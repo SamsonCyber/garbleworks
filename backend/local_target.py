@@ -50,6 +50,9 @@ _DEFAULT_ALLOW_PREFIXES = (
     "echo_target",
     "tests.",
     "test_",
+    # Dual-gate closed loop (blockjail + stegoff red-team)
+    "blockjail.",
+    "blockjail",
 )
 
 
