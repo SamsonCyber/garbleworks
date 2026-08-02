@@ -15,7 +15,7 @@ Brief description. Link the issue it closes (`Closes #…`).
 Test output, a benchmark delta, or a screenshot. New capability should come with a test.
 
 ```
-# paste: pytest -q  and/or  benchmark_harness.py --fail-on-regression
+# paste: pytest -q and/or benchmark_harness.py --fail-on-regression
 ```
 
 ## Checklist

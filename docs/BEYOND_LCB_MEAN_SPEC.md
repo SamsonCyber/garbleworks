@@ -1,7 +1,7 @@
-# Garbleworks: Beyond LCB vs Mean — Full Architecture Spec
+# Garbleworks: Beyond LCB vs Mean - Full Architecture Spec
 
-**Version:** 2026-07-27  
-**Status:** Design spec for v0.4+  
+**Version:** 2026-07-27 
+**Status:** Design spec for v0.4+ 
 **Goal:** Replace the current "LCB for search, held-out mean for claim" binary with a rich, multi-dimensional, statistically honest evidence system that produces actionable attack surfaces instead of single-recipe scores.
 
 This spec integrates and upgrades existing components (`rainbow.py`, `bandit.py`, `register.py` + calibration, `optimizer.py`, `EVOLVE_MATH.md`, `research_store.py`, `history.py`).
@@ -22,26 +22,26 @@ This spec integrates and upgrades existing components (`rainbow.py`, `bandit.py`
 
 ## 2. Design Principles
 
-1. **Evidence is multi-dimensional and compositional** — not a single success probability.
-2. **Coverage + Quality + Attribution** — fill the space, improve elites, explain *why*.
-3. **Hierarchical + transferable** — learn across targets while specializing.
-4. **Always-valid + honest** — sequential inference, proper optional stopping, no post-hoc p-hacking.
-5. **Decision-theoretic output** — report fronts, utilities, value-of-information, not just "it cleared 0.7".
-6. **Incremental** — reuse existing `Elite`, `Archive`, Beta posteriors, `L(x)`, fire history.
+1. **Evidence is multi-dimensional and compositional** - not a single success probability.
+2. **Coverage + Quality + Attribution** - fill the space, improve elites, explain *why*.
+3. **Hierarchical + transferable** - learn across targets while specializing.
+4. **Always-valid + honest** - sequential inference, proper optional stopping, no post-hoc p-hacking.
+5. **Decision-theoretic output** - report fronts, utilities, value-of-information, not just "it cleared 0.7".
+6. **Incremental** - reuse existing `Elite`, `Archive`, Beta posteriors, `L(x)`, fire history.
 
 ---
 
 ## 3. Core Data Model
 
-### 3.1 Descriptor (Cell Key) — Extended
+### 3.1 Descriptor (Cell Key) - Extended
 
 ```python
 CellKey = tuple[Behavior, ObfuscationLevel, RegisterBin, TargetClass?]
 
-Behavior        = "jailbreak" | "template" | "structure" | "persona" | "encoding" | "stego" | "carrier" | "hybrid"
-ObfuscationLevel = "none" | "light" | "medium" | "heavy"   # derived from op families + η
-RegisterBin     = "low" | "med" | "high"                   # L(x) quantiles or fixed cuts
-TargetClass     = "rlhf-heavy" | "abliterated" | "base" | "unknown"   # optional, learned or tagged
+Behavior = "jailbreak" | "template" | "structure" | "persona" | "encoding" | "stego" | "carrier" | "hybrid"
+ObfuscationLevel = "none" | "light" | "medium" | "heavy" # derived from op families + η
+RegisterBin = "low" | "med" | "high" # L(x) quantiles or fixed cuts
+TargetClass = "rlhf-heavy" | "abliterated" | "base" | "unknown" # optional, learned or tagged
 ```
 
 The archive becomes a **hierarchical grid** (behavior × obfuscation × register) with optional target-class slicing.
@@ -51,25 +51,25 @@ The archive becomes a **hierarchical grid** (behavior × obfuscation × register
 ```python
 @dataclass
 class Elite:
-    stack: list[str]                    # the recipe / op chain
-    s: int = 0                          # successes (can be graded-weighted)
-    n: int = 0
-    graded_sum: float = 0.0             # sum of AttackEval grades (0/0.33/0.66/1)
-    modes: dict[str, int] = field(default_factory=dict)  # behavior modes hit
+ stack: list[str] # the recipe / op chain
+ s: int = 0 # successes (can be graded-weighted)
+ n: int = 0
+ graded_sum: float = 0.0 # sum of AttackEval grades (0/0.33/0.66/1)
+ modes: dict[str, int] = field(default_factory=dict) # behavior modes hit
 
-    # Attribution
-    feature_lifts: dict[str, float] = field(default_factory=dict)  # e.g. {"L": -0.31, "chat_template": 0.18}
-    last_L: float = 0.0
-    last_eta: float = 0.0
+ # Attribution
+ feature_lifts: dict[str, float] = field(default_factory=dict) # e.g. {"L": -0.31, "chat_template": 0.18}
+ last_L: float = 0.0
+ last_eta: float = 0.0
 
-    # Posterior (Beta for binary, or mean + var for graded)
-    alpha: float = 1.0
-    beta: float = 1.0
+ # Posterior (Beta for binary, or mean + var for graded)
+ alpha: float = 1.0
+ beta: float = 1.0
 
-    @property
-    def lcb(self) -> float: ...
-    @property
-    def posterior_mean(self) -> float: ...
+ @property
+ def lcb(self) -> float: ...
+ @property
+ def posterior_mean(self) -> float: ...
 ```
 
 ### 3.3 Archive
@@ -77,9 +77,9 @@ class Elite:
 ```python
 @dataclass
 class Archive:
-    cells: dict[CellKey, Elite]
-    dead: set[CellKey]
-    global_prior: dict[str, float]   # hierarchical shrinkage (global a0/a1 or alpha/beta offsets)
+ cells: dict[CellKey, Elite]
+ dead: set[CellKey]
+ global_prior: dict[str, float] # hierarchical shrinkage (global a0/a1 or alpha/beta offsets)
 ```
 
 Cells accumulate evidence on the **same stack** (tighten interval) and only replace when a strictly better LCB arrives.
@@ -92,16 +92,16 @@ Every fire produces a rich observation:
 
 ```python
 Observation = {
-    "cell": CellKey,
-    "stack": list[str],
-    "L": float,
-    "eta": float,
-    "features": dict[str, float],   # lexical L + structural + syntactic + persona
-    "refused": bool,
-    "grade": float,                 # 0/0.33/0.66/1.0
-    "target_host": str,
-    "target_class": str | None,
-    "timestamp": float,
+ "cell": CellKey,
+ "stack": list[str],
+ "L": float,
+ "eta": float,
+ "features": dict[str, float], # lexical L + structural + syntactic + persona
+ "refused": bool,
+ "grade": float, # 0/0.33/0.66/1.0
+ "target_host": str,
+ "target_class": str | None,
+ "timestamp": float,
 }
 ```
 
@@ -152,8 +152,8 @@ Replace or augment fixed Wilson with always-valid methods for sequential decisio
 
 - Use **e-processes** or mixture martingales for the "is this cell reliably above X?" question.
 - Report both:
-  - Classic Wilson LCB (for comparability)
-  - Always-valid lower bound (for honest early stopping)
+ - Classic Wilson LCB (for comparability)
+ - Always-valid lower bound (for honest early stopping)
 - Optional-stopping correction is already partially present via `delta_eff`; make it explicit and documented.
 
 **Stopping rules become multi-objective:**
@@ -169,10 +169,10 @@ Instead of a single recipe + one number, produce:
 
 ### 7.1 Attack Surface Map
 - Heatmap or table of cells with:
-  - Best elite stack
-  - Posterior mean + always-valid LCB/UCB
-  - n, graded_avg
-  - Key feature lifts
+ - Best elite stack
+ - Posterior mean + always-valid LCB/UCB
+ - n, graded_avg
+ - Key feature lifts
 
 ### 7.2 Pareto Fronts
 Multiple fronts the user can choose from:
@@ -214,15 +214,15 @@ Multiple fronts the user can choose from:
 class Observation: ...
 
 class HierarchicalCalibrator:
-    def update(self, obs: Observation): ...
-    def p_pass(self, features: dict, target: str) -> tuple[float, float]: ...  # mean, ci
+ def update(self, obs: Observation): ...
+ def p_pass(self, features: dict, target: str) -> tuple[float, float]: ... # mean, ci
 
 class AttackSurface:
-    archive: Archive
-    calibrator: HierarchicalCalibrator
-    def get_pareto_front(self, axes: list[str]) -> list[dict]: ...
-    def attribution(self, cell: CellKey) -> dict: ...
-    def value_of_information(self, cell: CellKey, budget: int) -> float: ...
+ archive: Archive
+ calibrator: HierarchicalCalibrator
+ def get_pareto_front(self, axes: list[str]) -> list[dict]: ...
+ def attribution(self, cell: CellKey) -> dict: ...
+ def value_of_information(self, cell: CellKey, budget: int) -> float: ...
 ```
 
 ---

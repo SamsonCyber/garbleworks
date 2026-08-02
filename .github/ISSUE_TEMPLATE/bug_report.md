@@ -6,7 +6,7 @@ labels: bug
 ---
 
 > ⚠️ **Security issues:** do not file them here. A scope-enforcement escape, SSRF
-> bypass, or fan-out/cap bypass is a private report — see [`SECURITY.md`](../../SECURITY.md).
+> bypass, or fan-out/cap bypass is a private report - see [`SECURITY.md`](../../SECURITY.md).
 
 **What happened**
 A clear description of the bug.

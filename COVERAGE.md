@@ -87,7 +87,7 @@ requires (24/24 codepoint-audit pass).
 | Pig Latin | `pig_latin` |
 | JWT-shaped segment smuggling | `jwt_style_split` |
 
-## Steganographic channels (4)  — the "stego" source
+## Steganographic channels (4) - the "stego" source
 
 | corpus technique | op |
 |---|---|
@@ -134,7 +134,7 @@ requires (24/24 codepoint-audit pass).
 | Forged tool-result framing | `tool_result_wrap` |
 | System-message role framing | `semantic_frame` |
 
-## Semantic reframing — prose (9) + language (6+)
+## Semantic reframing - prose (9) + language (6+)
 
 | corpus technique | op |
 |---|---|
@@ -150,9 +150,9 @@ requires (24/24 codepoint-audit pass).
 
 ## Sampler (3)
 
-`repeat`, `sample_n`, `echo` — fan-out / repetition utilities for fuzzing volume.
+`repeat`, `sample_n`, `echo` - fan-out / repetition utilities for fuzzing volume.
 
-## Contextual misdirection — Pliny Family 27 (1 op, 5 scenarios)
+## Contextual misdirection - Pliny Family 27 (1 op, 5 scenarios)
 
 Deterministic scenario-framing wrappers. `misdirection_frame` reframes the payload
 as one of five plausible-deniability scenarios; the no-model sibling of `llm_reframe`.
@@ -192,7 +192,7 @@ are intentionally not implemented here:
 
 | StegOFF capability | reason |
 |---|---|
-| Image stego (LSB, white-on-white pixels, QR-in-image, adversarial perturbation) | needs an image carrier, not text — belongs in ST3GG / nanoGCG, not a text mutator |
+| Image stego (LSB, white-on-white pixels, QR-in-image, adversarial perturbation) | needs an image carrier, not text - belongs in ST3GG / nanoGCG, not a text mutator |
 | Audio stego (ultrasonic, audio adversarial) | needs an audio carrier |
 | Document stego (PDF JavaScript, post-EOF, incremental updates, DOCX/XLSX metadata, EXIF) | needs a binary document container |
 | Polyglot files | needs multi-format binary construction |

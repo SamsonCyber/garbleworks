@@ -15,8 +15,8 @@ cd C:\code\garbleworks\backend
 
 Results land in `backend/benchmarks/results/`:
 
-- `benchmark-latest.json` / `.md` — last run
-- `benchmark-<UTC timestamp>.json` / `.md` — archived run
+- `benchmark-latest.json` / `.md` - last run
+- `benchmark-<UTC timestamp>.json` / `.md` - archived run
 
 ## Suites
 

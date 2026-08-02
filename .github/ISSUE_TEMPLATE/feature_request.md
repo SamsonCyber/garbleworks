@@ -14,11 +14,11 @@ search/measurement change, describe the signal it produces.
 
 **Prior art**
 Paper, repo, or tool this comes from (garak/PyRIT/promptfoo probe, an arXiv method, etc.).
-Honest positioning is valued here — say what's already established vs new.
+Honest positioning is valued here - say what's already established vs new.
 
 **Does it already exist?**
 Check `GET /ops`, [`COVERAGE.md`](../../COVERAGE.md), and [`ADDITIONS.md`](../../ADDITIONS.md)
-first — a lot is already built.
+first - a lot is already built.
 
 **Measurement**
 How would we know it works? A benchmark-suite entry, an ASR delta, a coverage add?

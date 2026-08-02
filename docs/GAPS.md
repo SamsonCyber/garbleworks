@@ -16,7 +16,7 @@ Last updated with stats-honesty + validate_refire + behavior batteries.
 
 | Gap | Priority | Notes |
 |-----|----------|--------|
-| Full interactive TUI like Wallbreaker | **Shipped (v0.1)** | OpenTUI React: `cd tui && bun start` — Attack/Validate/Sessions/Bench; not a full agent REPL yet |
+| Full interactive TUI like Wallbreaker | **Shipped (v0.1)** | OpenTUI React: `cd tui && bun start` - Attack/Validate/Sessions/Bench; not a full agent REPL yet |
 | Multimodal image-edit attack channel | Low for text-first lab | Out of scope until needed |
 | Full HarmBench 400 in-repo | Won’t ship | License/size; use `GARBLEWORKS_BEHAVIORS` |
 | BH-FDR on strategy claims | Medium | Spec in EVOLVE_MATH; **not** a default production gate yet |

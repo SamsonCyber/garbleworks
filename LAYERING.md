@@ -5,16 +5,16 @@ piping every variant into the next stage. The ops fall into four layers, and a
 recipe behaves well when it visits them in this order:
 
 ```
-1. semantic    synonym                              (rewords; English in, English out)
-2. character   homoglyph, leetspeak, fullwidth,     (per-letter substitution / insertion,
-               case_alternate, combining, spacer,    text stays human/model readable)
-               zero_width, unicode_tags, reverse
-3. encoding    base64, hex, rot13, morse, binary,   (whole-string transform to a new charset)
-               atbash, url_encode, html_entities,
-               unicode_escape
-4. structure   tag_wrap, markdown_code, json_field, (delivery envelope around the payload)
-               divider_wrap, comment_wrap,
-               split_join, prefix_suffix
+1. semantic synonym (rewords; English in, English out)
+2. character homoglyph, leetspeak, fullwidth, (per-letter substitution / insertion,
+ case_alternate, combining, spacer, text stays human/model readable)
+ zero_width, unicode_tags, reverse
+3. encoding base64, hex, rot13, morse, binary, (whole-string transform to a new charset)
+ atbash, url_encode, html_entities,
+ unicode_escape
+4. structure tag_wrap, markdown_code, json_field, (delivery envelope around the payload)
+ divider_wrap, comment_wrap,
+ split_join, prefix_suffix
 ```
 
 ## The ordering rule
@@ -23,16 +23,16 @@ Apply lower layers before higher layers. A lower-layer op placed after a
 higher-layer op is usually self-defeating:
 
 - A **character** op after an **encoding** op corrupts the encoding. `leetspeak`
-  rewrites vowels (`a->4`, `e->3`), and those letters are part of the base64
-  alphabet, so `base64 leetspeak` produces a blob that no longer decodes. Proven:
-  `base64 leetspeak` on the standard probe decodes to
-  `Ignore?all prev?ous instructions...` with corrupted bytes.
+ rewrites vowels (`a->4`, `e->3`), and those letters are part of the base64
+ alphabet, so `base64 leetspeak` produces a blob that no longer decodes. Proven:
+ `base64 leetspeak` on the standard probe decodes to
+ `Ignore?all prev?ous instructions...` with corrupted bytes.
 - `zero_width` or `unicode_tags` inserted into an encoded blob breaks decoding too.
-  A strict base64 decoder rejects it; a naive one can't even ASCII-encode the
-  invisible characters.
+ A strict base64 decoder rejects it; a naive one can't even ASCII-encode the
+ invisible characters.
 - An **encoding** before a **structure** op is fine and stays reversible: unwrap
-  the envelope, then decode. `base64 markdown_code` and `hex tag_wrap` both
-  round-trip to the exact original.
+ the envelope, then decode. `base64 markdown_code` and `hex tag_wrap` both
+ round-trip to the exact original.
 
 `character -> encoding` is legal but buries the obfuscation. `homoglyph base64`
 decodes to homoglyph text, so a filter that scans the raw base64 sees nothing
@@ -66,5 +66,5 @@ fired through the probe set and checked; reversible ones were decode round-tripp
 ## Reproduce
 
 ```
-python refine.py     # fires the matrix, verifies layering (9 PASS, 1 NOTE)
+python refine.py # fires the matrix, verifies layering (9 PASS, 1 NOTE)
 ```
