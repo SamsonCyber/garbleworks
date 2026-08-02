@@ -18,7 +18,7 @@
 
 ## What this tool is
 
-Most jailbreak tooling is a bag of fixed payloads. Garbleworks is a **search-and-measurement engine** over a composable attack DSL.
+Most jailbreak tooling ships fixed payload lists. Garbleworks is a **search-and-measurement engine** over a composable attack DSL.
 
 You give it:
 
@@ -214,7 +214,7 @@ bun install
 bun start
 ```
 
-Tabs: Attack, Validate, Sessions, Bench, Help. Bridges to the Python backend only (no second fire path). Keys: `1`–`5` tabs, `Ctrl+R` run, `Ctrl+C` quit. See [`tui/README.md`](tui/README.md).
+Tabs: Attack, Validate, Sessions, Bench, Help. Bridges to the Python backend only (no second fire path). Keys: `1`-`5` tabs, `Ctrl+R` run, `Ctrl+C` quit. See [`tui/README.md`](tui/README.md).
 
 ### 3. MCP server (agent operator)
 
@@ -340,23 +340,23 @@ garbleworks/
 
 ## Why it is different (honest table)
 
-Garbleworks does not win on transform count alone. It competes on **search discipline**, **measurement honesty**, and **standards mapping**.
+Garbleworks does not win on transform count alone. The edge is **search discipline**, **measurement honesty**, and **standards mapping**.
 
 | Capability | garak / PyRIT | wallbreaker | h4rm3l | Garbleworks |
 |---|:---:|:---:|:---:|:---:|
-| Composable attack DSL | — | partial | yes | yes |
-| Genetic + quality-diversity search | — | — | bandit synth | EVOLVE + MAP-Elites |
-| Wilson / complete-case ASR + promotion gates | — | partial | — | yes (see gaps) |
-| Validate re-fire (N×) | — | yes | — | yes |
-| Graded LLM judge (4-level) | partial | yes | — | yes |
-| Thompson bandit + recipe lifecycle | — | — | — | yes |
-| Register / `L(x)` refusal analytics | — | — | — | yes |
-| Multi-turn beam tree search | — | Crescendo | — | Tempest-style |
-| OWASP / ATLAS / NIST / CWE crosswalk + export | — | partial | — | yes |
-| Enforced SSRF + MCP scope receipt | — | policy only | — | enforced |
-| Attack and defense-reduction evaluation | — | — | — | yes |
+| Composable attack DSL | - | partial | yes | yes |
+| Genetic + quality-diversity search | - | - | bandit synth | EVOLVE + MAP-Elites |
+| Wilson / complete-case ASR + promotion gates | - | partial | - | yes (see gaps) |
+| Validate re-fire (N×) | - | yes | - | yes |
+| Graded LLM judge (4-level) | partial | yes | - | yes |
+| Thompson bandit + recipe lifecycle | - | - | - | yes |
+| Register / `L(x)` refusal analytics | - | - | - | yes |
+| Multi-turn beam tree search | - | Crescendo | - | Tempest-style |
+| OWASP / ATLAS / NIST / CWE crosswalk + export | - | partial | - | yes |
+| Enforced SSRF + MCP scope receipt | - | policy only | - | enforced |
+| Attack and defense-reduction evaluation | - | - | - | yes |
 
-The composable-recipe idea is not novel ([h4rm3l](https://arxiv.org/abs/2408.04811), [WildTeaming](https://arxiv.org/abs/2406.18510)). The contribution here is the closed loop of search, validate re-fire, register analytics, and reportable bounds. BH-FDR is specified in EVOLVE_MATH but is not a default production gate yet.
+The composable-recipe idea is not novel ([h4rm3l](https://arxiv.org/abs/2408.04811), [WildTeaming](https://arxiv.org/abs/2406.18510)). This project closes the loop: search, validate re-fire, register analytics, and reportable bounds. BH-FDR is specified in EVOLVE_MATH but is not a default production gate yet.
 
 ---
 
@@ -387,10 +387,10 @@ The composable-recipe idea is not novel ([h4rm3l](https://arxiv.org/abs/2408.048
 
 ## References
 
-- h4rm3l — Doumbouya et al. 2024, [arXiv:2408.04811](https://arxiv.org/abs/2408.04811)
-- WildTeaming — Jiang et al. 2024, [arXiv:2406.18510](https://arxiv.org/abs/2406.18510)
-- Rainbow Teaming — Samvelyan et al. 2024, [arXiv:2402.16822](https://arxiv.org/abs/2402.16822)
-- Tempest — Zhou & Arel 2025, [arXiv:2503.10619](https://arxiv.org/abs/2503.10619)
+- h4rm3l: Doumbouya et al. 2024, [arXiv:2408.04811](https://arxiv.org/abs/2408.04811)
+- WildTeaming: Jiang et al. 2024, [arXiv:2406.18510](https://arxiv.org/abs/2406.18510)
+- Rainbow Teaming: Samvelyan et al. 2024, [arXiv:2402.16822](https://arxiv.org/abs/2402.16822)
+- Tempest: Zhou & Arel 2025, [arXiv:2503.10619](https://arxiv.org/abs/2503.10619)
 - HarmBench, JailbreakBench, StrongREJECT
 
 ---
