@@ -21,6 +21,14 @@ Runs:
 
 Success line: `REPRO_OK garbleworks security + math audit`
 
+Publish refreshed offline numbers into docs:
+
+```bash
+python scripts/publish_offline_benchmarks.py
+```
+
+See [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) and [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
+
 Note: `backend/research_store.py` provides Wilson LCB used by the harness and search modules.
 
 CI (`.github/workflows/ci.yml`) runs the full backend pytest suite plus the same math audit on every push/PR to main.
