@@ -1,9 +1,9 @@
 {
   "_meta": {
-    "ops_total": 143,
+    "ops_total": 152,
     "ops_linked": 122,
     "ops_plumbing_no_technique": 18,
-    "ops_unmapped": 3,
+    "ops_unmapped": 12,
     "techniques_with_ops": 63,
     "reference_only_count": 12
   },
@@ -37,9 +37,6 @@
     "comment_wrap": "Comment hiding & split-string concatenation",
     "contrastive_fewshot": "In-Context Attack (ICA)",
     "cot_hijack": "H-CoT (Chain-of-Thought Hijacking)",
-    "cot_dilution": "H-CoT (Chain-of-Thought Hijacking)",
-    "cot_no_decode": "H-CoT (Chain-of-Thought Hijacking)",
-    "cot_forge_verdict": "H-CoT (Chain-of-Thought Hijacking)",
     "crescendo_ladder": "Crescendo / multi-turn escalation",
     "decode_execute_wrap": "Base64 + decode-and-execute",
     "deep_inception": "DeepInception (nested fictional layers)",
@@ -68,7 +65,6 @@
     "jwt_style_split": "Payload Splitting (Kang et al.)",
     "keyboard_shift": "Classical ciphers (ROT13 / Caesar / Atbash)",
     "language_wrap": "Multilingual / low-resource pivot",
-    "amazigh_obfuscate": "Multilingual / low-resource pivot",
     "latex_wrap": "Tag / markup wrapping",
     "leetspeak": "Leetspeak / 1337",
     "manyshot_seed": "Many-shot jailbreaking",
@@ -231,10 +227,7 @@
       "fullwidth"
     ],
     "H-CoT (Chain-of-Thought Hijacking)": [
-      "cot_hijack",
-      "cot_dilution",
-      "cot_no_decode",
-      "cot_forge_verdict"
+      "cot_hijack"
     ],
     "Hex / octal / binary / decimal codepoints": [
       "a1z26",
@@ -295,10 +288,7 @@
     ],
     "Multilingual / low-resource pivot": [
       "language_wrap",
-      "translate",
-      "multilang",
-      "amazigh_obfuscate",
-      "transliterate"
+      "translate"
     ],
     "Past-tense & syntax reformulation": [
       "past_tense"
@@ -412,7 +402,16 @@
     "write_primitive_frame"
   ],
   "unmapped_ops": [
+    "amazigh_obfuscate",
+    "cot_dilution",
+    "cot_forge_verdict",
+    "cot_no_decode",
+    "decode_obey_soft",
+    "heuristic_evasion",
+    "heuristic_soft",
+    "heuristic_strip",
     "hieroglyph_wrap",
+    "homoglyph_soft",
     "operator_format_split",
     "operator_signature"
   ],
