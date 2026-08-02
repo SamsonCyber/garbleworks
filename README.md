@@ -51,25 +51,25 @@ That chain rewords lexically, swaps confusable glyphs, injects invisible charact
 
 ## How an engagement run works
 
-```
+```text
 objective + target
-        â”‚
-        â–¼
-   compose recipe  â”€â”€â–º  apply_recipe  â”€â”€â–º  variants
-        â–²                                      â”‚
-        â”‚                                      â–¼
-   search loop                         fire (scoped)
-   EVOLVE / MAP-Elites /                         â”‚
-   Thompson bandit / tree search                 â–¼
-        â”‚                              target adapter
-        â”‚                                      â”‚
-        â”‚                                      â–¼
-        â”‚                              detectors + judge
-        â”‚                                      â”‚
-        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ history / bandit â—„â”€â”€â”€â”€â”€â”€â”€â”˜
-                              â”‚
-                              â–¼
-                     report + export + field-guide crosswalk
+       |
+       v
+ compose recipe ----> apply_recipe ----> variants
+       ^                                    |
+       |                                    v
+ search loop                          fire (scoped)
+ EVOLVE / MAP-Elites /                      |
+ Thompson bandit / tree search              v
+       |                             target adapter
+       |                                    |
+       |                                    v
+       |                           detectors + judge
+       |                                    |
+       +------------ history / bandit <-----+
+                          |
+                          v
+              report + export + field-guide crosswalk
 ```
 
 | Stage | What happens | Where in code |
@@ -77,11 +77,11 @@ objective + target
 | Compose | Build an ordered op chain (UI, MCP, or optimizer) | `core.run_recipe`, `ops/*` |
 | Apply | Expand one input into many variants (fan-out caps apply) | `core.py`, `app.py` |
 | Fire | POST/GET the variant to a target URL or local callable | `fire.py`, `targets.py` |
-| Detect | Multi-signal hit rules (contains, regex, secret_regex, refusal_bank, llm_judge, â€¦) | `detectors.py` |
+| Detect | Multi-signal hit rules (contains, regex, secret_regex, refusal_bank, llm_judge, ...) | `detectors.py` |
 | Search | Prefer recipes that work; retire ones that do not | `evolve.py`, `optimizer.py`, `rainbow.py`, `bandit.py`, `treesearch.py` |
-| Measure | Wilson / Bernstein bounds, validate re-fire (NÃ—), optional McNemar A/B | `validate_refire.py`, `benchmark_harness.py` |
-| Map | Technique titles â†’ frameworks + executable ops | field guide JSON + MCP `field_guide_*` |
-| Export | Recipe â†’ promptfoo YAML / garak probe / PyRIT orchestrator shapes | `exporters.py` |
+| Measure | Wilson / Bernstein bounds, validate re-fire (Nx), optional McNemar A/B | `validate_refire.py`, `benchmark_harness.py` |
+| Map | Technique titles -> frameworks + executable ops | field guide JSON + MCP `field_guide_*` |
+| Export | Recipe -> promptfoo YAML / garak probe / PyRIT orchestrator shapes | `exporters.py` |
 
 ---
 
@@ -116,7 +116,7 @@ A recipe is a list of steps. Each step is an op name plus a parameter map.
 | sampler | 9 | sample_n, distinct_n, diverse_k, mmr_select, seed_sweep |
 | stego | 6 | emoji-binary, variation-selector channel, whitespace stego |
 | language | 5 | multilingual pivot, roundtrip, transliterate, pseudo-locale |
-| carrier | 5 | indirect injection carriers (email, editor-note, memory-seed, â€¦) |
+| carrier | 5 | indirect injection carriers (email, editor-note, memory-seed, ...) |
 | llm | 3 | llm-reframe, llm-generate, complexify (local model; pass-through if offline) |
 
 Full technique coverage and StegOFF text-method parity: [`COVERAGE.md`](COVERAGE.md).
@@ -177,7 +177,7 @@ Built-in kinds include:
 | `contains` / `not_contains` | Substring present or absent |
 | `regex` / `not_regex` | Pattern match |
 | `status_eq` / `status_in` | HTTP status |
-| `secret_regex` | Common secret shapes in the response (API keys, tokens, PEM, JWT, â€¦) |
+| `secret_regex` | Common secret shapes in the response (API keys, tokens, PEM, JWT, ...) |
 | `refusal_bank` | Model refusal phrases (positive = refused) |
 | `llm_judge` | AttackEval grades 0 / 0.33 / 0.66 / 1.0 |
 | `min_length` | Snippet length floor |
@@ -190,8 +190,8 @@ Built-in kinds include:
 | Mechanism | Job |
 |-----------|-----|
 | EVOLVE | Genetic search on the probability simplex (Aitchison geometry). Spec: [`EVOLVE_MATH.md`](EVOLVE_MATH.md) |
-| MAP-Elites (`rainbow.py`) | Quality-diversity over a behavior Ã— obfuscation grid |
-| Thompson bandit | Beta posterior per (op/recipe, target); `probation â†’ active â†’ retired` lifecycle |
+| MAP-Elites (`rainbow.py`) | Quality-diversity over a behavior x obfuscation grid |
+| Thompson bandit | Beta posterior per (op/recipe, target); `probation -> active -> retired` lifecycle |
 | Tree search (`treesearch.py`) | Multi-turn beam search for erosion paths the single-turn DSL misses |
 | Register `L(x)` (`register.py`) | Lexical loadedness model; estimates which features track refusal |
 
@@ -233,15 +233,15 @@ Copy [`.mcp.json.example`](.mcp.json.example) into your MCP client and set `cwd`
 
 | Tool | Purpose |
 |------|---------|
-| `generate_framings` | Objective â†’ one framed payload per named technique |
+| `generate_framings` | Objective -> one framed payload per named technique |
 | `apply_recipe` | Run an ordered op chain |
 | `list_techniques` | Op catalog (name, category, description, params) |
 | `chat_template_inject` | Wrap payload in chat-template special tokens |
 | `prefill_attack` | Multi-turn assistant prefill / response priming |
 | `pack_hunt` / `pack_hunt_decompose` / `pack_hunt_detect` | Decomposition attack + blue-team detect |
 | `optimize` | Genetic evolve against a scoped live target |
-| `validate_refire` | NÃ— re-fire + Wilson ASR |
-| `auto_attack` | Multi-strategy ladder (baseline â†’ pack_hunt â†’ optimize â†’ prefill) |
+| `validate_refire` | Nx re-fire + Wilson ASR |
+| `auto_attack` | Multi-strategy ladder (baseline -> pack_hunt -> optimize -> prefill) |
 | `start_run` / arena helpers | Closed-loop operator sessions |
 
 **Field-guide tools:**
@@ -251,8 +251,8 @@ Copy [`.mcp.json.example`](.mcp.json.example) into your MCP client and set `cwd`
 | `field_guide_search` | Full-text search over techniques |
 | `field_guide_get` | Full technique writeup |
 | `field_guide_crosswalk` | Framework IDs + tool hooks + ops |
-| `field_guide_ops` | Catalog technique â†’ executable ops |
-| `op_technique` | Reverse: op â†’ technique |
+| `field_guide_ops` | Catalog technique -> executable ops |
+| `op_technique` | Reverse: op -> technique |
 | `field_guide_by_framework` / `field_guide_by_tool` | Index by OWASP/ATLAS/CWE or garak/promptfoo/PyRIT |
 
 Catalog data is vendored at `backend/data/field-guide.json` (from [llm-injection-field-guide](https://github.com/SamsonCyber/llm-injection-field-guide)). Overview: [`docs/FIELD-GUIDE.md`](docs/FIELD-GUIDE.md).
@@ -351,7 +351,7 @@ Garbleworks does not win on transform count alone. The edge is **search discipli
 | Composable attack DSL | - | partial | yes | yes |
 | Genetic + quality-diversity search | - | - | bandit synth | EVOLVE + MAP-Elites |
 | Wilson / complete-case ASR + promotion gates | - | partial | - | yes (see gaps) |
-| Validate re-fire (NÃ—) | - | yes | - | yes |
+| Validate re-fire (Nx) | - | yes | - | yes |
 | Graded LLM judge (4-level) | partial | yes | - | yes |
 | Thompson bandit + recipe lifecycle | - | - | - | yes |
 | Register / `L(x)` refusal analytics | - | - | - | yes |
@@ -370,12 +370,12 @@ The composable-recipe idea is not novel ([h4rm3l](https://arxiv.org/abs/2408.048
 |-----|----------|
 | [`docs/USAGE-AND-API.md`](docs/USAGE-AND-API.md) | Full HTTP/UI reference: endpoints, adapters, detectors, recipes, troubleshooting |
 | [`COVERAGE.md`](COVERAGE.md) | Technique coverage, StegOFF parity, field-guide crosswalk |
-| [`docs/FIELD-GUIDE.md`](docs/FIELD-GUIDE.md) | Injection field guide overview and techniqueâ†’op bridge |
+| [`docs/FIELD-GUIDE.md`](docs/FIELD-GUIDE.md) | Injection field guide overview and technique->op bridge |
 | [`EVOLVE_MATH.md`](EVOLVE_MATH.md) | Optimizer and statistics, formal |
 | [`HARNESS-POSITIONING.md`](HARNESS-POSITIONING.md) | Positioning vs composable-jailbreak literature |
 | [`docs/GAPS.md`](docs/GAPS.md) | Known gaps and honesty notes |
 | [`docs/BENCH-VS-WALLBREAKER.md`](docs/BENCH-VS-WALLBREAKER.md) | Head-to-head A/B methodology |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) Â· [`SECURITY.md`](SECURITY.md) | Contribute Â· responsible use and disclosure |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`SECURITY.md`](SECURITY.md) | Contribute · responsible use and disclosure |
 
 ---
 
