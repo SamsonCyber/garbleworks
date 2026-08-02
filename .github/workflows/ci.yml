@@ -7,12 +7,9 @@ on:
     branches: [main]
 
 jobs:
-  test:
-    name: tests + math audit
+  offline-repro:
+    name: security + math audit (offline)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
     steps:
       - uses: actions/checkout@v4
 
@@ -20,17 +17,9 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
+          cache-dependency-path: backend/requirements.txt
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest
-
-      - name: Unit tests
-        run: pytest -q
-
-      - name: Math + plumbing audit (no external APIs)
-        # The audit suite runs against the echo target and mock judges only,
-        # so it needs no model or network. Fails the build on a stats regression.
-        run: python benchmark_harness.py --fail-on-regression
+      - name: Independent offline repro
+        # Same entry point documented in STATUS.md and profile maturity matrix.
+        # Full backend pytest still includes lab/live modules not shipped publicly.
+        run: python scripts/repro.py
