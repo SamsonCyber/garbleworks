@@ -21,15 +21,6 @@
 ---
 
 
-## Demo
-
-![Garbleworks workbench UI](docs/demo/garbleworks-ui.png)
-
-*Live local UI at* \http://127.0.0.1:9877\ *(captured from a real loopback run).*
-
-![Engagement loop](docs/demo/garbleworks-flow.png)
-
-*Engagement loop: objective + target -> compose recipe -> scoped fire -> search -> report/export.*
 
 ## What this tool is
 
