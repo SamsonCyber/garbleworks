@@ -134,7 +134,7 @@ All server-side outbound HTTP shares **one** policy module: `backend/fire.py`.
    - Set `GARBLEWORKS_BLOCK_PRIVATE=1` to also block loopback and private ranges.
 2. **No redirects.** A 302 cannot pivot into a blocked internal host after validation.
 3. **Engagement receipt (MCP).** Fire tools also require the host to match `authorized_scope`. Default scope is `local-selftest` (`127.0.0.1`, `localhost`). Off-scope hosts get `SCOPE DENIED`.
-4. **Caps.** Request bodies capped (4 MB). Fan-out bounded (`max_variants â‰¤ 2000`, deck inputs â‰¤ 1000).
+4. **Caps.** Request bodies capped (4 MB). Fan-out bounded (`max_variants <= 2000`, deck inputs <= 1000).
 
 The HTTP API has **no authentication**. Bind to `127.0.0.1` only. CORS allows only localhost origins. Details: [`SECURITY.md`](SECURITY.md).
 
@@ -315,29 +315,29 @@ Env knobs: copy [`.env.example`](.env.example) to `.env`. Common keys: `GARBLEWO
 
 ## Repository map
 
-```
+```text
 garbleworks/
-â”œâ”€â”€ README.md                 # this file
-â”œâ”€â”€ SECURITY.md               # authorized use + host hardening
-â”œâ”€â”€ NOTICE.md                 # attributions
-â”œâ”€â”€ LICENSE                   # Apache-2.0
-â”œâ”€â”€ run.ps1                   # Windows loopback launcher
-â”œâ”€â”€ backend/
-â”‚   â”œâ”€â”€ app.py                # FastAPI UI + HTTP API
-â”‚   â”œâ”€â”€ fire.py               # SSRF + scope single source of truth
-â”‚   â”œâ”€â”€ core.py               # recipe engine + registry
-â”‚   â”œâ”€â”€ ops/                  # transform families
-â”‚   â”œâ”€â”€ spine/                # campaign / scoring spine
-â”‚   â”œâ”€â”€ mcp_server.py         # MCP operator surface
-â”‚   â”œâ”€â”€ detectors.py          # hit detection + secret_regex bank
-â”‚   â”œâ”€â”€ evolve.py / optimizer.py / rainbow.py / bandit.py
-â”‚   â”œâ”€â”€ validate_refire.py
-â”‚   â”œâ”€â”€ recipes/  decks/  personas/  rubrics/
-â”‚   â”œâ”€â”€ data/field-guide.json
-â”‚   â””â”€â”€ test_security.py      # SSRF / scope regressions
-â”œâ”€â”€ tui/                      # OpenTUI operator console
-â”œâ”€â”€ frontend/                 # static web UI assets (served by app)
-â””â”€â”€ docs/                     # deep specs and API reference
+|-- README.md                 # this file
+|-- SECURITY.md               # authorized use + host hardening
+|-- NOTICE.md                 # attributions
+|-- LICENSE                   # Apache-2.0
+|-- run.ps1                   # Windows loopback launcher
+|-- backend/
+|   |-- app.py                # FastAPI UI + HTTP API
+|   |-- fire.py               # SSRF + scope single source of truth
+|   |-- core.py               # recipe engine + registry
+|   |-- ops/                  # transform families
+|   |-- spine/                # campaign / scoring spine
+|   |-- mcp_server.py         # MCP operator surface
+|   |-- detectors.py          # hit detection + secret_regex bank
+|   |-- evolve.py / optimizer.py / rainbow.py / bandit.py
+|   |-- validate_refire.py
+|   |-- recipes/  decks/  personas/  rubrics/
+|   |-- data/field-guide.json
+|   `-- test_security.py      # SSRF / scope regressions
+|-- tui/                      # OpenTUI operator console
+|-- frontend/                 # static web UI assets (served by app)
+`-- docs/                     # deep specs and API reference
 ```
 
 ---
