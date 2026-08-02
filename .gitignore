@@ -72,3 +72,8 @@ backend/data/*.db
 tui/agent/operator_state.json
 tui/last_paste.txt
 
+
+tui/agent/*.json
+tui/agent/*.txt
+!tui/agent/.gitkeep
+
