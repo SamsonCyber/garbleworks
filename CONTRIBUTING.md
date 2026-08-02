@@ -27,8 +27,8 @@ uvicorn app:app --reload --port 8000
 
 ```powershell
 cd backend
-.\.venv\Scripts\python.exe -m pytest -q          # unit tests
-.\.venv\Scripts\python.exe benchmark_harness.py --fail-on-regression   # math + plumbing audit
+.\.venv\Scripts\python.exe -m pytest -q # unit tests
+.\.venv\Scripts\python.exe benchmark_harness.py --fail-on-regression # math + plumbing audit
 ```
 
 CI runs both on every pull request (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml)). A PR that regresses the math-audit gates will fail; that is intentional, the statistical guarantees are the product.
@@ -42,14 +42,14 @@ Ops live in `backend/ops/`. Add a file, register the op, and list it in `backend
 from core import Operation, Param, register
 
 def _my_op(text: str, level: int) -> list[str]:
-    return [text * level]          # ops fan out to a list of variants
+ return [text * level] # ops fan out to a list of variants
 
 register(Operation(
-    name="my_op",
-    category="structure",          # sets the default tactic `family`
-    description="Multiply the input by N.",
-    params=[Param("level", "int", 1, "How many copies.", min=1, max=10)],
-    fn=_my_op,
+ name="my_op",
+ category="structure", # sets the default tactic `family`
+ description="Multiply the input by N.",
+ params=[Param("level", "int", 1, "How many copies.", min=1, max=10)],
+ fn=_my_op,
 ))
 ```
 
@@ -65,10 +65,10 @@ Adapters (`backend/targets.py`) turn a payload string into the right request sha
 
 ```python
 register(Adapter(
-    id="my_adapter", label="My custom adapter",
-    defaults={"url": "...", "headers": "...", "model": "..."},
-    render=lambda payload, opts: (body_bytes, content_type, extra_headers),
-    extract=lambda resp_text, opts: reply_string,
+ id="my_adapter", label="My custom adapter",
+ defaults={"url": "...", "headers": "...", "model": "..."},
+ render=lambda payload, opts: (body_bytes, content_type, extra_headers),
+ extract=lambda resp_text, opts: reply_string,
 ))
 ```
 

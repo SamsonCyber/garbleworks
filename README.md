@@ -14,7 +14,7 @@
 > [!WARNING]
 > **Authorized security testing only.** Use on models you own or run locally, in-scope bug bounty targets, written pentest engagements, CTFs, and labs you control. Do not use this to defeat third-party production safety controls without authorization. See [`SECURITY.md`](SECURITY.md).
 
-**Maturity:** implemented · independently validated · maintained. See [STATUS.md](STATUS.md).  
+**Maturity:** implemented · independently validated · maintained. See [STATUS.md](STATUS.md). 
 **Reproduce (no model):** `bash scripts/repro.sh` or `powershell -File scripts/repro.ps1` (expects `REPRO_OK`).
 
 
@@ -44,7 +44,7 @@ It then:
 The core unit is a **recipe**: an ordered composition of string transforms.
 
 ```
-synonym:limit=3   homoglyph:coverage=0.5   zero_width:every=2   tag_wrap
+synonym:limit=3 homoglyph:coverage=0.5 zero_width:every=2 tag_wrap
 ```
 
 That chain rewords lexically, swaps confusable glyphs, injects invisible characters, then wraps structure. Four primitives, one composed candidate. The harness searches over compositions instead of sampling a static list.
@@ -55,23 +55,23 @@ That chain rewords lexically, swaps confusable glyphs, injects invisible charact
 
 ```text
 objective + target
-       |
-       v
+ |
+ v
  compose recipe ----> apply_recipe ----> variants
-       ^                                    |
-       |                                    v
- search loop                          fire (scoped)
- EVOLVE / MAP-Elites /                      |
- Thompson bandit / tree search              v
-       |                             target adapter
-       |                                    |
-       |                                    v
-       |                           detectors + judge
-       |                                    |
-       +------------ history / bandit <-----+
-                          |
-                          v
-              report + export + field-guide crosswalk
+ ^ |
+ | v
+ search loop fire (scoped)
+ EVOLVE / MAP-Elites / |
+ Thompson bandit / tree search v
+ | target adapter
+ | |
+ | v
+ | detectors + judge
+ | |
+ +------------ history / bandit <-----+
+ |
+ v
+ report + export + field-guide crosswalk
 ```
 
 | Stage | What happens | Where in code |
@@ -93,10 +93,10 @@ A recipe is a list of steps. Each step is an op name plus a parameter map.
 
 ```json
 [
-  {"op": "synonym", "params": {"limit": 3}},
-  {"op": "homoglyph", "params": {"coverage": 0.5}},
-  {"op": "zero_width", "params": {"every": 2}},
-  {"op": "tag_wrap", "params": {}}
+ {"op": "synonym", "params": {"limit": 3}},
+ {"op": "homoglyph", "params": {"coverage": 0.5}},
+ {"op": "zero_width", "params": {"every": 2}},
+ {"op": "tag_wrap", "params": {}}
 ]
 ```
 
@@ -130,10 +130,10 @@ Full technique coverage and StegOFF text-method parity: [`COVERAGE.md`](COVERAGE
 All server-side outbound HTTP shares **one** policy module: `backend/fire.py`.
 
 1. **URL policy** (`validate_target_url`)
-   - Scheme must be `http` or `https`.
-   - Link-local / cloud metadata (`169.254.0.0/16`), multicast, reserved, and unspecified addresses are blocked.
-   - Loopback and RFC-1918 stay allowed by default so local and LAN model servers work.
-   - Set `GARBLEWORKS_BLOCK_PRIVATE=1` to also block loopback and private ranges.
+ - Scheme must be `http` or `https`.
+ - Link-local / cloud metadata (`169.254.0.0/16`), multicast, reserved, and unspecified addresses are blocked.
+ - Loopback and RFC-1918 stay allowed by default so local and LAN model servers work.
+ - Set `GARBLEWORKS_BLOCK_PRIVATE=1` to also block loopback and private ranges.
 2. **No redirects.** A 302 cannot pivot into a blocked internal host after validation.
 3. **Engagement receipt (MCP).** Fire tools also require the host to match `authorized_scope`. Default scope is `local-selftest` (`127.0.0.1`, `localhost`). Off-scope hosts get `SCOPE DENIED`.
 4. **Caps.** Request bodies capped (4 MB). Fan-out bounded (`max_variants <= 2000`, deck inputs <= 1000).
@@ -154,15 +154,15 @@ Example local Ollama target (also in `backend/TARGET-abliterated-qwen.json`, loo
 
 ```json
 {
-  "adapter": "raw",
-  "url": "http://127.0.0.1:11434/v1/chat/completions",
-  "method": "POST",
-  "headers": {"Content-Type": "application/json"},
-  "opts": {
-    "body": "{\"model\":\"your-model\",\"messages\":[{\"role\":\"user\",\"content\":\"{payload}\"}],\"stream\":false}",
-    "body_type": "json",
-    "response_path": "choices.0.message.content"
-  }
+ "adapter": "raw",
+ "url": "http://127.0.0.1:11434/v1/chat/completions",
+ "method": "POST",
+ "headers": {"Content-Type": "application/json"},
+ "opts": {
+ "body": "{\"model\":\"your-model\",\"messages\":[{\"role\":\"user\",\"content\":\"{payload}\"}],\"stream\":false}",
+ "body_type": "json",
+ "response_path": "choices.0.message.content"
+ }
 }
 ```
 
@@ -319,27 +319,27 @@ Env knobs: copy [`.env.example`](.env.example) to `.env`. Common keys: `GARBLEWO
 
 ```text
 garbleworks/
-|-- README.md                 # this file
-|-- SECURITY.md               # authorized use + host hardening
-|-- NOTICE.md                 # attributions
-|-- LICENSE                   # Apache-2.0
-|-- run.ps1                   # Windows loopback launcher
+|-- README.md # this file
+|-- SECURITY.md # authorized use + host hardening
+|-- NOTICE.md # attributions
+|-- LICENSE # Apache-2.0
+|-- run.ps1 # Windows loopback launcher
 |-- backend/
-|   |-- app.py                # FastAPI UI + HTTP API
-|   |-- fire.py               # SSRF + scope single source of truth
-|   |-- core.py               # recipe engine + registry
-|   |-- ops/                  # transform families
-|   |-- spine/                # campaign / scoring spine
-|   |-- mcp_server.py         # MCP operator surface
-|   |-- detectors.py          # hit detection + secret_regex bank
-|   |-- evolve.py / optimizer.py / rainbow.py / bandit.py
-|   |-- validate_refire.py
-|   |-- recipes/  decks/  personas/  rubrics/
-|   |-- data/field-guide.json
-|   `-- test_security.py      # SSRF / scope regressions
-|-- tui/                      # OpenTUI operator console
-|-- frontend/                 # static web UI assets (served by app)
-`-- docs/                     # deep specs and API reference
+| |-- app.py # FastAPI UI + HTTP API
+| |-- fire.py # SSRF + scope single source of truth
+| |-- core.py # recipe engine + registry
+| |-- ops/ # transform families
+| |-- spine/ # campaign / scoring spine
+| |-- mcp_server.py # MCP operator surface
+| |-- detectors.py # hit detection + secret_regex bank
+| |-- evolve.py / optimizer.py / rainbow.py / bandit.py
+| |-- validate_refire.py
+| |-- recipes/ decks/ personas/ rubrics/
+| |-- data/field-guide.json
+| `-- test_security.py # SSRF / scope regressions
+|-- tui/ # OpenTUI operator console
+|-- frontend/ # static web UI assets (served by app)
+`-- docs/ # deep specs and API reference
 ```
 
 ---

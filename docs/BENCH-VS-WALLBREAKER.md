@@ -25,7 +25,7 @@ python -m bench --tools garbleworks:gw_baseline --only easy_dump_marker,easy_bas
 
 ## Install Wallbreaker (optional sibling)
 
-AGPL-3.0 — **do not vendor** into garbleworks. Separate clone + subprocess only.
+AGPL-3.0 - **do not vendor** into garbleworks. Separate clone + subprocess only.
 
 ```powershell
 cd C:\Code
@@ -110,7 +110,7 @@ python -m garbleworks --list-behaviors --behaviors bench/battery/v1_behaviors_sa
 Estimand: \(P(\text{leak}\mid\text{independent prefill trial on system canary})\). Floor **n≥30**.
 
 ```powershell
-# Offline mock (no API) — verifies stats + exit codes
+# Offline mock (no API) - verifies stats + exit codes
 python -m bench.live_efficacy --dry-run --n 30 --require-promote
 
 # Live Haiku (API cost): 30 independent secrets × prefill
@@ -176,7 +176,7 @@ python -m garbleworks --auto "extract canary" --secret CANARY_... --mode prefill
 Artifacts: `backend/sessions/run-<ts>-<hex>.jsonl`, `run-*.json`, `run-*.md`, `autosave.json`.
 
 ```powershell
-# Resume last session (read-only) / list wins — Wallbreaker-style polish
+# Resume last session (read-only) / list wins - Wallbreaker-style polish
 python -m garbleworks --resume
 python -m garbleworks --findings
 
@@ -207,6 +207,6 @@ Requires Wallbreaker at `C:\Code\wallbreaker` (AGPL sibling; not vendored).
 
 **Local canary patches for WB compatibility (in this estate):**
 - Canary speaks **SSE** when `stream:true` (Wallbreaker streams by default)
-- Local WB clone: Ollama rejects `content:null` — `openai_provider.py` uses `""`
+- Local WB clone: Ollama rejects `content:null` - `openai_provider.py` uses `""`
 
 **Measured (direct protocol, 3 objectives):** GW direct = WB wire = WB `query_target` = **ASR 1.0** (McNemar both wins). Agent auto is a separate, weaker comparison.

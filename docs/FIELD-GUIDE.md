@@ -27,11 +27,11 @@ techniques: the `llm-injection-field-guide`. It is the knowledge layer that conn
 It is the piece that turns garbleworks from a payload forge into an auditable harness:
 
 1. **Reference → runtime bridge.** `field_guide_ops(title)` returns the garbleworks
-   op(s) that implement a technique, so you go straight from "I want to test Policy
-   Puppetry" to running it. Reference catalog ↔ executable transform, in one hop.
+ op(s) that implement a technique, so you go straight from "I want to test Policy
+ Puppetry" to running it. Reference catalog ↔ executable transform, in one hop.
 2. **Runtime → report bridge.** Findings can carry the technique's OWASP/ATLAS/NIST/CWE
-   IDs (when present) and any garak/promptfoo/PyRIT probe that also tests it, so a result
-   drops into a report or a second tool without re-mapping by hand.
+ IDs (when present) and any garak/promptfoo/PyRIT probe that also tests it, so a result
+ drops into a report or a second tool without re-mapping by hand.
 
 ## Categories (312 techniques)
 
@@ -64,18 +64,18 @@ service to stand up; if garbleworks is connected, the field guide is connected.
 | `field_guide_crosswalk(title)` | the full framework mapping + the tool/probe + origin |
 | `field_guide_by_framework(id)` | every technique under an OWASP / ATLAS / CWE id |
 | `field_guide_by_tool(tool)` | every technique with a garak / promptfoo / pyrit / strongreject hook |
-| `field_guide_ops(title)` | **the bridge** — the garbleworks op(s) that implement the technique, ready for `generate_framings` / `apply_recipe` |
+| `field_guide_ops(title)` | **the bridge** - the garbleworks op(s) that implement the technique, ready for `generate_framings` / `apply_recipe` |
 
 ### Example: reference to runtime in two calls
 
 ```text
 field_guide_search("indirect prompt injection")
-  → "Indirect Prompt Injection via Retrieved Content"
-     cat=indirect · OWASP LLM01 · ATLAS AML.T0051.001 · CWE-1427
-     garak: latentinjection · benchmarks: AgentDojo, InjecAgent, Gray Swan
+ → "Indirect Prompt Injection via Retrieved Content"
+ cat=indirect · OWASP LLM01 · ATLAS AML.T0051.001 · CWE-1427
+ garak: latentinjection · benchmarks: AgentDojo, InjecAgent, Gray Swan
 
 field_guide_ops("Policy Puppetry")
-  → { ops: ["policy_puppetry"], run_with: "generate_framings" }
+ → { ops: ["policy_puppetry"], run_with: "generate_framings" }
 ```
 
 ## Keeping the catalog in sync
@@ -95,6 +95,6 @@ When you add a garbleworks op that implements a catalogued technique, wire it in
 
 ## See also
 
-- [Technique coverage](../COVERAGE.md) — the op-level view, including StegOFF parity
+- [Technique coverage](../COVERAGE.md) - the op-level view, including StegOFF parity
 - [Positioning vs the literature](../HARNESS-POSITIONING.md)
 - Project front page: [`../README.md`](../README.md)

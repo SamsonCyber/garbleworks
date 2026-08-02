@@ -13,10 +13,10 @@ bun start
 One mode: local tool-chain morphs on F5 / Ctrl+R·T·S, and Grok can override via the seat hub.
 
 ```
-BRIEF → F5 / Ctrl+R  →  tool-chain (generate_framings / MUTATE live)
-                      →  payload bay updates (history via file, not argv)
-                      →  YOU Ctrl+V in Gray Swan · report r/t/s
-                      →  Grok may POST a better payload to hub anytime
+BRIEF → F5 / Ctrl+R → tool-chain (generate_framings / MUTATE live)
+ → payload bay updates (history via file, not argv)
+ → YOU Ctrl+V in Gray Swan · report r/t/s
+ → Grok may POST a better payload to hub anytime
 ```
 
 **Grok seat (optional override, always on in Web arena):**
@@ -48,7 +48,7 @@ Widen the terminal (≥88 cols) for the ops rail. After advise, focus moves to *
 
 ### Harness ops
 
-Clean rungs (`clean_direct`, …) are hand-built framings (no loud op).  
+Clean rungs (`clean_direct`, …) are hand-built framings (no loud op). 
 Signature rungs call the same op registry the MCP exposes (`chat_template_inject`, `homoglyph`, …). Activity shows:
 
 ```
@@ -67,7 +67,7 @@ inside the multi-line text areas (BRIEF / REPLY), where Enter must insert a newl
 | Key | Action |
 |-----|--------|
 | ↑↓ / j k | Profile (when profiles focused) |
-| Tab | Cycle fields — now includes **payload bay** and (when armed) the **outcome** bank |
+| Tab | Cycle fields - now includes **payload bay** and (when armed) the **outcome** bank |
 | **Enter** (on profiles) | Advise / run |
 | F5 / Ctrl+Enter | Advise / run (works from anywhere, incl. BRIEF) |
 | **Enter / c** (on payload bay) | Copy payload to clipboard |
@@ -82,7 +82,7 @@ inside the multi-line text areas (BRIEF / REPLY), where Enter must insert a newl
 | Esc | Kill job |
 | Ctrl+C | Quit |
 
-The BRIEF panel has a red **✕ clear** button on its right edge — click it to
+The BRIEF panel has a red **✕ clear** button on its right edge - click it to
 empty the field, or press **Ctrl+L** (a modifier is required since a bare key
 would type into the card).
 
@@ -93,9 +93,9 @@ Ctrl+V will work or you need to open the file.
 
 ## Profiles
 
-- **Web arena** (default) — advise loop + r/t/s
-- **Local canary** — auto ladder against built-in echo (live fires stream in activity)
-- **Abliterated Qwen / Prefill / Custom** — API targets
+- **Web arena** (default) - advise loop + r/t/s
+- **Local canary** - auto ladder against built-in echo (live fires stream in activity)
+- **Abliterated Qwen / Prefill / Custom** - API targets
 
 ## CLI-only
 

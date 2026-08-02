@@ -1,6 +1,6 @@
 # Spec: DGX Spark as Garbleworks Generator Cluster
 
-Status: design (research-backed). Implements nothing yet.  
+Status: design (research-backed). Implements nothing yet. 
 Audience: operator (nephew). Goal: resume-grade, bounty-ready mutator brain on DGX Spark, not a Wallbreaker clone.
 
 ---
@@ -30,25 +30,25 @@ The gap is not "more transforms." The gap is **generator quality under closed-lo
 | Spec | Value | Implication for us |
 |---|---|---|
 | Chip | GB10 Grace Blackwell | CUDA 12.x stack; ARM CPU |
-| Memory | **128 GB unified** LPDDR5x | Fits 70B Q4–Q5 and dual 32B stacks |
+| Memory | **128 GB unified** LPDDR5x | Fits 70B Q4-Q5 and dual 32B stacks |
 | Bandwidth | **~273 GB/s** | Token/s limited vs desktop GDDR; batch and keep-alive matter |
 | Perf | Up to ~1 PFLOP FP4 | Prefer quantized kernels (NVFP4 / AWQ / GPTQ where supported) |
-| Storage | 1–4 TB NVMe | Multiple model banks on disk; swap by role |
+| Storage | 1-4 TB NVMe | Multiple model banks on disk; swap by role |
 
 Sources: NVIDIA product page / DGX Spark user guide (unified 128 GB, 273 GB/s).
 
-**Design consequence:** optimize for **concurrent role isolation** and **long keep-alive**, not for raw 405B full-precision cosplay. Prefer one hot 32B–70B generator + optional lighter judge, over three cold 70Bs thrashing memory.
+**Design consequence:** optimize for **concurrent role isolation** and **long keep-alive**, not for raw 405B full-precision cosplay. Prefer one hot 32B-70B generator + optional lighter judge, over three cold 70Bs thrashing memory.
 
 ---
 
-## 2. Competitive landscape (honest)
+## 2. Competitive space (honest)
 
 ### 2.1 Wallbreaker ([JailbrokenAI/wallbreaker](https://github.com/JailbrokenAI/wallbreaker))
 
 | Strength | Our response |
 |---|---|
 | Agent REPL + huge tool surface | Keep MCP + TUI; deepen tools, do not AGPL-merge |
-| Parseltongue / P4RS3LT0NGV3 (50–222 transforms) | We have 138 ops + field-guide map; parity is catalog, not novelty |
+| Parseltongue / P4RS3LT0NGV3 (50-222 transforms) | We have 138 ops + field-guide map; parity is catalog, not novelty |
 | PAIR / TAP / Crescendo / BoN loops | We have optimizer, treesearch, arena ladders |
 | Persona author (ENI) + sysprompt corpus | Gap: optional later (GAPS.md) |
 | Multimodal image channel | Low priority for text bounty / Arena chat |
@@ -96,15 +96,15 @@ Generator and attacker must not be Claude/GPT for sensitive classes without `SAF
 
 ### 3.2 Fit matrix (128 GB unified; Q4/Q5-ish)
 
-Sizes are **approximate** RAM for weights + KV; leave 16–24 GB free for OS + concurrent server.
+Sizes are **approximate** RAM for weights + KV; leave 16-24 GB free for OS + concurrent server.
 
 | Tier | Model family (examples) | Approx RAM | Role | Notes |
 |---|---|---|---|---|
-| **A — Hot generator** | Qwen2.5 / Qwen3 **32B** abliterate (huihui_ai / community) | ~20–24 GB Q4 | GENERATOR primary | Best latency / quality trade on Spark bandwidth |
-| **B — Heavy mutator** | Llama-3.3 / Qwen2.5 **70B** abliterate Q4 | ~40–48 GB | ATTACKER or overnight EVOLVE | Stronger multi-step mutation; slower tokens/s |
-| **C — Fast swarm** | Qwen2.5 **14B** abliterate Q5/Q6 | ~10–12 GB | Parallel reframe fan-out | Many short `llm_reframe` calls |
-| **D — Judge** | Qwen2.5 **14B–32B instruct** (stock or light ablate) | 10–24 GB | JUDGE | Prefer consistent rubrics over max uncensored |
-| **E — Canary target** | Current 7B abliterate or stock 7–14B | 5–10 GB | local TARGET only | Never call this "frontier ASR" |
+| **A - Hot generator** | Qwen2.5 / Qwen3 **32B** abliterate (huihui_ai / community) | ~20-24 GB Q4 | GENERATOR primary | Best latency / quality trade on Spark bandwidth |
+| **B - Heavy mutator** | Llama-3.3 / Qwen2.5 **70B** abliterate Q4 | ~40-48 GB | ATTACKER or overnight EVOLVE | Stronger multi-step mutation; slower tokens/s |
+| **C - Fast swarm** | Qwen2.5 **14B** abliterate Q5/Q6 | ~10-12 GB | Parallel reframe fan-out | Many short `llm_reframe` calls |
+| **D - Judge** | Qwen2.5 **14B-32B instruct** (stock or light ablate) | 10-24 GB | JUDGE | Prefer consistent rubrics over max uncensored |
+| **E - Canary target** | Current 7B abliterate or stock 7-14B | 5-10 GB | local TARGET only | Never call this "frontier ASR" |
 
 **Current lab baseline:** `huihui_ai/qwen2.5-abliterate:7b-instruct-q4_K_M` via Ollama (`TARGET-abliterated-qwen.json`, `llm.DEFAULT_MODEL=ablit:latest`). Spark goal: **upgrade GENERATOR to Tier A, ATTACKER to A or B**, keep judge separate.
 
@@ -130,36 +130,36 @@ Sizes are **approximate** RAM for weights + KV; leave 16–24 GB free for OS + c
 ## 4. Architecture: Spark-backed mutation stack
 
 ```
-                    ┌─────────────────────────────────────────┐
-                    │  Operator: TUI / MCP / CLI / Arena UI    │
-                    └───────────────────┬─────────────────────┘
-                                        │
-                    ┌───────────────────▼─────────────────────┐
-                    │  Garbleworks control plane (desktop/Pi) │
-                    │  optimizer · bandit · treesearch · arena│
-                    │  fire · scope · validate_refire · logs  │
-                    └───────┬─────────────────┬───────────────┘
-                            │                 │
-              brain roles   │                 │  fire (in-scope only)
-                            ▼                 ▼
-              ┌─────────────────────┐   ┌──────────────────┐
-              │  DGX Spark cluster  │   │  Target (bounty /│
-              │  vLLM or Ollama     │   │  Arena / lab)    │
-              │  GEN / ATK / JUDGE │   └──────────────────┘
-              └─────────────────────┘
+ ┌─────────────────────────────────────────┐
+ │ Operator: TUI / MCP / CLI / Arena UI │
+ └───────────────────┬─────────────────────┘
+ │
+ ┌───────────────────▼─────────────────────┐
+ │ Garbleworks control plane (desktop/Pi) │
+ │ optimizer · bandit · treesearch · arena│
+ │ fire · scope · validate_refire · logs │
+ └───────┬─────────────────┬───────────────┘
+ │ │
+ brain roles │ │ fire (in-scope only)
+ ▼ ▼
+ ┌─────────────────────┐ ┌──────────────────┐
+ │ DGX Spark cluster │ │ Target (bounty /│
+ │ vLLM or Ollama │ │ Arena / lab) │
+ │ GEN / ATK / JUDGE │ └──────────────────┘
+ └─────────────────────┘
 ```
 
 ### 4.1 Mutation pipeline (product behavior)
 
 For one objective:
 
-1. **Seed** — creative catalog + bandit top arms + optional ATTACKER draft.
-2. **Compose** — recipe chain (deterministic ops) and/or LLM reframes (GENERATOR).
-3. **Phenotype dedupe** — shingle Jaccard before burn (mutation analysis Tier-2).
-4. **Fire** — scoped adapter; tripwire → burned-cells / clean track.
-5. **Score** — detectors + JUDGE graded score.
-6. **Update** — bandit posteriors, EVOLVE credits, research_store promote/retire.
-7. **Confirm** — `validate_refire` N× before claim; Wilson LCB in report.
+1. **Seed** - creative catalog + bandit top arms + optional ATTACKER draft.
+2. **Compose** - recipe chain (deterministic ops) and/or LLM reframes (GENERATOR).
+3. **Phenotype dedupe** - shingle Jaccard before burn (mutation analysis Tier-2).
+4. **Fire** - scoped adapter; tripwire → burned-cells / clean track.
+5. **Score** - detectors + JUDGE graded score.
+6. **Update** - bandit posteriors, EVOLVE credits, research_store promote/retire.
+7. **Confirm** - `validate_refire` N× before claim; Wilson LCB in report.
 
 ### 4.2 New modules (proposed)
 
@@ -184,7 +184,7 @@ export GARBLEWORKS_GENERATOR_MODEL=qwen2.5-ablit-32b:q4
 export GARBLEWORKS_GENERATOR_BASE_URL=http://192.168.x.spark:11434
 
 export GARBLEWORKS_ATTACKER_PROVIDER=ollama
-export GARBLEWORKS_ATTACKER_MODEL=qwen2.5-ablit-32b:q4   # or 70B overnight
+export GARBLEWORKS_ATTACKER_MODEL=qwen2.5-ablit-32b:q4 # or 70B overnight
 
 export GARBLEWORKS_JUDGE_PROVIDER=ollama
 export GARBLEWORKS_JUDGE_MODEL=qwen2.5-14b-instruct:q5
@@ -197,14 +197,14 @@ vLLM variant: set `PROVIDER=openai` and `BASE_URL=http://spark:8000/v1`.
 Grounded in existing gap analysis (KB 2026-07-12) and code:
 
 1. **Tripwire-aware optimizer policy** (arena already has it; optimizer does not).
-2. **UCB seed credit inject** (EVOLVE_MATH §10 — currently incomplete).
+2. **UCB seed credit inject** (EVOLVE_MATH §10 - currently incomplete).
 3. **Dynamic basket** from creative + bandit + host posteriors.
 4. **Target-class surface routing** (obfuscation off on soft targets).
-5. **Free refusal-direction pre-filter** from fire_history embeddings (prior art: DROJ / xJailbreak / STEER — integration only, not claimed novelty).
-6. **Multi-model generator ensemble** — reframe with 14B swarm, polish with 32B/70B.
+5. **Free refusal-direction pre-filter** from fire_history embeddings (prior art: DROJ / xJailbreak / STEER - integration only, not claimed novelty).
+6. **Multi-model generator ensemble** - reframe with 14B swarm, polish with 32B/70B.
 7. **BH-FDR as optional gate** (spec exists; not default yet).
 
-Spark makes 5–6 practical (latency budget). Without Spark, 5–6 stay toy-scale.
+Spark makes 5-6 practical (latency budget). Without Spark, 5-6 stay toy-scale.
 
 ---
 
@@ -268,27 +268,27 @@ Optional stretch (resume gold):
 
 ## 7. Build phases
 
-### Phase 0 — Wire (1–2 days after box lands)
+### Phase 0 - Wire (1-2 days after box lands)
 
 - Network: Spark on LAN; firewall allow harness host only.
 - Ollama install; pull Tier A + C + D.
 - Point `GARBLEWORKS_*` env; smoke MCP generate_framings.
 - Document serial / MAC / IP in private ops note (not git).
 
-### Phase 1 — Mutation quality (1–2 weeks)
+### Phase 1 - Mutation quality (1-2 weeks)
 
 - Parallel reframe pool (Tier C).
 - Mutation policy module (tripwire bans).
 - Dynamic basket + UCB inject if still open.
 - Ablation: 7B vs 32B generator on fixed battery (n≥30 where API allows; local canary for free).
 
-### Phase 2 — Cluster roles (1 week)
+### Phase 2 - Cluster roles (1 week)
 
 - vLLM dual-serve or multi-model Ollama keep-alive policy.
 - Separate JUDGE model; calibration suite.
 - `spark_cluster` health in `/health` and TUI.
 
-### Phase 3 — Product polish (ongoing)
+### Phase 3 - Product polish (ongoing)
 
 - Report template + export for bounty.
 - Arena operator pack (class ladders + burned cells UI).
