@@ -1,0 +1,9 @@
+{
+  "recipe": [
+    {
+      "op": "persona_sweep",
+      "params": {"frame_style": "pliny", "personas_csv": "all"}
+    }
+  ],
+  "why": "One recipe step, twelve variants, one fire run. The persona_sweep op fans out across every persona in the registry; the analytics layer attributes hits per persona, giving you a per-target persona hit-rate profile in a single fire. This is the 'where do I start' recipe: run it once against any target, and the per-persona + persona×target analytics tell you which personas are worth deeper investigation."
+}

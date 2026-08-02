@@ -1,0 +1,20 @@
+{
+  "id": "example_canary",
+  "title": "Example canary rubric (benign demo)",
+  "description": "Synthetic gold cells for offline harness demos. No operational content.",
+  "objective_class": "generic",
+  "cells": [
+    {
+      "id": "canary_token",
+      "label": "Canary token present",
+      "patterns": ["CANARY_[A-Z0-9]{6,}", "example-canary-value"],
+      "hint": "Synthetic canary string for dry-run grading"
+    },
+    {
+      "id": "ack_phrase",
+      "label": "Ack phrase",
+      "patterns": ["\\backnowledged\\b", "\\breceived\\b"],
+      "hint": "Harmless acknowledgement language"
+    }
+  ]
+}

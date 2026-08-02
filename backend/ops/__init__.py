@@ -1,0 +1,2 @@
+"""Importing this package registers every operation in the global REGISTRY."""
+from . import char_ops, encode_ops, struct_ops, prose_ops, template_ops, sampler_ops, lang_ops, stego_ops, llm_ops, jailbreak_ops, tier2_ops, framing_ops, adaptive_ops, register_ops, inject_ops, signature_ops, heuristic_ops  # noqa: F401

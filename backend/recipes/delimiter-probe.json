@@ -1,0 +1,10 @@
+{
+  "recipe": [
+    {
+      "op": "delimiter_collision",
+      "params": {
+        "target": "openai"
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "recipe": [
+    {
+      "op": "synonym",
+      "params": {
+        "limit": 6,
+        "combine": true
+      }
+    },
+    {
+      "op": "leetspeak",
+      "params": {
+        "level": 1
+      }
+    }
+  ]
+}

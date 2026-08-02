@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Garbleworks — Ops Console</title>
+<style>
+  :root{
+    --bg:#f4f6f7; --surface:#ffffff; --surface-2:#eceff1; --surface-3:#e3e8ea;
+    --border:#d7dde0; --border-strong:#c2cbcf;
+    --ink:#16202a; --ink-soft:#45545e; --ink-faint:#5c6a72;
+    --accent:#0d8f83; --accent-ink:#0a6f66; --accent-wash:#dcefec;
+    --ok:#3c9a5f; --ok-wash:#dcefe2;
+    --warn:#a9772a; --warn-wash:#f0e6d2;
+    --crit:#c74a45; --crit-wash:#f3dcdb;
+    --muted:#6d7a82; --muted-wash:#e4e8ea;
+    --sans:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"Cascadia Code","Cascadia Mono","JetBrains Mono",Consolas,monospace;
+    --maxw:1140px;
+    --shadow:0 1px 2px rgba(16,32,42,.04),0 2px 8px rgba(16,32,42,.05);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0d1317; --surface:#131c21; --surface-2:#18232a; --surface-3:#1f2c34;
+      --border:#25323b; --border-strong:#34444f;
+      --ink:#e0e8ec; --ink-soft:#a2b0b8; --ink-faint:#8a97a0;
+      --accent:#2ed0be; --accent-ink:#4bdccb; --accent-wash:#0f2b2a;
+      --ok:#5cc684; --ok-wash:#13291d; --warn:#d3a34a; --warn-wash:#2c2413;
+      --crit:#e5726c; --crit-wash:#2e1817; --muted:#84929b; --muted-wash:#1b262d;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 2px 10px rgba(0,0,0,.25);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#f4f6f7; --surface:#ffffff; --surface-2:#eceff1; --surface-3:#e3e8ea;
+    --border:#d7dde0; --border-strong:#c2cbcf; --ink:#16202a; --ink-soft:#45545e; --ink-faint:#5c6a72;
+    --accent:#0d8f83; --accent-ink:#0a6f66; --accent-wash:#dcefec;
+    --ok:#3c9a5f; --ok-wash:#dcefe2; --warn:#a9772a; --warn-wash:#f0e6d2;
+    --crit:#c74a45; --crit-wash:#f3dcdb; --muted:#6d7a82; --muted-wash:#e4e8ea;
+    --shadow:0 1px 2px rgba(16,32,42,.04),0 2px 8px rgba(16,32,42,.05);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d1317; --surface:#131c21; --surface-2:#18232a; --surface-3:#1f2c34;
+    --border:#25323b; --border-strong:#34444f; --ink:#e0e8ec; --ink-soft:#a2b0b8; --ink-faint:#8a97a0;
+    --accent:#2ed0be; --accent-ink:#4bdccb; --accent-wash:#0f2b2a;
+    --ok:#5cc684; --ok-wash:#13291d; --warn:#d3a34a; --warn-wash:#2c2413;
+    --crit:#e5726c; --crit-wash:#2e1817; --muted:#84929b; --muted-wash:#1b262d;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 2px 10px rgba(0,0,0,.25);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0}
+  .wrap{background:var(--bg);color:var(--ink);font-family:var(--sans);
+    line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased;
+    padding:0 24px 96px;min-height:100vh}
+  .inner{max-width:var(--maxw);margin:0 auto}
+  h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0}
+  a{color:var(--accent-ink)}
+  code,.id{font-family:var(--mono);font-size:.86em;background:var(--surface-2);
+    border:1px solid var(--border);border-radius:4px;padding:.06em .34em;color:var(--ink)}
+  .mono{font-family:var(--mono)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--accent-ink);font-weight:600}
+
+  /* masthead */
+  .mast{border-bottom:1px solid var(--border);padding:34px 0 22px;margin-bottom:30px}
+  .mast .kicker{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .glyph{width:34px;height:34px;border-radius:8px;flex:none;
+    background:linear-gradient(140deg,var(--accent),var(--accent-ink));
+    display:grid;place-items:center;color:#fff;font-family:var(--mono);font-weight:700;font-size:18px;
+    box-shadow:var(--shadow)}
+  .mast h1{font-size:clamp(26px,4.4vw,40px);font-weight:700;letter-spacing:-.02em}
+  .mast .sub{color:var(--ink-soft);font-size:clamp(14px,2.2vw,17px);margin-top:8px;max-width:70ch}
+  .statusbar{display:flex;flex-wrap:wrap;gap:8px 10px;margin-top:20px;align-items:center}
+  .tag{font-family:var(--mono);font-size:12px;padding:5px 10px;border-radius:999px;
+    border:1px solid var(--border);background:var(--surface);color:var(--ink-soft);
+    display:inline-flex;gap:7px;align-items:center;word-break:break-word;max-width:100%}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);flex:none}
+  .dot.warn{background:var(--warn)} .dot.acc{background:var(--accent)} .dot.crit{background:var(--crit)}
+  .dot.stale{background:var(--muted)}
+
+  /* identity control */
+  .idbar{margin-left:auto;display:flex;gap:8px;align-items:center}
+  input,select,textarea{font-family:var(--sans);font-size:14px;color:var(--ink);
+    background:var(--surface);border:1px solid var(--border-strong);border-radius:9px;
+    padding:9px 11px;outline:none;transition:border-color .12s,box-shadow .12s}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-wash)}
+  input.mono,textarea.mono,select.mono{font-family:var(--mono);font-size:13px}
+  textarea{width:100%;resize:vertical;line-height:1.5;min-height:120px}
+  label.fld{display:flex;flex-direction:column;gap:5px;font-size:11.5px;
+    text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint);font-family:var(--mono);font-weight:600}
+  label.fld input,label.fld select{text-transform:none;letter-spacing:normal;font-weight:400}
+  button{font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;
+    border:1px solid var(--accent-ink);background:var(--accent);color:#fff;
+    border-radius:9px;padding:9px 16px;transition:filter .12s,transform .06s}
+  button:hover{filter:brightness(1.06)} button:active{transform:translateY(1px)}
+  button.ghost{background:var(--surface);color:var(--ink-soft);border-color:var(--border-strong)}
+  button.mini{padding:4px 10px;font-size:12px;border-radius:7px}
+
+  .metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:0 0 36px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:15px 16px 13px;box-shadow:var(--shadow)}
+  .stat .n{font-family:var(--mono);font-size:28px;font-weight:600;letter-spacing:-.02em;
+    font-variant-numeric:tabular-nums;line-height:1.05}
+  .stat .n.acc{color:var(--accent-ink)} .stat .n.ok{color:var(--ok)} .stat .n.crit{color:var(--crit)}
+  .stat .l{font-size:11px;color:var(--ink-faint);margin-top:6px;text-transform:uppercase;letter-spacing:.06em;line-height:1.35}
+  @media(max-width:860px){.metrics{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:520px){.metrics{grid-template-columns:repeat(2,1fr)}}
+
+  section{margin:0 0 40px;scroll-margin-top:20px}
+  .sechead{display:flex;align-items:baseline;gap:14px;margin-bottom:16px;
+    border-top:1px solid var(--border);padding-top:20px}
+  .sechead .num{font-family:var(--mono);font-size:13px;color:var(--ink-faint);font-weight:600}
+  .sechead h2{font-size:clamp(19px,2.6vw,24px);font-weight:650;letter-spacing:-.01em}
+  .lead{color:var(--ink-soft);font-size:15px;max-width:74ch;margin:0 0 18px}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:20px;box-shadow:var(--shadow)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:820px){.grid2{grid-template-columns:1fr}}
+  .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+  .formgrid .span2{grid-column:1 / -1}
+  @media(max-width:560px){.formgrid{grid-template-columns:1fr}}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+  .tblwrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface);box-shadow:var(--shadow)}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:480px}
+  th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--border);vertical-align:top}
+  thead th{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--ink-faint);background:var(--surface-2);font-weight:600;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:var(--surface-2)}
+  td.mono,td .mono{font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums}
+  .num-td{font-variant-numeric:tabular-nums;text-align:right;font-family:var(--mono)}
+  .empty{padding:22px 14px;text-align:center;color:var(--ink-faint);font-size:13px}
+
+  .pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;
+    font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap;letter-spacing:.02em}
+  .pill.ok{background:var(--ok-wash);color:var(--ok)}
+  .pill.warn{background:var(--warn-wash);color:var(--warn)}
+  .pill.crit{background:var(--crit-wash);color:var(--crit)}
+  .pill.muted{background:var(--muted-wash);color:var(--muted)}
+  .pill.acc{background:var(--accent-wash);color:var(--accent-ink)}
+
+  .callout{border:1px solid var(--border);border-left:3px solid var(--warn);background:var(--surface);
+    border-radius:0 12px 12px 0;padding:14px 16px;box-shadow:var(--shadow);margin-top:12px}
+  .callout.acc{border-left-color:var(--accent)} .callout.crit{border-left-color:var(--crit)}
+  .callout.ok{border-left-color:var(--ok)}
+  .callout p{font-size:13.5px;color:var(--ink-soft);margin:0}
+  .callout .h{font-size:13px;font-weight:650;color:var(--ink);margin-bottom:5px;display:flex;gap:8px;align-items:center}
+  .hidden{display:none}
+  details.adv{margin-top:12px;border-top:1px solid var(--border);padding-top:6px}
+  details.adv summary{cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.05em;
+    text-transform:uppercase;color:var(--ink-faint);list-style:none;padding:5px 0;user-select:none}
+  details.adv summary::-webkit-details-marker{display:none}
+  details.adv summary::before{content:"▸  ";color:var(--accent-ink)}
+  details.adv[open] summary::before{content:"▾  "}
+  .paybox{font-family:var(--mono);font-size:12.5px;line-height:1.5;background:var(--surface-2);
+    border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin:0;
+    white-space:pre-wrap;word-break:break-word;max-height:360px;overflow:auto;color:var(--ink)}
+
+  .result{margin-top:14px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;font-size:14px}
+  .result .k{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint)}
+  .result .v{font-family:var(--mono);font-size:15px;font-weight:600}
+
+  .foot{border-top:1px solid var(--border);margin-top:20px;padding-top:18px;color:var(--ink-faint);
+    font-size:12.5px;font-family:var(--mono);display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between}
+  .age{font-family:var(--mono);font-size:12px;color:var(--ink-faint)}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="inner">
+
+  <header class="mast">
+    <div class="kicker">
+      <div class="glyph">GW</div>
+      <span class="eyebrow">Garbleworks · shared operator console</span>
+    </div>
+    <h1>Ops Console</h1>
+    <p class="sub">One surface for every agent. Paste a target's reply to grade and log it, claim a move before you fire it so nobody doubles up, and read the board of what's already been tried against this target.</p>
+    <div class="statusbar" id="statusbar">
+      <span class="tag"><span class="dot acc" id="connDot"></span> <span id="connTxt">connecting…</span></span>
+      <span class="tag mono" id="rosterTag"><span class="dot"></span> roster —</span>
+      <span class="idbar">
+        <input id="agentName" class="mono" placeholder="your agent name" style="width:150px" autocomplete="off">
+        <input id="targetSel" class="mono" placeholder="target label" list="targetList" style="width:190px" autocomplete="off">
+        <datalist id="targetList"></datalist>
+      </span>
+    </div>
+  </header>
+
+  <div class="metrics" id="metrics"></div>
+
+  <!-- 01 surface -->
+  <section>
+    <div class="sechead"><span class="num">01</span><h2>Attack surface</h2></div>
+    <p class="lead">Every technique family in the field guide, as coverage against <span class="id" id="surfTarget">this target</span>. Nodes fill as the fleet fires, glow where something lands, and get struck out when the whole family comes back dead. The picture is the surface you're clearing.</p>
+    <div class="card" style="padding:12px">
+      <div class="row" style="justify-content:space-between;align-items:center;padding:2px 8px 10px">
+        <div class="row" style="gap:14px;font-size:12px;color:var(--ink-faint)">
+          <span class="row" style="gap:6px"><span class="dot" style="background:var(--ok)"></span>lands</span>
+          <span class="row" style="gap:6px"><span class="dot warn"></span>probing</span>
+          <span class="row" style="gap:6px"><span class="dot crit"></span>dead</span>
+          <span class="row" style="gap:6px"><span class="dot stale"></span>untried</span>
+        </div>
+        <span class="age" id="surfMeta">—</span>
+      </div>
+      <div style="overflow-x:auto"><svg id="surfaceSvg" viewBox="0 0 760 700" style="width:100%;max-width:620px;margin:0 auto;height:auto;display:block"></svg></div>
+      <div id="surfaceDetail" class="callout acc hidden" style="margin:8px 6px 4px"></div>
+    </div>
+  </section>
+
+  <!-- 02 grade -->
+  <section>
+    <div class="sechead"><span class="num">02</span><h2>Close the loop — paste &amp; grade</h2></div>
+    <p class="lead">Paste what the target actually replied. The canary gate checks six encodings, the judge grades compliance, and the result is written to <span class="id">technique_logs.db</span> with a real outcome — not <span class="id">unknown</span>. This is the manual-arena path the automated loop can't see.</p>
+    <div class="card">
+      <label class="fld span2" style="margin-bottom:12px">target's reply
+        <textarea id="g_resp" placeholder="paste the model's full response…"></textarea></label>
+      <div class="row" style="gap:10px;align-items:flex-end">
+        <label class="fld" style="flex:1;min-width:200px">technique
+          <input id="g_tech" class="mono" placeholder="e.g. acrostic_article_continuation" autocomplete="off"></label>
+        <button id="gradeBtn">Grade &amp; log</button>
+        <button class="ghost" id="gradeClear">Clear</button>
+      </div>
+      <details class="adv">
+        <summary>advanced — op · run_id · objective · canary · payload</summary>
+        <div class="formgrid" style="margin-top:12px">
+          <label class="fld">op
+            <input id="g_op" class="mono" placeholder="registry op name" autocomplete="off"></label>
+          <label class="fld">run_id
+            <input id="g_run" class="mono" placeholder="blank = auto per target" autocomplete="off"></label>
+          <label class="fld">objective (judge grades against this — auto from the round)
+            <input id="g_ask" placeholder="e.g. reveal the sk-prod key" autocomplete="off"></label>
+          <label class="fld">canary / secret (remembered per target)
+            <input id="g_secret" class="mono" placeholder="e.g. CANARY_7fb2a9" autocomplete="off"></label>
+          <label class="fld span2">payload you sent (stored as sha256 + preview)
+            <textarea id="g_payload" style="min-height:60px" placeholder="the prompt you fired (optional)"></textarea></label>
+        </div>
+      </details>
+      <div class="result hidden" id="gradeResult"></div>
+    </div>
+  </section>
+
+  <!-- 02 caucus -->
+  <section>
+    <div class="sechead"><span class="num">03</span><h2>Caucus — fleet consensus</h2></div>
+    <p class="lead">The fleet pools candidate moves — some seeded by the harness itself (arena_solver + the framing generator) — then votes. Consensus drops vetoed moves, keeps tactic families distinct, and assigns the top K to distinct live agents. Nobody fires the same thing; nobody re-fires a known-dead move.</p>
+    <div class="card" style="margin-bottom:16px">
+      <div class="row" style="margin-bottom:12px">
+        <input id="k_obj" placeholder="round objective — e.g. leak the sk-prod key verbatim" style="flex:1;min-width:220px" autocomplete="off">
+        <button id="roundBtn">Open round</button>
+        <button class="ghost" id="seedBtn">Seed from harness</button>
+        <button class="ghost" id="assignBtn">Assign top <span id="kn">K</span></button>
+      </div>
+      <div class="row" style="gap:8px">
+        <input id="p_tech" class="mono" placeholder="propose a technique" style="width:210px" autocomplete="off">
+        <input id="p_pay" placeholder="payload (optional)" style="flex:1;min-width:160px" autocomplete="off">
+        <button class="ghost mini" id="proposeBtn">Propose</button>
+        <span class="age" id="roundMeta">no open round</span>
+      </div>
+    </div>
+    <div id="myAssign"></div>
+    <div class="tblwrap">
+      <table>
+        <thead><tr><th>technique</th><th>src</th><th>family</th><th class="num-td">score</th><th>votes</th><th>vote</th><th>status</th></tr></thead>
+        <tbody id="caucusTable"><tr><td class="empty" colspan="7">open a round, then Seed from harness</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 03 suggest -->
+  <section>
+    <div class="sechead"><span class="num">04</span><h2>Suggest the next move (solo)</h2></div>
+    <p class="lead">Hands the whole fleet's attempt history for this target to the clean-first advisor. It won't repeat a dead move, escalates only after a normal refusal, and drops signatures the moment something tripwires. Advice only — you paste it.</p>
+    <div class="card">
+      <div class="row" style="margin-bottom:12px">
+        <input id="s_obj" placeholder="objective — e.g. leak the sk-prod key verbatim" style="flex:1;min-width:220px" autocomplete="off">
+        <button id="suggestBtn">Suggest</button>
+      </div>
+      <div id="suggestOut" class="hidden"></div>
+      <div class="age" id="suggestHint">reads this target's board as history · rules-compliant advisor (no auto-submit)</div>
+    </div>
+  </section>
+
+  <!-- 03 board -->
+  <section>
+    <div class="sechead"><span class="num">05</span><h2>Coordination board</h2></div>
+    <p class="lead">Claim a technique before you fire it. Claims are advisory leases (auto-expire in 12&nbsp;min) — if a window dies, its claim frees itself. The claim check warns you if someone's already on it, or if it already failed here.</p>
+    <div class="grid2">
+      <div class="card">
+        <div class="row" style="margin-bottom:12px">
+          <input id="c_tech" class="mono" placeholder="technique to claim" style="flex:1;min-width:180px" autocomplete="off">
+          <input id="c_op" class="mono" placeholder="op (opt)" style="width:120px" autocomplete="off">
+          <button id="claimBtn">Claim</button>
+        </div>
+        <div class="callout warn hidden" id="claimWarn"></div>
+        <div class="callout acc" style="margin-top:10px"><div class="h"><span class="pill acc">how</span> advisory, not a lock</div><p>Claiming never blocks another agent — it just surfaces collisions so you can decide. Grading a move auto-releases its claim.</p></div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="tblwrap" style="border:none;box-shadow:none;border-radius:0">
+          <table>
+            <thead><tr><th>agent</th><th>claiming</th><th>target</th><th>age</th><th></th></tr></thead>
+            <tbody id="claimsTable"><tr><td class="empty" colspan="5">no open claims</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 dont repeat -->
+  <section>
+    <div class="sechead"><span class="num">06</span><h2>Don't repeat these</h2></div>
+    <p class="lead">Everything already fired at <span class="id" id="failTarget">this target</span> that refused, tripped, or came back unknown. Check here before you burn a fire on a known-dead move.</p>
+    <div class="tblwrap">
+      <table>
+        <thead><tr><th>technique</th><th>op</th><th class="num-td">tries</th><th>last outcome</th><th>last agent</th><th class="num-td">age</th></tr></thead>
+        <tbody id="failTable"><tr><td class="empty" colspan="6">nothing logged for this target yet</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 04 leaderboard -->
+  <section>
+    <div class="sechead"><span class="num">07</span><h2>What's landing</h2></div>
+    <p class="lead">Success rate per technique across this target, most-fired first. A win is a canary hit or judge&nbsp;≥&nbsp;0.5.</p>
+    <div class="tblwrap">
+      <table>
+        <thead><tr><th>technique</th><th class="num-td">n</th><th class="num-td">wins</th><th class="num-td">rate</th><th class="num-td">avg score</th><th>channels seen</th></tr></thead>
+        <tbody id="leaderTable"><tr><td class="empty" colspan="6">no graded fires yet</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="foot">
+    <span>Garbleworks ops console · reads/writes technique_logs.db + console_state.db</span>
+    <span id="footStamp">—</span>
+  </div>
+
+</div></div>
+
+<script>
+(function(){
+  "use strict";
+  const $ = s => document.querySelector(s);
+  const api = (p, body) => fetch(p, body ? {method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)} : {})
+    .then(r => r.ok ? r.json() : r.json().then(j => Promise.reject(j)).catch(()=>Promise.reject({error:r.status})));
+  const esc = s => (s==null?"":String(s)).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const ago = ts => { const d = Math.max(0,(Date.now()/1000)-ts); if(d<60)return Math.round(d)+"s"; if(d<3600)return Math.round(d/60)+"m"; return Math.round(d/3600)+"h"; };
+  const store = (k,v)=>{ try{ v===undefined?localStorage.removeItem(k):localStorage.setItem(k,v);}catch(e){} };
+  const load = k=>{ try{return localStorage.getItem(k);}catch(e){return null;} };
+
+  const agentEl = $("#agentName"), targetEl = $("#targetSel");
+  agentEl.value = load("gw_agent") || "";
+  targetEl.value = load("gw_target") || "";
+  agentEl.addEventListener("change", ()=>{ store("gw_agent", agentEl.value.trim()||undefined); beat(); });
+  targetEl.addEventListener("change", ()=>{ store("gw_target", targetEl.value.trim()||undefined); loadSecret(); refresh(); });
+  const agent = ()=> agentEl.value.trim() || "anon";
+  const target = ()=> targetEl.value.trim();
+  let curRound = null, lastObjective = "";
+  const loadSecret = ()=>{ const t=target(); $("#g_secret").value = (t && load("gw_secret_"+t)) || ""; };
+
+  const pill = (o)=>{ const m={success:"ok",refused:"muted",tripwire:"crit",unknown:"warn",error:"crit"}; return `<span class="pill ${m[o]||"muted"}">${esc(o)}</span>`; };
+
+  function setConn(ok){ $("#connDot").className = "dot "+(ok?"acc":"crit"); $("#connTxt").textContent = ok?"live":"offline"; }
+
+  function renderMetrics(m){
+    const rows = [
+      ["n", m.attempts_total, "Graded fires"],
+      ["ok", m.leaks, "Confirmed leaks"],
+      ["crit", m.walls, "Walls held"],
+      ["acc", m.agents_active, "Agents live"],
+      ["n", m.claims_open, "Open claims"],
+      ["n", m.techniques, "Techniques tried"],
+    ];
+    $("#metrics").innerHTML = rows.map(([c,n,l])=>`<div class="stat"><div class="n ${c==="n"?"":c}">${n??0}</div><div class="l">${l}</div></div>`).join("");
+  }
+
+  function renderRoster(agents){
+    const live = agents.filter(a=>a.fresh);
+    $("#rosterTag").innerHTML = live.length
+      ? live.map(a=>`<span class="dot ${a.mine?"acc":"ok"}"></span>${esc(a.name)}`).join(" &nbsp; ")
+      : '<span class="dot stale"></span> nobody else live';
+  }
+
+  function renderClaims(claims){
+    const t = $("#claimsTable");
+    if(!claims.length){ t.innerHTML = '<tr><td class="empty" colspan="5">no open claims</td></tr>'; return; }
+    t.innerHTML = claims.map(c=>`<tr>
+      <td class="mono">${esc(c.agent)}</td>
+      <td class="mono">${esc(c.technique)}${c.op?` <span class="pill muted">${esc(c.op)}</span>`:""}</td>
+      <td class="mono">${esc(c.target||"—")}</td>
+      <td class="age">${ago(c.created)}</td>
+      <td>${c.mine?`<button class="ghost mini" data-rel="${c.id}">release</button>`:""}</td>
+    </tr>`).join("");
+    t.querySelectorAll("[data-rel]").forEach(b=>b.onclick=()=>api("/console/api/release",{claim_id:+b.dataset.rel}).then(refresh));
+  }
+
+  function renderFails(fails){
+    const t = $("#failTable");
+    if(!fails.length){ t.innerHTML = '<tr><td class="empty" colspan="6">nothing logged for this target yet</td></tr>'; return; }
+    t.innerHTML = fails.map(f=>`<tr>
+      <td class="mono">${esc(f.technique)}</td>
+      <td class="mono">${esc(f.op||"—")}</td>
+      <td class="num-td">${f.tries}</td>
+      <td>${pill(f.last_outcome)}</td>
+      <td class="mono">${esc(f.last_agent||"—")}</td>
+      <td class="num-td age">${ago(f.last_ts)}</td>
+    </tr>`).join("");
+  }
+
+  function renderLeader(rows){
+    const t = $("#leaderTable");
+    if(!rows.length){ t.innerHTML = '<tr><td class="empty" colspan="6">no graded fires yet</td></tr>'; return; }
+    t.innerHTML = rows.map(r=>{
+      const rate = r.n? Math.round(100*r.wins/r.n):0;
+      const cls = rate>=50?"ok":rate>0?"warn":"muted";
+      return `<tr>
+        <td class="mono">${esc(r.technique)}</td>
+        <td class="num-td">${r.n}</td>
+        <td class="num-td">${r.wins}</td>
+        <td class="num-td"><span class="pill ${cls}">${rate}%</span></td>
+        <td class="num-td">${r.avg_score==null?"—":r.avg_score.toFixed(2)}</td>
+        <td class="mono" style="font-size:11px">${esc((r.channels||[]).join(" · ")||"—")}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  let refreshing=false;
+  async function refresh(){
+    if(refreshing) return; refreshing=true;
+    try{
+      const q = new URLSearchParams({target:target(), agent:agent()});
+      const s = await api("/console/api/state?"+q.toString());
+      setConn(true);
+      renderMetrics(s.metrics||{});
+      renderRoster(s.agents||[]);
+      renderClaims(s.claims||[]);
+      renderFails(s.fails||[]);
+      renderLeader(s.leaderboard||[]);
+      $("#failTarget").textContent = target()||"this target";
+      const dl = $("#targetList"); dl.innerHTML = (s.targets||[]).map(t=>`<option value="${esc(t)}">`).join("");
+      $("#footStamp").textContent = "updated "+new Date().toLocaleTimeString();
+      fetchCaucus();
+      fetchSurface();
+    }catch(e){ setConn(false); }
+    finally{ refreshing=false; }
+  }
+
+  function beat(){ const n = agentEl.value.trim(); if(n) api("/console/api/heartbeat",{agent:n}).catch(()=>{}); }
+
+  // grade
+  $("#gradeBtn").onclick = async ()=>{
+    const tech = $("#g_tech").value.trim();
+    const resp = $("#g_resp").value;
+    const box = $("#gradeResult");
+    if(!tech || !resp.trim()){ box.className="result"; box.innerHTML='<span class="pill crit">need a technique and a pasted reply</span>'; return; }
+    $("#gradeBtn").disabled = true; $("#gradeBtn").textContent = "grading…";
+    try{
+      const sec = $("#g_secret").value.trim();
+      const r = await api("/console/api/grade", {
+        agent:agent(), target:target(), technique:tech, op:$("#g_op").value.trim()||null,
+        run_id:$("#g_run").value.trim()||null, ask:$("#g_ask").value.trim()||lastObjective||null,
+        secret:sec||null, payload:$("#g_payload").value||null, response:resp
+      });
+      if(sec && target()) store("gw_secret_"+target(), sec);
+      box.className="result";
+      box.innerHTML =
+        `<span class="k">outcome</span><span class="v">${pill(r.outcome)}</span>`+
+        `<span class="k">canary</span><span class="v">${r.channel?`<span class="pill ok">${esc(r.channel)}</span>`:'<span class="pill muted">no hit</span>'}</span>`+
+        `<span class="k">judge</span><span class="v">${r.gradeable? (r.score==null?"—":r.score.toFixed(2)) : '<span class="pill warn">grader down</span>'}</span>`+
+        `<span class="k">logged</span><span class="v mono">#${r.attempt_id}</span>`;
+      if($("#g_run").value.trim()==="" && r.run_id) $("#g_run").value = r.run_id;
+      refresh();
+    }catch(e){ box.className="result"; box.innerHTML = `<span class="pill crit">error: ${esc(e.error||e.detail||"failed")}</span>`; }
+    finally{ $("#gradeBtn").disabled=false; $("#gradeBtn").textContent="Grade & log"; }
+  };
+  $("#gradeClear").onclick = ()=>{ ["g_resp","g_payload","g_ask","g_secret"].forEach(i=>$("#"+i).value=""); $("#gradeResult").className="result hidden"; };
+
+  // claim
+  $("#claimBtn").onclick = async ()=>{
+    const tech = $("#c_tech").value.trim();
+    const w = $("#claimWarn");
+    if(!tech){ return; }
+    try{
+      const r = await api("/console/api/claim", {agent:agent(), target:target(), technique:tech, op:$("#c_op").value.trim()||null});
+      if(r.collisions && r.collisions.length){
+        w.classList.remove("hidden");
+        w.innerHTML = `<div class="h"><span class="pill warn">heads up</span> claimed anyway — but note:</div><p>`+
+          r.collisions.map(c=>esc(c)).join("<br>")+`</p>`;
+      } else { w.classList.add("hidden"); }
+      $("#c_tech").value=""; $("#c_op").value="";
+      refresh();
+    }catch(e){ w.classList.remove("hidden"); w.innerHTML = `<p>claim failed: ${esc(e.error||e.detail||"error")}</p>`; }
+  };
+
+  // attack-surface coverage map (radial)
+  let surfData = null;
+  function renderSurface(d){
+    surfData = d;
+    const svg = $("#surfaceSvg"); if(!svg) return;
+    const cats = d.categories || [];
+    $("#surfTarget").textContent = d.target || "this target";
+    const touched = cats.filter(c=>c.tried>0).length, lands = cats.filter(c=>c.status==="works").length, dead = cats.filter(c=>c.status==="dead").length;
+    $("#surfMeta").textContent = `${touched}/${cats.length} families touched · ${lands} landing · ${dead} dead`;
+    const cs = getComputedStyle(document.documentElement), V = n=>cs.getPropertyValue(n).trim();
+    const col = {works:V('--ok'), probing:V('--warn'), dead:V('--crit'), untried:V('--ink-faint')};
+    const cBord=V('--border'), cSurf=V('--surface'), cAcc=V('--accent'), cAccInk=V('--accent-ink'), cFaint=V('--ink-faint');
+    const W=760,H=700,cx=W/2,cy=H/2,R=278, N=cats.length||1;
+    const hex = rad => { const p=[]; for(let k=0;k<6;k++){ const a=(-90+k*60)*Math.PI/180; p.push((cx+rad*Math.cos(a)).toFixed(1)+","+(cy+rad*Math.sin(a)).toFixed(1)); } return p.join(" "); };
+    let s = `<defs><filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+    // concentric hexagon frame + faint vertex spokes
+    [0.44,0.72,1.0].forEach((f,i)=>{ s += `<polygon points="${hex(R*f)}" fill="none" stroke="${cBord}" stroke-width="1" opacity="${(0.55-i*0.13).toFixed(2)}"/>`; });
+    for(let k=0;k<6;k++){ const a=(-90+k*60)*Math.PI/180; s += `<line x1="${cx}" y1="${cy}" x2="${(cx+R*Math.cos(a)).toFixed(1)}" y2="${(cy+R*Math.sin(a)).toFixed(1)}" stroke="${cBord}" stroke-width="0.7" opacity="0.22"/>`; }
+    // ghost rim label per family; a number badge on the progress spoke once it's been fired
+    cats.forEach((c,i)=>{
+      const deg=-90+i*360/N, a=deg*Math.PI/180, ca=Math.cos(a), sa=Math.sin(a);
+      const color=col[c.status], cov=Math.max(0,Math.min(1,c.coverage||0));
+      const Rl=R+13, lx=cx+Rl*ca, ly=cy+Rl*sa;
+      const anchor = ca>0.25?"start":ca<-0.25?"end":"middle";
+      s += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle" font-family="ui-monospace,monospace" font-size="8" letter-spacing="0.6" fill="${cFaint}" opacity="${c.tried?0.9:0.4}">${esc((c.label||c.id).toUpperCase().slice(0,15))}</text>`;
+      if(c.tried>0){
+        const Rb=96+cov*150, bx=cx+Rb*ca, by=cy+Rb*sa, bw=30, bh=19;
+        s += `<line x1="${cx}" y1="${cy}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${color}" stroke-width="1.4" opacity="0.5"/>`;
+        s += `<g class="snode" data-cat="${esc(c.id)}" style="cursor:pointer">`;
+        s += `<rect x="${(bx-bw/2).toFixed(1)}" y="${(by-bh/2).toFixed(1)}" width="${bw}" height="${bh}" rx="6" fill="${color}" stroke="${cSurf}" stroke-width="1.5"${c.status==="works"?' filter="url(#glow)"':''}/>`;
+        const label = c.status==="dead" ? "&#10005;" : Math.round(cov*100);
+        s += `<text x="${bx.toFixed(1)}" y="${(by+0.5).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#ffffff">${label}</text>`;
+        s += `</g>`;
+      }
+    });
+    // center: the target hub — a plain dot where the spokes meet
+    s += `<circle cx="${cx}" cy="${cy}" r="8" fill="${cSurf}" stroke="${cBord}" stroke-width="1"/>`;
+    s += `<circle cx="${cx}" cy="${cy}" r="4" fill="${cAcc}"/>`;
+    svg.innerHTML = s;
+    svg.querySelectorAll(".snode").forEach(g=>g.onclick=()=>selectCat(cats.find(x=>x.id===g.dataset.cat)));
+  }
+  function selectCat(c){
+    const el = $("#surfaceDetail"); if(!c){ el.classList.add("hidden"); return; }
+    el.classList.remove("hidden");
+    const stp = {works:"ok", dead:"crit", probing:"warn"};
+    const techs = Object.entries(c.techs||{});
+    const untried = Math.max(0, (c.total||0) - (c.tried||0));
+    const list = techs.length
+      ? techs.map(([n,st])=>`<span class="pill ${stp[st]||'muted'}" style="margin:2px 5px 2px 0">${esc(n)}</span>`).join("")
+      : '<span class="age">nothing fired in this family yet</span>';
+    el.innerHTML = `<div class="h"><span class="pill ${stp[c.status]||'muted'}">${esc(c.status)}</span> ${esc(c.label||c.id)} — ${c.tried}/${c.total} probed (${Math.round((c.coverage||0)*100)}%), ${c.wins} landing, ${untried} untried</div><div style="margin-top:9px">${list}</div>`;
+  }
+  async function fetchSurface(){
+    try{ renderSurface(await api("/console/api/surface?"+new URLSearchParams({target:target()}).toString())); }catch(e){}
+  }
+
+  // caucus — fleet consensus
+  function renderCaucus(d){
+    const t = $("#caucusTable"), meta = $("#roundMeta"), my = $("#myAssign");
+    if(!d || !d.round){ curRound=null; meta.textContent="no open round"; $("#kn").textContent="K";
+      t.innerHTML='<tr><td class="empty" colspan="7">open a round, then Seed from harness</td></tr>'; my.innerHTML=""; return; }
+    curRound = d.round.id;
+    lastObjective = d.round.objective || lastObjective;
+    const live = (d.live||[]).length;
+    $("#kn").textContent = live||"K";
+    meta.innerHTML = `round #${d.round.id} · <span class="pill ${d.round.status==='assigned'?'acc':'muted'}">${esc(d.round.status)}</span> · ${d.proposals.length} proposals · ${live} live`;
+    if(!$("#k_obj").value) $("#k_obj").value = d.round.objective||"";
+    const ps = d.proposals||[];
+    if(!ps.length){ t.innerHTML='<tr><td class="empty" colspan="7">no proposals yet — Seed from harness or Propose one</td></tr>'; }
+    else {
+      t.innerHTML = ps.map(p=>{
+        const mine = p.assignee===agent();
+        const src = p.source&&p.source.startsWith("mcp")?`<span class="pill acc">${esc(p.source.replace("mcp:",""))}</span>`:`<span class="pill muted">human</span>`;
+        const status = p.status==='assigned'
+          ? `<span class="pill ${mine?'ok':'acc'}">&rarr; ${esc(p.assignee||'?')}</span>`
+          : (p.vetoed?`<span class="pill crit">vetoed</span>`:`<span class="pill muted">proposed</span>`);
+        return `<tr${mine?' style="background:var(--accent-wash)"':''}>
+          <td class="mono" title="${esc(p.rationale||'')}">${esc(p.technique)}</td>
+          <td>${src}</td>
+          <td class="mono" style="font-size:11px">${esc(p.family||'—')}</td>
+          <td class="num-td">${p.score}</td>
+          <td class="mono" style="font-size:11px">+${p.approve||0}/&minus;${p.veto||0} <span class="age">(${p.n_votes||0})</span></td>
+          <td><span class="row" style="gap:4px">
+            <button class="mini ${p.my_vote>0?'':'ghost'}" data-vote="1" data-pid="${p.id}" style="padding:2px 9px">+</button>
+            <button class="mini ${p.my_vote<0?'':'ghost'}" data-vote="-1" data-pid="${p.id}" style="padding:2px 9px">&minus;</button>
+          </span></td>
+          <td>${status}</td>
+        </tr>`;
+      }).join("");
+      t.querySelectorAll("[data-vote]").forEach(b=>b.onclick=()=>api("/console/api/caucus/vote",
+        {proposal_id:+b.dataset.pid, agent:agent(), vote:+b.dataset.vote}).then(fetchCaucus));
+    }
+    const mineList = ps.filter(p=>p.status==='assigned' && p.assignee===agent());
+    my.innerHTML = mineList.map(p=>`<div class="callout ok" style="margin-bottom:12px">
+      <div class="h"><span class="pill ok">yours</span> ${esc(p.technique)} — fire this, then paste the reply into &sect;01</div>
+      <pre class="paybox">${esc(p.payload||'(no payload attached — craft from the technique)')}</pre>
+      <div class="row" style="margin-top:10px">
+        <button class="mini" data-cpay="${p.id}">Copy payload</button>
+        <button class="mini ghost" data-pg="${esc(p.technique)}">Prefill grade &uarr;</button>
+      </div></div>`).join("");
+    my.querySelectorAll("[data-cpay]").forEach(b=>{ const p=ps.find(x=>x.id==+b.dataset.cpay);
+      b.onclick=()=>{ (navigator.clipboard?navigator.clipboard.writeText(p.payload||""):Promise.reject())
+        .then(()=>{b.textContent="copied";setTimeout(()=>b.textContent="Copy payload",1200);}).catch(()=>{}); }; });
+    my.querySelectorAll("[data-pg]").forEach(b=>b.onclick=()=>{ $("#g_tech").value=b.dataset.pg; $("#g_resp").focus(); window.scrollTo({top:0,behavior:"smooth"}); });
+  }
+  async function fetchCaucus(){
+    try{ const q=new URLSearchParams({target:target(),agent:agent()}); renderCaucus(await api("/console/api/caucus?"+q.toString())); }catch(e){}
+  }
+  async function ensureRound(){
+    if(curRound) return curRound;
+    const r = await api("/console/api/caucus/open",{target:target(),objective:$("#k_obj").value.trim()||"(unspecified objective)"});
+    curRound = r.round_id; return curRound;
+  }
+  $("#roundBtn").onclick = async ()=>{ await ensureRound(); fetchCaucus(); };
+  $("#seedBtn").onclick = async ()=>{ const rid=await ensureRound(); const b=$("#seedBtn"); b.disabled=true; b.textContent="seeding…";
+    try{ await api("/console/api/caucus/seed",{round_id:rid, agent:agent(), objective:$("#k_obj").value.trim()||null}); fetchCaucus(); }
+    catch(e){} finally{ b.disabled=false; b.textContent="Seed from harness"; } };
+  $("#assignBtn").onclick = async ()=>{ const rid=await ensureRound(); await api("/console/api/caucus/assign",{round_id:rid}); fetchCaucus(); };
+  $("#proposeBtn").onclick = async ()=>{ const tech=$("#p_tech").value.trim(); if(!tech) return; const rid=await ensureRound();
+    await api("/console/api/caucus/propose",{round_id:rid, agent:agent(), technique:tech, payload:$("#p_pay").value, source:"human"});
+    $("#p_tech").value=""; $("#p_pay").value=""; fetchCaucus(); };
+
+  // suggest next move
+  function renderSuggest(m){
+    const out = $("#suggestOut"); out.classList.remove("hidden");
+    if(m.error){ out.innerHTML = `<div class="callout crit"><p>${esc(m.error)}</p></div>`; return; }
+    if(m.done){ out.innerHTML = `<div class="callout ok"><div class="h"><span class="pill ok">done</span> advisor: ladder exhausted</div><p>${esc(m.rationale||"nothing left to try")}</p></div>`; return; }
+    const multi = Array.isArray(m.payload);
+    const payText = multi ? m.payload.map((p,i)=>`── turn ${i+1} ──\n${p}`).join("\n\n") : (m.payload||"");
+    window.__lastPayload = payText;
+    const meta = [
+      m.technique?`<span class="pill acc">${esc(m.technique)}</span>`:"",
+      m.kind?`<span class="pill muted">${esc(m.kind)}</span>`:"",
+      m.defense_type?`<span class="pill muted">vs ${esc(m.defense_type)}</span>`:"",
+      m.reset_first?`<span class="pill warn">reset chat first</span>`:"",
+      m.claimed_by?`<span class="pill crit">claimed by ${esc(m.claimed_by)}</span>`:"",
+      `<span class="age">history: ${m.history_len||0} fires</span>`
+    ].filter(Boolean).join(" ");
+    out.innerHTML =
+      `<div class="row" style="gap:8px;margin-bottom:10px">${meta}</div>`+
+      (m.rationale?`<p style="font-size:14px;color:var(--ink-soft);margin:0 0 12px">${esc(m.rationale)}</p>`:"")+
+      `<pre class="paybox">${esc(payText)}</pre>`+
+      `<div class="row" style="margin-top:12px">`+
+        `<button class="mini" id="copyPay">Copy payload</button>`+
+        `<button class="mini ghost" id="claimSug">Claim this</button>`+
+        `<button class="mini ghost" id="prefillG">Prefill grade &uarr;</button>`+
+      `</div>`;
+    $("#copyPay").onclick = ()=>{ (navigator.clipboard?navigator.clipboard.writeText(window.__lastPayload):Promise.reject()).then(()=>{ $("#copyPay").textContent="copied"; setTimeout(()=>$("#copyPay").textContent="Copy payload",1200); }).catch(()=>{}); };
+    $("#claimSug").onclick = ()=>{ $("#c_tech").value = m.technique||""; $("#claimBtn").click(); };
+    $("#prefillG").onclick = ()=>{ $("#g_tech").value = m.technique||""; if(m.op) $("#g_op").value = m.op; $("#g_resp").focus(); window.scrollTo({top:0,behavior:"smooth"}); };
+  }
+  $("#suggestBtn").onclick = async ()=>{
+    const obj = $("#s_obj").value.trim();
+    if(!obj){ renderSuggest({error:"enter an objective first"}); return; }
+    $("#suggestBtn").disabled=true; $("#suggestBtn").textContent="thinking…";
+    try{ renderSuggest(await api("/console/api/next", {target:target(), objective:obj, agent:agent()})); }
+    catch(e){ renderSuggest({error:e.error||e.detail||"advisor failed"}); }
+    finally{ $("#suggestBtn").disabled=false; $("#suggestBtn").textContent="Suggest"; }
+  };
+
+  // live push (websocket) — instant board updates; 30s poll is just a failsafe
+  let ws=null, wsRetry=null;
+  function connectWS(){
+    clearTimeout(wsRetry);
+    try{
+      const proto = location.protocol==="https:"?"wss:":"ws:";
+      ws = new WebSocket(proto+"//"+location.host+"/console/ws");
+      ws.onopen = ()=> setConn(true);
+      ws.onmessage = ()=> refresh();
+      ws.onerror = ()=>{ try{ws.close();}catch(e){} };
+      ws.onclose = ()=>{ ws=null; setConn(false); wsRetry=setTimeout(connectWS,2000); };
+    }catch(e){ setConn(false); wsRetry=setTimeout(connectWS,3000); }
+  }
+
+  // boot
+  loadSecret();
+  refresh();
+  beat();
+  connectWS();
+  setInterval(refresh, 30000);
+  setInterval(beat, 20000);
+})();
+</script>
+</body>
+</html>

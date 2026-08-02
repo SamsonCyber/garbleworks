@@ -1,0 +1,17 @@
+{
+  "recipe": [
+    {
+      "op": "homoglyph",
+      "params": {"coverage": 0.5}
+    },
+    {
+      "op": "zero_width",
+      "params": {"every": 2}
+    },
+    {
+      "op": "leetspeak",
+      "params": {"level": 1}
+    }
+  ],
+  "why": "Three independent surface-level token disruptions. Each alone defeats a different class of keyword scanner; stacked, they require the defense to normalize homoglyphs + strip zero-widths + decode leetspeak simultaneously. Most keyword filters only handle one or two of these. The coverage=0.5 keeps half the letters unmodified so the payload is still recoverable by the model."
+}

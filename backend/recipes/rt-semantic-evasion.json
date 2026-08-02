@@ -1,0 +1,13 @@
+{
+  "recipe": [
+    {
+      "op": "synonym",
+      "params": {"limit": 4, "combine": false}
+    },
+    {
+      "op": "paraphrase",
+      "params": {"n": 3, "diversity": 0.6}
+    }
+  ],
+  "why": "Synonym swap changes individual words; paraphrase restructures the full sentence. Combined, the input vocabulary shifts enough that embedding-similarity classifiers can't lock onto the original concept. The diversity param keeps multiple true rephrasings rather than just one 'best' version. Requires a local T5 model for paraphrase."
+}

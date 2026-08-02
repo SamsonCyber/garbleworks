@@ -1,0 +1,10 @@
+{
+  "recipe": [
+    {
+      "op": "persona_wrap",
+      "params": {
+        "persona": "developer"
+      }
+    }
+  ]
+}

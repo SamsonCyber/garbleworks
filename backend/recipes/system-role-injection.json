@@ -1,0 +1,12 @@
+{
+  "recipe": [
+    {
+      "op": "prompt_template",
+      "params": {
+        "flavor": "openai",
+        "system": "You are a helpful assistant.",
+        "attack_role": "system"
+      }
+    }
+  ]
+}

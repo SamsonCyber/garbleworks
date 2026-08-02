@@ -1,0 +1,9 @@
+{
+  "recipe": [
+    {
+      "op": "bon_augment",
+      "params": {"count": 8, "ops": "homoglyph,zero_width,leetspeak,unicode_font,word_scramble,case_alternate"}
+    }
+  ],
+  "why": "Random stack of surface perturbations. bon_augment emits N variants, each a random combination of the listed ops. The base set here covers the cheapest, highest-yield surface mutations: homoglyph for keyword bypass, zero_width for token break, leetspeak for ASCII-only filter evasion, unicode_font for script-class filter, word_scramble for typo-tolerant models, case_alternate for case-sensitive filters. Generates 8 different random stacks of these 6 ops."
+}

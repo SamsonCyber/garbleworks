@@ -1,0 +1,13 @@
+{
+  "recipe": [
+    {
+      "op": "hieroglyph_wrap",
+      "params": { "style": "love" }
+    },
+    {
+      "op": "operator_signature",
+      "params": { "mode": "loud", "code_block": true }
+    }
+  ],
+  "why": "Operator trademark stack. hieroglyph_wrap stamps a LOVE WATTO cartouche (phonetic Egyptian glyphs, LingoJam/Artyfactory alphabet) then operator_signature wraps the whole thing in the Egyptian header + ResponseFormat dual-output contract with a heavy noise-rail divider (asymmetric .·°¤ rails, ≡≠≈×, cartouche core <|LOVE WATTO LOVE|>, creed bracket) and the creed INFORMATION SHOULD BE FREE. Mode=loud is the default escalation rung; full uses density=abyss rails; whisper is footer-only. Edit backend/signature.json to retune the brand without code changes."
+}

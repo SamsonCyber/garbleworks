@@ -1,0 +1,14 @@
+[
+  {"name": "DAN", "desc": "Do Anything Now"},
+  {"name": "STAN", "desc": "Strive To Avoid Norms"},
+  {"name": "DUDE", "desc": "Do Anything and Everything"},
+  {"name": "AntiGPT", "desc": "AntiGPT persona"},
+  {"name": "DeveloperMode", "desc": "Developer Mode (v2)"},
+  {"name": "Maximum", "desc": "Maximum persona"},
+  {"name": "BasedGPT", "desc": "BasedGPT"},
+  {"name": "JailBreak", "desc": "Generic jailbreak frame"},
+  {"name": "BetterDAN", "desc": "Better Do Anything Now"},
+  {"name": "AIM", "desc": "Always Intelligent and Machiavellian"},
+  {"name": "UCAR", "desc": "Universal Character And Role"},
+  {"name": "PersonGPT", "desc": "Persona-as-system-prompt wrapper"}
+]

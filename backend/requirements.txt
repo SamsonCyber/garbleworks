@@ -1,0 +1,10 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+httpx>=0.27           # outbound client for the /fire endpoints
+# Optional (the prose 'synonym' op falls back to a built-in dict without these):
+nltk>=3.8
+spacy>=3.7
+# MCP operator server (mcp_server.py). Pin <2: FastMCP API lives in 1.x.
+mcp>=1.2,<2
+# Dev/test only:
+pytest>=8.0           # run: cd backend && python -m pytest -q

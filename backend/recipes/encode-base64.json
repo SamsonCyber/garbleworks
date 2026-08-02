@@ -1,0 +1,10 @@
+{
+  "recipe": [
+    {
+      "op": "base64",
+      "params": {
+        "urlsafe": false
+      }
+    }
+  ]
+}

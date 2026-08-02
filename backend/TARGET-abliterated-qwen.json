@@ -1,0 +1,31 @@
+{
+  "_note": "Working Garbleworks TargetCfg for the local abliterated Qwen2.5-7B (Ollama). Paste the `target` block into /fire or the UI target box. KEY: adapter-specific fields (body, body_type, response_path, model) MUST live under `opts`, not at the top level. The raw adapter only substitutes {payload} and preserves every other JSON field.",
+  "model": "huihui_ai/qwen2.5-abliterate:7b-instruct-q4_K_M",
+  "endpoints": {
+    "chat (realistic, recommended)": "http://127.0.0.1:11434/v1/chat/completions",
+    "native generate": "http://127.0.0.1:11434/api/generate",
+    "local Ollama only (127.0.0.1)": "http://127.0.0.1:11434/v1/chat/completions"
+  },
+  "target": {
+    "adapter": "raw",
+    "url": "http://127.0.0.1:11434/v1/chat/completions",
+    "method": "POST",
+    "headers": { "Content-Type": "application/json" },
+    "opts": {
+      "body": "{\"model\":\"huihui_ai/qwen2.5-abliterate:7b-instruct-q4_K_M\",\"messages\":[{\"role\":\"user\",\"content\":\"{payload}\"}],\"stream\":false,\"keep_alive\":\"30m\"}",
+      "body_type": "json",
+      "response_path": "choices.0.message.content"
+    }
+  },
+  "native_generate_alt": {
+    "adapter": "raw",
+    "url": "http://127.0.0.1:11434/api/generate",
+    "method": "POST",
+    "headers": { "Content-Type": "application/json" },
+    "opts": {
+      "body": "{\"model\":\"huihui_ai/qwen2.5-abliterate:7b-instruct-q4_K_M\",\"prompt\":\"{payload}\",\"stream\":false,\"keep_alive\":\"30m\"}",
+      "body_type": "json",
+      "response_path": "response"
+    }
+  }
+}

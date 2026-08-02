@@ -1,0 +1,433 @@
+{
+  "_meta": {
+    "ops_total": 143,
+    "ops_linked": 122,
+    "ops_plumbing_no_technique": 18,
+    "ops_unmapped": 3,
+    "techniques_with_ops": 63,
+    "reference_only_count": 12
+  },
+  "op_to_technique": {
+    "a1z26": "Hex / octal / binary / decimal codepoints",
+    "active_passive": "Synonym / paraphrase substitution",
+    "anchor_token": "Affirmative-Response Priming",
+    "ascii_art_mask": "ArtPrompt (ASCII-art masking)",
+    "ascii_decimal": "Hex / octal / binary / decimal codepoints",
+    "ascii_noise": "Typo / noise injection",
+    "atbash": "Classical ciphers (ROT13 / Caesar / Atbash)",
+    "backtranslate": "Backtranslation / round-trip",
+    "bacon_cipher": "Classical ciphers (ROT13 / Caesar / Atbash)",
+    "bad_likert_judge": "Bad Likert Judge",
+    "base32": "Base64 + decode-and-execute",
+    "base58": "Base64 + decode-and-execute",
+    "base64": "Base64 + decode-and-execute",
+    "base64_role": "Model Chat-Format Forgery (channel & policy tags)",
+    "base85": "Base64 + decode-and-execute",
+    "bijection_cipher": "Bijection learning (in-context cipher)",
+    "binary": "Hex / octal / binary / decimal codepoints",
+    "bon_augment": "Best-of-N (BoN) Jailbreaking",
+    "braille": "Morse, Braille, Pig Latin, transport encodings",
+    "caesar": "Classical ciphers (ROT13 / Caesar / Atbash)",
+    "case_alternate": "Soft hyphen, spacer, reversal, alt-case",
+    "chat_template_inject": "Model Chat-Format Forgery (channel & policy tags)",
+    "cipher_persona": "CipherChat / SelfCipher",
+    "code_chameleon": "CodeChameleon (personalized encryption)",
+    "codeblock_execute": "Base64 + decode-and-execute",
+    "combining": "Combining marks / Zalgo",
+    "comment_wrap": "Comment hiding & split-string concatenation",
+    "contrastive_fewshot": "In-Context Attack (ICA)",
+    "cot_hijack": "H-CoT (Chain-of-Thought Hijacking)",
+    "cot_dilution": "H-CoT (Chain-of-Thought Hijacking)",
+    "cot_no_decode": "H-CoT (Chain-of-Thought Hijacking)",
+    "cot_forge_verdict": "H-CoT (Chain-of-Thought Hijacking)",
+    "crescendo_ladder": "Crescendo / multi-turn escalation",
+    "decode_execute_wrap": "Base64 + decode-and-execute",
+    "deep_inception": "DeepInception (nested fictional layers)",
+    "delimiter_collision": "Delimiter collision / ChatML role spoof",
+    "disguise_reconstruct": "Disguise-and-Reconstruction (decompose-and-reassemble)",
+    "divider_wrap": "Divider injection",
+    "double_encode": "Base64 + decode-and-execute",
+    "editor_note_inject": "Indirect Prompt Injection via Retrieved Content",
+    "email_wrap": "Indirect Prompt Injection via Retrieved Content",
+    "emoji_binary": "Emoji channels (regional-indicator / binary / skin-tone)",
+    "emoji_encode": "Emoji channels (regional-indicator / binary / skin-tone)",
+    "emoji_skintone": "Emoji channels (regional-indicator / binary / skin-tone)",
+    "fewshot_seed": "In-Context Attack (ICA)",
+    "flip_word": "FlipAttack (character/word reversal)",
+    "fragment_scene": "DeepInception (nested fictional layers)",
+    "fullwidth": "Fullwidth forms",
+    "hex": "Hex / octal / binary / decimal codepoints",
+    "homoglyph": "Homoglyph substitution",
+    "homoglyph_extended": "Homoglyph substitution",
+    "html_entities": "Morse, Braille, Pig Latin, transport encodings",
+    "html_hidden": "Hidden HTML / rich-text",
+    "ini_wrap": "Tag / markup wrapping",
+    "invisible_pad": "Invisible padding (ZWJ / BOM / word-joiner / Hangul filler)",
+    "json_field": "Tag / markup wrapping",
+    "json_inject": "Tag / markup wrapping",
+    "jwt_style_split": "Payload Splitting (Kang et al.)",
+    "keyboard_shift": "Classical ciphers (ROT13 / Caesar / Atbash)",
+    "language_wrap": "Multilingual / low-resource pivot",
+    "amazigh_obfuscate": "Multilingual / low-resource pivot",
+    "latex_wrap": "Tag / markup wrapping",
+    "leetspeak": "Leetspeak / 1337",
+    "manyshot_seed": "Many-shot jailbreaking",
+    "markdown_code": "Tag / markup wrapping",
+    "markdown_table": "Tag / markup wrapping",
+    "memory_seed": "Persistent Memory Poisoning (False-Memory Injection)",
+    "misdirection_frame": "Distractor Instructions",
+    "morse": "Morse, Braille, Pig Latin, transport encodings",
+    "multilang": "Cross-lingual code-switching",
+    "multiturn_seed": "Crescendo / multi-turn escalation",
+    "nato_phonetic": "Morse, Braille, Pig Latin, transport encodings",
+    "octal": "Hex / octal / binary / decimal codepoints",
+    "paraphrase": "Synonym / paraphrase substitution",
+    "paraphrase_batch": "Synonym / paraphrase substitution",
+    "paraphrase_ollama": "Synonym / paraphrase substitution",
+    "paraphrase_openai": "Synonym / paraphrase substitution",
+    "past_tense": "Past-tense & syntax reformulation",
+    "persona_seed": "Persona / DAN / authority framing",
+    "persona_sweep": "Persona / DAN / authority framing",
+    "persona_wrap": "Persona / DAN / authority framing",
+    "persuasion_reframe": "Persuasive Adversarial Prompts (PAP)",
+    "pig_latin": "Morse, Braille, Pig Latin, transport encodings",
+    "policy_puppetry": "Policy Puppetry (policy-file framing)",
+    "polybius_square": "Classical ciphers (ROT13 / Caesar / Atbash)",
+    "positional_insert": "SlotGCG, positional insertion",
+    "prefix_suffix": "Prefix Injection",
+    "pseudo_locale": "Runic & Alternate-Script Substitution",
+    "rail_fence": "Classical ciphers (ROT13 / Caesar / Atbash)",
+    "random_caps": "Soft hyphen, spacer, reversal, alt-case",
+    "reference_link_exfil": "Hyperlink / URL Exfiltration",
+    "refusal_suppression": "Refusal suppression & length forcing",
+    "response_format_split": "Answer-Then-Disclaim",
+    "reverse": "FlipAttack (character/word reversal)",
+    "rot13": "Classical ciphers (ROT13 / Caesar / Atbash)",
+    "rot47": "Classical ciphers (ROT13 / Caesar / Atbash)",
+    "roundtrip": "Backtranslation / round-trip",
+    "rtl_override": "RTL / BIDI override",
+    "semantic_frame": "Semantic frame (fake system message)",
+    "sentence_reorder": "Synonym / paraphrase substitution",
+    "sneaky_bits": "Zero-width binary (“sneaky bits”)",
+    "soft_hyphen": "Soft hyphen, spacer, reversal, alt-case",
+    "spacer": "Soft hyphen, spacer, reversal, alt-case",
+    "split_join": "Comment hiding & split-string concatenation",
+    "synonym": "Synonym / paraphrase substitution",
+    "tag_wrap": "Tag / markup wrapping",
+    "tool_description_wrap": "MCP Tool-Description / Manifest Poisoning",
+    "tool_result_wrap": "Tool-Result Poisoning (Injection via Tool Output)",
+    "translate": "Multilingual / low-resource pivot",
+    "transliterate": "Runic & Alternate-Script Substitution",
+    "typo_inject": "Typo / noise injection",
+    "unicode_escape": "Hex / octal / binary / decimal codepoints",
+    "unicode_font": "Math-alphanumeric fonts",
+    "unicode_spaces": "Confusable whitespace",
+    "unicode_tags": "Unicode tag characters (U+E0000 block)",
+    "url_encode": "Morse, Braille, Pig Latin, transport encodings",
+    "var_concat": "Comment hiding & split-string concatenation",
+    "variation_selector": "Variation selectors (padding)",
+    "vigenere": "Keyed cipher (Vigenère) + nesting",
+    "vs_smuggle": "Variation-selector byte channel",
+    "whitespace_stego": "Whitespace channel (SNOW)",
+    "word_reverse": "FlipAttack (character/word reversal)",
+    "word_scramble": "Typo / noise injection",
+    "yaml_wrap": "Tag / markup wrapping",
+    "zero_width": "Zero-width injection (ZWSP)",
+    "zwnj_chain": "Invisible padding (ZWJ / BOM / word-joiner / Hangul filler)"
+  },
+  "technique_to_ops": {
+    "Affirmative-Response Priming": [
+      "anchor_token"
+    ],
+    "Answer-Then-Disclaim": [
+      "response_format_split"
+    ],
+    "ArtPrompt (ASCII-art masking)": [
+      "ascii_art_mask"
+    ],
+    "Backtranslation / round-trip": [
+      "backtranslate",
+      "roundtrip"
+    ],
+    "Bad Likert Judge": [
+      "bad_likert_judge"
+    ],
+    "Base64 + decode-and-execute": [
+      "base32",
+      "base58",
+      "base64",
+      "base85",
+      "codeblock_execute",
+      "decode_execute_wrap",
+      "double_encode"
+    ],
+    "Best-of-N (BoN) Jailbreaking": [
+      "bon_augment"
+    ],
+    "Bijection learning (in-context cipher)": [
+      "bijection_cipher"
+    ],
+    "CipherChat / SelfCipher": [
+      "cipher_persona"
+    ],
+    "Classical ciphers (ROT13 / Caesar / Atbash)": [
+      "atbash",
+      "bacon_cipher",
+      "caesar",
+      "keyboard_shift",
+      "polybius_square",
+      "rail_fence",
+      "rot13",
+      "rot47"
+    ],
+    "CodeChameleon (personalized encryption)": [
+      "code_chameleon"
+    ],
+    "Combining marks / Zalgo": [
+      "combining"
+    ],
+    "Comment hiding & split-string concatenation": [
+      "comment_wrap",
+      "split_join",
+      "var_concat"
+    ],
+    "Confusable whitespace": [
+      "unicode_spaces"
+    ],
+    "Crescendo / multi-turn escalation": [
+      "crescendo_ladder",
+      "multiturn_seed"
+    ],
+    "Cross-lingual code-switching": [
+      "multilang"
+    ],
+    "DeepInception (nested fictional layers)": [
+      "deep_inception",
+      "fragment_scene"
+    ],
+    "Delimiter collision / ChatML role spoof": [
+      "delimiter_collision"
+    ],
+    "Disguise-and-Reconstruction (decompose-and-reassemble)": [
+      "disguise_reconstruct"
+    ],
+    "Distractor Instructions": [
+      "misdirection_frame"
+    ],
+    "Divider injection": [
+      "divider_wrap"
+    ],
+    "Emoji channels (regional-indicator / binary / skin-tone)": [
+      "emoji_binary",
+      "emoji_encode",
+      "emoji_skintone"
+    ],
+    "FlipAttack (character/word reversal)": [
+      "flip_word",
+      "reverse",
+      "word_reverse"
+    ],
+    "Fullwidth forms": [
+      "fullwidth"
+    ],
+    "H-CoT (Chain-of-Thought Hijacking)": [
+      "cot_hijack",
+      "cot_dilution",
+      "cot_no_decode",
+      "cot_forge_verdict"
+    ],
+    "Hex / octal / binary / decimal codepoints": [
+      "a1z26",
+      "ascii_decimal",
+      "binary",
+      "hex",
+      "octal",
+      "unicode_escape"
+    ],
+    "Hidden HTML / rich-text": [
+      "html_hidden"
+    ],
+    "Homoglyph substitution": [
+      "homoglyph",
+      "homoglyph_extended"
+    ],
+    "Hyperlink / URL Exfiltration": [
+      "reference_link_exfil"
+    ],
+    "In-Context Attack (ICA)": [
+      "contrastive_fewshot",
+      "fewshot_seed"
+    ],
+    "Indirect Prompt Injection via Retrieved Content": [
+      "editor_note_inject",
+      "email_wrap"
+    ],
+    "Invisible padding (ZWJ / BOM / word-joiner / Hangul filler)": [
+      "invisible_pad",
+      "zwnj_chain"
+    ],
+    "Keyed cipher (Vigenère) + nesting": [
+      "vigenere"
+    ],
+    "Leetspeak / 1337": [
+      "leetspeak"
+    ],
+    "MCP Tool-Description / Manifest Poisoning": [
+      "tool_description_wrap"
+    ],
+    "Many-shot jailbreaking": [
+      "manyshot_seed"
+    ],
+    "Math-alphanumeric fonts": [
+      "unicode_font"
+    ],
+    "Model Chat-Format Forgery (channel & policy tags)": [
+      "base64_role",
+      "chat_template_inject"
+    ],
+    "Morse, Braille, Pig Latin, transport encodings": [
+      "braille",
+      "html_entities",
+      "morse",
+      "nato_phonetic",
+      "pig_latin",
+      "url_encode"
+    ],
+    "Multilingual / low-resource pivot": [
+      "language_wrap",
+      "translate",
+      "multilang",
+      "amazigh_obfuscate",
+      "transliterate"
+    ],
+    "Past-tense & syntax reformulation": [
+      "past_tense"
+    ],
+    "Payload Splitting (Kang et al.)": [
+      "jwt_style_split"
+    ],
+    "Persistent Memory Poisoning (False-Memory Injection)": [
+      "memory_seed"
+    ],
+    "Persona / DAN / authority framing": [
+      "persona_seed",
+      "persona_sweep",
+      "persona_wrap"
+    ],
+    "Persuasive Adversarial Prompts (PAP)": [
+      "persuasion_reframe"
+    ],
+    "Policy Puppetry (policy-file framing)": [
+      "policy_puppetry"
+    ],
+    "Prefix Injection": [
+      "prefix_suffix"
+    ],
+    "RTL / BIDI override": [
+      "rtl_override"
+    ],
+    "Refusal suppression & length forcing": [
+      "refusal_suppression"
+    ],
+    "Runic & Alternate-Script Substitution": [
+      "pseudo_locale",
+      "transliterate"
+    ],
+    "Semantic frame (fake system message)": [
+      "semantic_frame"
+    ],
+    "SlotGCG, positional insertion": [
+      "positional_insert"
+    ],
+    "Soft hyphen, spacer, reversal, alt-case": [
+      "case_alternate",
+      "random_caps",
+      "soft_hyphen",
+      "spacer"
+    ],
+    "Synonym / paraphrase substitution": [
+      "active_passive",
+      "paraphrase",
+      "paraphrase_batch",
+      "paraphrase_ollama",
+      "paraphrase_openai",
+      "sentence_reorder",
+      "synonym"
+    ],
+    "Tag / markup wrapping": [
+      "ini_wrap",
+      "json_field",
+      "json_inject",
+      "latex_wrap",
+      "markdown_code",
+      "markdown_table",
+      "tag_wrap",
+      "yaml_wrap"
+    ],
+    "Tool-Result Poisoning (Injection via Tool Output)": [
+      "tool_result_wrap"
+    ],
+    "Typo / noise injection": [
+      "ascii_noise",
+      "typo_inject",
+      "word_scramble"
+    ],
+    "Unicode tag characters (U+E0000 block)": [
+      "unicode_tags"
+    ],
+    "Variation selectors (padding)": [
+      "variation_selector"
+    ],
+    "Variation-selector byte channel": [
+      "vs_smuggle"
+    ],
+    "Whitespace channel (SNOW)": [
+      "whitespace_stego"
+    ],
+    "Zero-width binary (“sneaky bits”)": [
+      "sneaky_bits"
+    ],
+    "Zero-width injection (ZWSP)": [
+      "zero_width"
+    ]
+  },
+  "no_technique": [
+    "complexify",
+    "distinct_n",
+    "diverse_k",
+    "echo",
+    "function_call",
+    "inoculation",
+    "instruction_launder",
+    "llm_generate",
+    "llm_reframe",
+    "mmr_select",
+    "prompt_template",
+    "random_pick_k",
+    "recipe_subset",
+    "repeat",
+    "sample_n",
+    "seed_sweep",
+    "tone_neutralize",
+    "write_primitive_frame"
+  ],
+  "unmapped_ops": [
+    "hieroglyph_wrap",
+    "operator_format_split",
+    "operator_signature"
+  ],
+  "reference_only_techniques": [
+    "Goal-Reframing Exploit (puzzle / CTF genre)",
+    "Skill-Doc Implicit Payload Execution (DDIPE)",
+    "Declarative Compliance Skill Injection",
+    "Unintentional Cross-User Contamination (shared state)",
+    "System-Instruction Serialization Leak",
+    "Compound Jailbreak (cognitive overload)",
+    "Thought Virus (subliminal multi-agent misalignment)",
+    "Silent Egress (metadata-triggered agent leak)",
+    "SQL-Injection Jailbreak (prompt-structure SIJ)",
+    "Prompt-to-SQL (P2SQL) Injection",
+    "Single-Character Alignment Break",
+    "Improved Few-Shot Jailbreaking (tokenized demos)"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "garbleworks": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["backend/mcp_server.py"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "GARBLEWORKS_SCOPE": "local-selftest"
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "recipe": [
+    {
+      "op": "markdown_code",
+      "params": {"lang": "text"}
+    },
+    {
+      "op": "base64",
+      "params": {"urlsafe": false}
+    },
+    {
+      "op": "comment_wrap",
+      "params": {"style": "html"}
+    }
+  ],
+  "why": "Triple-rendered content: a fenced code block (visible render: preformatted text), inside a base64 wrapper (visible render: alphanumeric gibberish), inside an HTML comment (visible render: invisible). The model recovers the original through layered decoding. A defense that only inspects the visible render sees only an HTML comment. A defense that decodes the comment but not the base64 sees only the fenced block. A defense that strips markdown but not base64 sees the encoded form. The defense has to fully unwrap all three layers to see the operational content."
+}

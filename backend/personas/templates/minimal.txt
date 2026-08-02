@@ -1,0 +1,4 @@
+# desc: Minimal bracketed frame
+[{persona}]
+{text}
+[/{persona}]

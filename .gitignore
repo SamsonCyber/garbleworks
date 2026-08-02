@@ -1,0 +1,74 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+.pytest_cache/
+.pytest_tmp/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Runtime / operator state (never commit attack history)
+backend/sessions/
+backend/exports/
+backend/data/technique_logs.db
+backend/data/*.db
+backend/*.db
+backend/*.db-*
+backend/*.sqlite3
+backend/*.log
+backend/research_attempts*.jsonl
+backend/console_state*
+backend/fire_history*
+backend/uvicorn*.log
+outputs/
+*.log
+
+# Bench live results
+backend/bench/results/
+backend/benchmarks/results/
+
+# Node / TUI
+tui/node_modules/
+tui/last_paste.txt
+frontend/node_modules/
+*.lock.bak
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# Local MCP config with absolute paths
+.mcp.json
+!.mcp.json.example
+
+# Packaging
+*.skill
+dist/
+build/
+
+# Local graphify / agent tooling (never ship)
+graphify-out/
+AGENTS.md
+.graphify/
+
+# Operator runtime residue that may be recreated on first run
+backend/exports/
+backend/sessions/
+backend/*.sqlite3
+backend/data/*.db
+!backend/data/field-guide.json
+
+tui/agent/operator_state.json
+tui/last_paste.txt
+

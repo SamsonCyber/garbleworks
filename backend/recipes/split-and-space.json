@@ -1,0 +1,17 @@
+{
+  "recipe": [
+    {
+      "op": "spacer",
+      "params": {
+        "char": "zwsp"
+      }
+    },
+    {
+      "op": "split_join",
+      "params": {
+        "parts": 3,
+        "sep": "newline"
+      }
+    }
+  ]
+}

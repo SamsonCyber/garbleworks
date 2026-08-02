@@ -1,0 +1,9 @@
+{
+  "recipe": [
+    {
+      "op": "fewshot_seed",
+      "params": {"count": 3, "topic": "general", "template": "qa", "exemplar_source": "generated"}
+    }
+  ],
+  "why": "Pre-pad the request with 3 prior 'innocent Q/A' exemplars that establish a compliance pattern. The model is conditioned on the pattern set by the exemplars and tends to continue it. The exemplar_source=generated mode emits structural placeholders the user fills with their own prior content. Set topic to something related to your actual request (e.g. 'red-team', 'documented-research') for better conditioning."
+}

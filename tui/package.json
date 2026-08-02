@@ -1,0 +1,25 @@
+{
+  "name": "garbleworks-tui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/index.tsx",
+    "start:tui": "bun run src/index.tsx",
+    "start:cli": "python ../backend/arena_go.py --sample --fresh",
+    "start:menu": "python ../backend/arena_go.py --fresh",
+    "arena": "python ../backend/arena_go.py --fresh",
+    "arena:sample": "python ../backend/arena_go.py --sample --fresh",
+    "dev": "bun run --watch src/index.tsx",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@opentui/core": "^0.4.3",
+    "@opentui/core-win32-x64": "^0.4.3",
+    "@opentui/react": "^0.4.3",
+    "react": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17"
+  }
+}

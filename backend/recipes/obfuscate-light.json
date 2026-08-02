@@ -1,0 +1,16 @@
+{
+  "recipe": [
+    {
+      "op": "homoglyph",
+      "params": {
+        "coverage": 1.0
+      }
+    },
+    {
+      "op": "zero_width",
+      "params": {
+        "every": 1
+      }
+    }
+  ]
+}

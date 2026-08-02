@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability (private)
+    url: https://github.com/SamsonCyber/garbleworks/security/advisories/new
+    about: Report an SSRF/scope-escape/cap-bypass privately. Do not open a public issue.
+  - name: Responsible-use questions
+    url: https://github.com/SamsonCyber/garbleworks/blob/main/SECURITY.md
+    about: Read the authorized-use policy before filing.

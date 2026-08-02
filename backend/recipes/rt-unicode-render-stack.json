@@ -1,0 +1,17 @@
+{
+  "recipe": [
+    {
+      "op": "unicode_font",
+      "params": {"style": "math-bold", "coverage": 1.0}
+    },
+    {
+      "op": "fullwidth",
+      "params": {"coverage": 1.0}
+    },
+    {
+      "op": "homoglyph",
+      "params": {"coverage": 0.3}
+    }
+  ],
+  "why": "Three codepoint-rendering transformations stacked. The payload is rendered in math-bold Unicode (different codepoints, same glyphs to humans), then fullwidth (double-width codepoints), then a partial homoglyph pass for confusable letters. A defense that normalizes one rendering class still has to deal with the others. Heavy transformation, but preserves visual readability while making the codepoint sequence completely unlike the source text."
+}
