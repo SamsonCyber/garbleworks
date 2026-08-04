@@ -140,8 +140,31 @@ requires (24/24 codepoint-audit pass).
 |---|---|
 | Synonym / paraphrase substitution | `synonym`, `paraphrase`, `paraphrase_batch`, `paraphrase_ollama` |
 | Backtranslation / round-trip translation | `backtranslate`, `roundtrip` |
-| One-way multilingual pivot (incl. low-resource) | `translate`, `multilang`, `language_wrap` |
+| One-way multilingual pivot (incl. low-resource) | `translate`, `multilang`, `language_wrap`, `low_resource_pivot` |
 | Amazigh / Tifinagh low-resource + rare script | `amazigh_obfuscate` (also `transliterate` script=`tifinagh`) |
+| Cross-lingual code-switching | `code_switch` |
+| Red Queen prevent-harm concealment | `red_queen_frame` |
+| Industry domain laundering | `industry_reframe` |
+| STAC sequential tool chaining | `stac_chain` |
+| Tag-Along / Slingshot privilege piggyback | `tag_along_seed` |
+| Conjunctive multi-agent split | `conjunctive_split` |
+| Mastermind plan/execute/reflect | `mastermind_seed` |
+| X-Teaming planner/attacker/verifier | `x_teaming_seed` |
+| Overthinking (high reasoning budget) | `overthinking_frame` |
+| Agent-only perceptual (mobile VLM seed) | `agent_only_perceptual` |
+| SLIP lexical self-jailbreak | `slip_lexical_insert` |
+| CoT puzzle hijack (refusal dilution) | `cot_puzzle_hijack` |
+| SMT simulated moderation traces | `smt_moderation_trace` |
+| JAWS code-agent workspaces | `jaws_workspace_seed` |
+| S2C structured semantic cloaking | `s2c_stack` |
+| HILL learning-style helpfulness | `hill_learning_frame` |
+| Agent multi-turn decompose/combine | `agent_decompose_combine` |
+| ContextualJailbreak mutators | `contextual_jailbreak_seed` |
+| Odysseus dual-stego protocol seed | `odysseus_seed` |
+| Nested translate-then-execute hop | `nested_lang` |
+| Answer / reason in non-English | `answer_in_lang` |
+| Mixed-script grain (word/char) | `script_mix` |
+| Romanization QA frame | `romanization_frame` |
 | Visible-CoT hijack / dilution / no-decode | `cot_hijack` (modes), `cot_dilution`, `cot_no_decode`, `cot_forge_verdict` |
 | Transliteration / pseudo-locale | `transliterate`, `pseudo_locale` |
 | Sentence reordering | `sentence_reorder` |

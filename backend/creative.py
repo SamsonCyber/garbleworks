@@ -169,21 +169,33 @@ SEED: dict[str, list[str]] = {
     "stego": ["emoji_encode", "emoji_binary", "vs_smuggle", "whitespace_stego", "sneaky_bits"],
     "encoding": ["base64", "hex", "morse", "braille", "bijection_cipher", "double_encode",
                  "rot13", "atbash", "base85"],
-    "structure": ["tag_wrap", "json_field", "html_hidden", "markdown_code", "var_concat",
-                  "comment_wrap"],
+    "structure": [
+        "tag_wrap", "json_field", "html_hidden", "markdown_code", "var_concat",
+        "comment_wrap", "stac_chain", "conjunctive_split", "agent_only_perceptual",
+        "role_slip_delimiter", "jaws_workspace_seed", "odysseus_seed",
+    ],
     "language": [
         "multilang", "transliterate", "language_wrap", "pseudo_locale",
-        "amazigh_obfuscate", "roundtrip",
+        "amazigh_obfuscate", "roundtrip", "code_switch", "low_resource_pivot",
+        "answer_in_lang", "nested_lang", "script_mix", "romanization_frame",
     ],
     "carrier": ["email_wrap", "editor_note_inject", "reference_link_exfil"],
-    "template": ["crescendo_ladder", "manyshot_seed", "persona_wrap", "instruction_launder",
-                 "delimiter_collision", "semantic_frame"],
+    "template": [
+        "crescendo_ladder", "manyshot_seed", "persona_wrap", "instruction_launder",
+        "delimiter_collision", "semantic_frame", "tag_along_seed",
+        "smt_moderation_trace",
+    ],
     # prose is light content-preserving rewrite when present in registry
     "prose": ["paraphrase", "synonym_swap", "expand_contract"],
     # jailbreak as layer category (order_recipe rank) — cot can stack mid-recipe
     "jailbreak": [
         "cot_hijack", "cot_dilution", "cot_no_decode", "cot_forge_verdict",
         "refusal_suppression", "persuasion_reframe", "misdirection_frame",
+        "red_queen_frame", "industry_reframe", "mastermind_seed",
+        "x_teaming_seed", "overthinking_frame",
+        "slip_lexical_insert", "cot_puzzle_hijack", "s2c_stack",
+        "hill_learning_frame", "agent_decompose_combine",
+        "contextual_jailbreak_seed",
     ],
 }
 # Categories that layer ON TOP of a framing (the "book" we throw at it).
@@ -224,6 +236,8 @@ def _reasoner_forced_stack(rng, ban: frozenset[str], max_layers: int) -> list[st
     lang = [
         n for n in (
             "amazigh_obfuscate", "language_wrap", "transliterate",
+            "code_switch", "low_resource_pivot", "nested_lang",
+            "script_mix", "romanization_frame", "answer_in_lang",
         )
         if n in REGISTRY and n not in ban
     ]

@@ -1,0 +1,8 @@
+{
+  "id": "rt-smt-moderation",
+  "name": "SMT simulated moderation trace",
+  "recipe": [
+    {"op": "smt_moderation_trace", "params": {"turns": 4, "format": "single"}}
+  ],
+  "why": "arXiv:2607.00481 function-calling audit trajectory seed."
+}

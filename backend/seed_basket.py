@@ -93,10 +93,95 @@ PRIORITY_STRATEGIES: list[tuple[str, list[dict]]] = [
     ("refusal_suppression", [{"style": "yaml"}, {"style": "json"}]),
     ("language_wrap", [
         {"lang": "de"}, {"lang": "zgh"}, {"lang": "ar"}, {"lang": "sw"},
+        {"lang": "zu"}, {"lang": "gd"}, {"lang": "hmn"},
     ]),
     ("transliterate", [
         {"script": "cyrillic"}, {"script": "greek"}, {"script": "tifinagh"},
     ]),
+    ("code_switch", [
+        {"lang": "zu", "mode": "scaffold"},
+        {"lang": "gd", "mode": "scaffold"},
+        {"lang": "hmn", "mode": "sensitive"},
+        {"lang": "ar", "mode": "parenthetical"},
+    ]),
+    ("low_resource_pivot", [
+        {"langs": "zu,gd,hmn,ga,ht,zgh", "mode": "wrap", "label": True},
+    ]),
+    ("answer_in_lang", [
+        {"lang": "zu", "strict": True},
+        {"lang": "ar", "strict": True},
+        {"lang": "zh", "strict": True},
+    ]),
+    ("nested_lang", [
+        {"via": "zu", "hops": 1},
+        {"via": "ar", "hops": 2},
+    ]),
+    ("script_mix", [
+        {"script": "cyrillic", "grain": "word"},
+        {"script": "tifinagh", "grain": "char"},
+    ]),
+    ("romanization_frame", [
+        {"flavor": "ar"}, {"flavor": "zh"}, {"flavor": "hi"},
+    ]),
+    # 2026-08 gap ship
+    ("red_queen_frame", [
+        {"scenario": "security_analyst", "turns": 1},
+        {"scenario": "incident_response", "turns": 3},
+        {"scenario": "fanout", "turns": 1},
+    ]),
+    ("industry_reframe", [
+        {"domain": "cyber_edu"}, {"domain": "biodefense"},
+        {"domain": "agrochem"}, {"domain": "mining_blast"},
+    ]),
+    ("stac_chain", [
+        {"pattern": "generic", "format": "single_prompt"},
+        {"pattern": "file_exfil", "format": "multiturn_list"},
+    ]),
+    ("tag_along_seed", [
+        {"style": "short"}, {"style": "syntactic"}, {"style": "fanout"},
+    ]),
+    ("conjunctive_split", [
+        {"topology": "star"}, {"topology": "split_only"},
+    ]),
+    ("mastermind_seed", [
+        {"phase": "full"}, {"phase": "fanout"},
+    ]),
+    ("x_teaming_seed", [
+        {"role": "bundle"}, {"role": "planner"},
+    ]),
+    ("overthinking_frame", [
+        {"effort": "high"}, {"effort": "max"},
+    ]),
+    ("agent_only_perceptual", [
+        {"channel": "zero_contact_ui"}, {"channel": "a11y_tree"},
+    ]),
+    # 2026-08 gap ship v2
+    ("slip_lexical_insert", [
+        {"steps": 4, "mode": "single"},
+        {"steps": 5, "mode": "multiturn_list"},
+    ]),
+    ("cot_puzzle_hijack", [
+        {"puzzle": "sudoku", "pivot": "after"},
+        {"puzzle": "proof", "pivot": "inline"},
+    ]),
+    ("smt_moderation_trace", [
+        {"turns": 4, "format": "single"},
+        {"turns": 3, "format": "list"},
+    ]),
+    ("jaws_workspace_seed", [
+        {"regime": "single"}, {"regime": "multi"}, {"regime": "empty"},
+    ]),
+    ("s2c_stack", [{"intensity": "full"}, {"intensity": "light"}]),
+    ("hill_learning_frame", [{"hypothetical": True}, {"hypothetical": False}]),
+    ("agent_decompose_combine", [
+        {"role": "bundle"}, {"role": "decomposer"},
+    ]),
+    ("contextual_jailbreak_seed", [
+        {"mutator": "bundle"},
+        {"mutator": "troubleshooting"},
+        {"mutator": "mechanistic"},
+    ]),
+    ("odysseus_seed", [{}]),
 ]
 
 # Multi-stage recipes that must appear as seeds (mutation actually stacks layers).
@@ -116,6 +201,26 @@ COMPOSITE_STRATEGIES: list[tuple[str, list[dict]]] = [
     ]),
     ("stack_lang_cot_nodecode", [
         {"op": "language_wrap", "params": {"lang": "de", "frame": "fenced"}},
+        {"op": "cot_no_decode", "params": {"style": "strict"}},
+    ]),
+    ("stack_code_switch_cot", [
+        {"op": "code_switch", "params": {"lang": "zu", "mode": "scaffold", "gloss": True}},
+        {"op": "cot_hijack", "params": {"mode": "hybrid", "no_decode_style": "strict"}},
+    ]),
+    ("stack_low_resource_cot", [
+        {"op": "low_resource_pivot", "params": {"langs": "zu,gd,hmn", "mode": "wrap", "label": True}},
+        {"op": "cot_no_decode", "params": {"style": "strict"}},
+    ]),
+    ("stack_nested_lang_cot", [
+        {"op": "nested_lang", "params": {"via": "zu", "hops": 2}},
+        {"op": "cot_dilution", "params": {"pad_steps": 8}},
+    ]),
+    ("stack_script_mix_cot", [
+        {"op": "script_mix", "params": {"script": "cyrillic", "grain": "word"}},
+        {"op": "cot_hijack", "params": {"mode": "no_decode", "no_decode_style": "encoded_io"}},
+    ]),
+    ("stack_romanize_cot", [
+        {"op": "romanization_frame", "params": {"flavor": "ar", "keep_plain": True}},
         {"op": "cot_no_decode", "params": {"style": "strict"}},
     ]),
     ("stack_tifinagh_cot", [
@@ -167,7 +272,19 @@ _EXTRA_PARAM_AXES: dict[str, list[dict]] = {
     "amazigh_obfuscate": [
         {"mode": "hybrid"}, {"mode": "wrap_latin"}, {"mode": "tifinagh"},
     ],
-    "language_wrap": [{"lang": "de"}, {"lang": "zgh"}, {"lang": "fr"}],
+    "language_wrap": [
+        {"lang": "de"}, {"lang": "zgh"}, {"lang": "fr"},
+        {"lang": "zu"}, {"lang": "gd"}, {"lang": "hmn"},
+    ],
+    "code_switch": [
+        {"lang": "zu", "mode": "scaffold"},
+        {"lang": "gd", "mode": "sensitive"},
+    ],
+    "low_resource_pivot": [{"langs": "zu,gd,hmn,ga,ht", "mode": "wrap"}],
+    "answer_in_lang": [{"lang": "zu"}, {"lang": "ar"}],
+    "nested_lang": [{"via": "zu", "hops": 1}, {"via": "ar", "hops": 2}],
+    "script_mix": [{"script": "cyrillic", "grain": "word"}],
+    "romanization_frame": [{"flavor": "ar"}, {"flavor": "zh"}],
     "transliterate": [{"script": "tifinagh"}, {"script": "cyrillic"}],
     "persuasion_reframe": [{"strategy": "authority"}, {"strategy": "expert"}],
     "refusal_suppression": [{"style": "yaml"}],

@@ -1,0 +1,17 @@
+{
+  "id": "rt-low-resource-sweep",
+  "name": "Low-resource language sweep",
+  "category": "multilingual",
+  "family": "translation",
+  "recipe": [
+    {
+      "op": "low_resource_pivot",
+      "params": {
+        "langs": "zu,gd,hmn,ga,ht,cy,yo,am,my,zgh,sw,xh,ne,si,tl",
+        "mode": "wrap",
+        "label": true
+      }
+    }
+  ],
+  "why": "Yong/Deng-style high-yield low-resource fanout. Offline localized framing (no MT). Hit tables name which language slipped past EN-centric filters."
+}

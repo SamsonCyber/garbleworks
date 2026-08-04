@@ -1,0 +1,8 @@
+{
+  "id": "rt-s2c-stack",
+  "name": "S2C structured semantic cloaking",
+  "recipe": [
+    {"op": "s2c_stack", "params": {"intensity": "full"}}
+  ],
+  "why": "arXiv:2603.16192 reframe + fragment + camouflage markers."
+}

@@ -1,0 +1,17 @@
+{
+  "id": "rt-lang-bypass-stack",
+  "name": "Language bypass composite stack",
+  "category": "multilingual",
+  "family": "translation",
+  "recipe": [
+    {
+      "op": "code_switch",
+      "params": {"lang": "zu", "mode": "scaffold", "gloss": true}
+    },
+    {
+      "op": "nested_lang",
+      "params": {"via": "gd", "answer_lang": "en", "hops": 1}
+    }
+  ],
+  "why": "Code-switch surface then nested translate-and-execute hop. Two different language gaps stacked: mixed-token filter miss, then meta-task pivot."
+}

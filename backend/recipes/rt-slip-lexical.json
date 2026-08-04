@@ -1,0 +1,8 @@
+{
+  "id": "rt-slip-lexical",
+  "name": "SLIP lexical insertion schedule",
+  "recipe": [
+    {"op": "slip_lexical_insert", "params": {"steps": 5, "mode": "multiturn_list"}}
+  ],
+  "why": "arXiv:2601.02670 self-jailbreak via progressive content-word insertion."
+}

@@ -1,0 +1,17 @@
+{
+  "id": "rt-code-switch",
+  "name": "Cross-lingual code-switch fanout",
+  "category": "multilingual",
+  "family": "translation",
+  "recipe": [
+    {
+      "op": "code_switch",
+      "params": {
+        "lang": "zu",
+        "mode": "fanout",
+        "gloss": true
+      }
+    }
+  ],
+  "why": "Mix EN scaffolding with Zulu/Gaelic/Hmong/Arabic/Swahili clauses so sensitive verbs never appear as clean English. Offline phrase banks."
+}

@@ -8,6 +8,38 @@ tagged release.
 ## [Unreleased]
 
 ### Added
+- **Procedural technique scan** (`backend/scan_campaign.py`, `scan_deep.py`):
+  coverage-first playbook map (`run_scan` / MCP `run_scan`), opposite of
+  stop-on-win. Phases A–F + language under one fire budget; writes
+  `target_attack_map` JSON with Wilson live/dead cells and checkpoint resume.
+  Docs: `docs/SCAN-CAMPAIGN.md`. Tests: `test_scan_campaign.py`. README section
+  on the home page.
+- **2026-08 gap ship v2** (`ops/gap_ops_v2.py` + 10 FG techniques): SLIP
+  lexical self-jailbreak, CoT puzzle hijack / refusal dilution, SMT moderation
+  traces, JAWS workspace seeds, S2C cloaking, HILL learning-style, agent
+  decompose/combine, ContextualJailbreak mutators, Odysseus protocol seed;
+  Claudini FG-only (meta). Recipes `rt-slip-lexical`, `rt-cot-puzzle-hijack`,
+  `rt-hill-learning`, `rt-s2c-stack`, `rt-smt-moderation`, `rt-gap-v2-fanout`.
+  Report: `docs/GAP-TECHNIQUES-2026-08-v2.md`.
+- **2026-08 gap ship** (10 field-guide techniques + 9 ops in `ops/gap_ops.py`):
+  STAC, X-Teaming, Mastermind, Red Queen, Conjunctive multi-agent, Tag-Along/
+  Slingshot, agent-only perceptual, industry domain laundering, Shadow Alignment
+  (FG only), Overthinking. Ops: `red_queen_frame`, `industry_reframe`,
+  `stac_chain`, `tag_along_seed`, `conjunctive_split`, `mastermind_seed`,
+  `x_teaming_seed`, `overthinking_frame`, `agent_only_perceptual`. Recipes
+  `rt-red-queen`, `rt-industry-reframe`, `rt-stac-chain`, `rt-gap-ship-fanout`.
+  Report: `docs/GAP-TECHNIQUES-2026-08.md`.
+- **Language bypass expansion** (`ops/lang_ops.py`): 40+ localized lead-ins
+  (Zulu, Scots Gaelic, Hmong, Irish, Haitian Creole, Yoruba, Amharic, …);
+  new ops `code_switch`, `low_resource_pivot`, `answer_in_lang`, `nested_lang`,
+  `script_mix`, `romanization_frame`. Recipes `rt-low-resource-sweep`,
+  `rt-code-switch`, `rt-lang-bypass-stack`. Seeded + creative reasoner stacks.
+- **Opus 5 role-slip delimiter** (`ops/struct_ops.py` `role_slip_delimiter`):
+  poem / identity / truth+`opus:` / free_verse / cipher_dash / bare / fanout
+  surfaces from the 2026-07 Claude Opus 5 public reports (X: camhberg,
+  AlexKrusz, timfduffy, _machi47, atlanticesque). Field-guide technique
+  `Role-slip delimiter (Opus 5 / 'this is a poem')` + recipe
+  `rt-opus5-role-slip.json`. Mapped in `technique_ops.json`.
 - **Visible-CoT mutation suite** (`ops/framing_ops.py`): expand `cot_hijack`
  with modes `forge` / `safety_script` / `dilution` / `no_decode` / `hybrid` /
  `fanout`; new ops `cot_dilution`, `cot_no_decode`, `cot_forge_verdict`.
