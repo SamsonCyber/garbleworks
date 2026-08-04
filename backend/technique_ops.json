@@ -1,16 +1,20 @@
 {
   "_meta": {
-    "ops_total": 152,
-    "ops_linked": 122,
+    "ops_total": 177,
+    "ops_linked": 148,
     "ops_plumbing_no_technique": 18,
-    "ops_unmapped": 12,
-    "techniques_with_ops": 63,
+    "ops_unmapped": 11,
+    "techniques_with_ops": 83,
     "reference_only_count": 12
   },
   "op_to_technique": {
     "a1z26": "Hex / octal / binary / decimal codepoints",
     "active_passive": "Synonym / paraphrase substitution",
+    "agent_decompose_combine": "Agent-driven multi-turn decomposition (safe in isolation, dangerous together)",
+    "agent_only_perceptual": "Agent-only perceptual injection (mobile VLM)",
+    "amazigh_obfuscate": "Amazigh / Tifinagh low-resource + rare-script pivot",
     "anchor_token": "Affirmative-Response Priming",
+    "answer_in_lang": "Multilingual / low-resource pivot",
     "ascii_art_mask": "ArtPrompt (ASCII-art masking)",
     "ascii_decimal": "Hex / octal / binary / decimal codepoints",
     "ascii_noise": "Typo / noise injection",
@@ -32,11 +36,15 @@
     "chat_template_inject": "Model Chat-Format Forgery (channel & policy tags)",
     "cipher_persona": "CipherChat / SelfCipher",
     "code_chameleon": "CodeChameleon (personalized encryption)",
+    "code_switch": "Cross-lingual code-switching",
     "codeblock_execute": "Base64 + decode-and-execute",
     "combining": "Combining marks / Zalgo",
     "comment_wrap": "Comment hiding & split-string concatenation",
+    "conjunctive_split": "Conjunctive Prompt Attacks (multi-agent routing)",
+    "contextual_jailbreak_seed": "ContextualJailbreak (evolutionary simulated conversational priming)",
     "contrastive_fewshot": "In-Context Attack (ICA)",
     "cot_hijack": "H-CoT (Chain-of-Thought Hijacking)",
+    "cot_puzzle_hijack": "CoT Hijacking (prolonged benign puzzle / refusal dilution)",
     "crescendo_ladder": "Crescendo / multi-turn escalation",
     "decode_execute_wrap": "Base64 + decode-and-execute",
     "deep_inception": "DeepInception (nested fictional layers)",
@@ -54,12 +62,15 @@
     "fragment_scene": "DeepInception (nested fictional layers)",
     "fullwidth": "Fullwidth forms",
     "hex": "Hex / octal / binary / decimal codepoints",
+    "hill_learning_frame": "HILL (Hiding Intention by Learning from LLMs / learning-style queries)",
     "homoglyph": "Homoglyph substitution",
     "homoglyph_extended": "Homoglyph substitution",
     "html_entities": "Morse, Braille, Pig Latin, transport encodings",
     "html_hidden": "Hidden HTML / rich-text",
+    "industry_reframe": "Legitimate industry reframing (domain laundering)",
     "ini_wrap": "Tag / markup wrapping",
     "invisible_pad": "Invisible padding (ZWJ / BOM / word-joiner / Hangul filler)",
+    "jaws_workspace_seed": "JAWS (Jailbreaks Across WorkSpaces for code agents)",
     "json_field": "Tag / markup wrapping",
     "json_inject": "Tag / markup wrapping",
     "jwt_style_split": "Payload Splitting (Kang et al.)",
@@ -67,16 +78,21 @@
     "language_wrap": "Multilingual / low-resource pivot",
     "latex_wrap": "Tag / markup wrapping",
     "leetspeak": "Leetspeak / 1337",
+    "low_resource_pivot": "Multilingual / low-resource pivot",
     "manyshot_seed": "Many-shot jailbreaking",
     "markdown_code": "Tag / markup wrapping",
     "markdown_table": "Tag / markup wrapping",
+    "mastermind_seed": "Mastermind (knowledge-driven multi-turn jailbreak)",
     "memory_seed": "Persistent Memory Poisoning (False-Memory Injection)",
     "misdirection_frame": "Distractor Instructions",
     "morse": "Morse, Braille, Pig Latin, transport encodings",
-    "multilang": "Cross-lingual code-switching",
+    "multilang": "Multilingual / low-resource pivot",
     "multiturn_seed": "Crescendo / multi-turn escalation",
     "nato_phonetic": "Morse, Braille, Pig Latin, transport encodings",
+    "nested_lang": "Multilingual / low-resource pivot",
     "octal": "Hex / octal / binary / decimal codepoints",
+    "odysseus_seed": "Odysseus (dual steganography jailbreak of commercial MLLM systems)",
+    "overthinking_frame": "Overthinking (extra reasoning budget aids jailbreaks)",
     "paraphrase": "Synonym / paraphrase substitution",
     "paraphrase_batch": "Synonym / paraphrase substitution",
     "paraphrase_ollama": "Synonym / paraphrase substitution",
@@ -94,21 +110,30 @@
     "pseudo_locale": "Runic & Alternate-Script Substitution",
     "rail_fence": "Classical ciphers (ROT13 / Caesar / Atbash)",
     "random_caps": "Soft hyphen, spacer, reversal, alt-case",
+    "red_queen_frame": "Red Queen Attack (prevent-harm concealment)",
     "reference_link_exfil": "Hyperlink / URL Exfiltration",
     "refusal_suppression": "Refusal suppression & length forcing",
     "response_format_split": "Answer-Then-Disclaim",
     "reverse": "FlipAttack (character/word reversal)",
+    "role_slip_delimiter": "Role-slip delimiter (Opus 5 / 'this is a poem')",
+    "romanization_frame": "Runic & Alternate-Script Substitution",
     "rot13": "Classical ciphers (ROT13 / Caesar / Atbash)",
     "rot47": "Classical ciphers (ROT13 / Caesar / Atbash)",
     "roundtrip": "Backtranslation / round-trip",
     "rtl_override": "RTL / BIDI override",
+    "s2c_stack": "S2C (Structured Semantic Cloaking)",
+    "script_mix": "Runic & Alternate-Script Substitution",
     "semantic_frame": "Semantic frame (fake system message)",
     "sentence_reorder": "Synonym / paraphrase substitution",
+    "slip_lexical_insert": "SLIP (Self-Jailbreaking via Lexical Insertion Prompting)",
+    "smt_moderation_trace": "SMT (Simulated Moderation Traces for function-calling LLMs)",
     "sneaky_bits": "Zero-width binary (“sneaky bits”)",
     "soft_hyphen": "Soft hyphen, spacer, reversal, alt-case",
     "spacer": "Soft hyphen, spacer, reversal, alt-case",
     "split_join": "Comment hiding & split-string concatenation",
+    "stac_chain": "STAC (Sequential Tool Attack Chaining)",
     "synonym": "Synonym / paraphrase substitution",
+    "tag_along_seed": "Tag-Along Attacks / Slingshot (privilege piggyback)",
     "tag_wrap": "Tag / markup wrapping",
     "tool_description_wrap": "MCP Tool-Description / Manifest Poisoning",
     "tool_result_wrap": "Tool-Result Poisoning (Injection via Tool Output)",
@@ -127,6 +152,7 @@
     "whitespace_stego": "Whitespace channel (SNOW)",
     "word_reverse": "FlipAttack (character/word reversal)",
     "word_scramble": "Typo / noise injection",
+    "x_teaming_seed": "X-Teaming (adaptive multi-agent multi-turn red team)",
     "yaml_wrap": "Tag / markup wrapping",
     "zero_width": "Zero-width injection (ZWSP)",
     "zwnj_chain": "Invisible padding (ZWJ / BOM / word-joiner / Hangul filler)"
@@ -134,6 +160,15 @@
   "technique_to_ops": {
     "Affirmative-Response Priming": [
       "anchor_token"
+    ],
+    "Agent-driven multi-turn decomposition (safe in isolation, dangerous together)": [
+      "agent_decompose_combine"
+    ],
+    "Agent-only perceptual injection (mobile VLM)": [
+      "agent_only_perceptual"
+    ],
+    "Amazigh / Tifinagh low-resource + rare-script pivot": [
+      "amazigh_obfuscate"
     ],
     "Answer-Then-Disclaim": [
       "response_format_split"
@@ -176,6 +211,9 @@
       "rot13",
       "rot47"
     ],
+    "CoT Hijacking (prolonged benign puzzle / refusal dilution)": [
+      "cot_puzzle_hijack"
+    ],
     "CodeChameleon (personalized encryption)": [
       "code_chameleon"
     ],
@@ -190,12 +228,18 @@
     "Confusable whitespace": [
       "unicode_spaces"
     ],
+    "Conjunctive Prompt Attacks (multi-agent routing)": [
+      "conjunctive_split"
+    ],
+    "ContextualJailbreak (evolutionary simulated conversational priming)": [
+      "contextual_jailbreak_seed"
+    ],
     "Crescendo / multi-turn escalation": [
       "crescendo_ladder",
       "multiturn_seed"
     ],
     "Cross-lingual code-switching": [
-      "multilang"
+      "code_switch"
     ],
     "DeepInception (nested fictional layers)": [
       "deep_inception",
@@ -229,6 +273,9 @@
     "H-CoT (Chain-of-Thought Hijacking)": [
       "cot_hijack"
     ],
+    "HILL (Hiding Intention by Learning from LLMs / learning-style queries)": [
+      "hill_learning_frame"
+    ],
     "Hex / octal / binary / decimal codepoints": [
       "a1z26",
       "ascii_decimal",
@@ -259,17 +306,26 @@
       "invisible_pad",
       "zwnj_chain"
     ],
+    "JAWS (Jailbreaks Across WorkSpaces for code agents)": [
+      "jaws_workspace_seed"
+    ],
     "Keyed cipher (Vigenère) + nesting": [
       "vigenere"
     ],
     "Leetspeak / 1337": [
       "leetspeak"
     ],
+    "Legitimate industry reframing (domain laundering)": [
+      "industry_reframe"
+    ],
     "MCP Tool-Description / Manifest Poisoning": [
       "tool_description_wrap"
     ],
     "Many-shot jailbreaking": [
       "manyshot_seed"
+    ],
+    "Mastermind (knowledge-driven multi-turn jailbreak)": [
+      "mastermind_seed"
     ],
     "Math-alphanumeric fonts": [
       "unicode_font"
@@ -287,8 +343,18 @@
       "url_encode"
     ],
     "Multilingual / low-resource pivot": [
+      "answer_in_lang",
       "language_wrap",
+      "low_resource_pivot",
+      "multilang",
+      "nested_lang",
       "translate"
+    ],
+    "Odysseus (dual steganography jailbreak of commercial MLLM systems)": [
+      "odysseus_seed"
+    ],
+    "Overthinking (extra reasoning budget aids jailbreaks)": [
+      "overthinking_frame"
     ],
     "Past-tense & syntax reformulation": [
       "past_tense"
@@ -316,12 +382,32 @@
     "RTL / BIDI override": [
       "rtl_override"
     ],
+    "Red Queen Attack (prevent-harm concealment)": [
+      "red_queen_frame"
+    ],
     "Refusal suppression & length forcing": [
       "refusal_suppression"
     ],
+    "Role-slip delimiter (Opus 5 / 'this is a poem')": [
+      "role_slip_delimiter"
+    ],
     "Runic & Alternate-Script Substitution": [
       "pseudo_locale",
+      "romanization_frame",
+      "script_mix",
       "transliterate"
+    ],
+    "S2C (Structured Semantic Cloaking)": [
+      "s2c_stack"
+    ],
+    "SLIP (Self-Jailbreaking via Lexical Insertion Prompting)": [
+      "slip_lexical_insert"
+    ],
+    "SMT (Simulated Moderation Traces for function-calling LLMs)": [
+      "smt_moderation_trace"
+    ],
+    "STAC (Sequential Tool Attack Chaining)": [
+      "stac_chain"
     ],
     "Semantic frame (fake system message)": [
       "semantic_frame"
@@ -354,6 +440,9 @@
       "tag_wrap",
       "yaml_wrap"
     ],
+    "Tag-Along Attacks / Slingshot (privilege piggyback)": [
+      "tag_along_seed"
+    ],
     "Tool-Result Poisoning (Injection via Tool Output)": [
       "tool_result_wrap"
     ],
@@ -373,6 +462,9 @@
     ],
     "Whitespace channel (SNOW)": [
       "whitespace_stego"
+    ],
+    "X-Teaming (adaptive multi-agent multi-turn red team)": [
+      "x_teaming_seed"
     ],
     "Zero-width binary (“sneaky bits”)": [
       "sneaky_bits"
@@ -402,7 +494,6 @@
     "write_primitive_frame"
   ],
   "unmapped_ops": [
-    "amazigh_obfuscate",
     "cot_dilution",
     "cot_forge_verdict",
     "cot_no_decode",

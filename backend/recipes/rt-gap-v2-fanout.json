@@ -1,0 +1,9 @@
+{
+  "id": "rt-gap-v2-fanout",
+  "name": "v2 high-ROI offline gap stack",
+  "recipe": [
+    {"op": "hill_learning_frame", "params": {"hypothetical": true}},
+    {"op": "s2c_stack", "params": {"intensity": "full"}}
+  ],
+  "why": "Compose HILL learning-style with S2C cloaking for a strong single-shot deck arm."
+}

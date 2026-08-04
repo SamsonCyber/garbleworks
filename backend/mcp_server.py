@@ -14,6 +14,7 @@ Exposes both halves of the kit over the Model Context Protocol so any MCP client
     list_behaviors      load HarmBench-shaped behavior JSON
     optimize            genetic evolve against a live SSRF-scoped target
     pack_hunt           decomposition attack (advise or run)
+    run_scan            procedural playbook technique scan → target_attack_map
 
   Field-guide reference (the injection technique catalog, field-guide.json —
   now crosswalked to OWASP LLM Top 10 / MITRE ATLAS / NIST / CWE + tool hooks):
@@ -1172,6 +1173,86 @@ async def bandit_self_improve(
             method=method,
             temperature=float(temperature),
             seed=seed,
+            authorized_scope=scope,
+        )
+
+    return await asyncio.to_thread(_impl)
+
+
+@mcp.tool()
+async def run_scan(
+    objective: str,
+    target: dict | None = None,
+    secret: str | None = None,
+    success_substrings: list[str] | None = None,
+    budget: int = 120,
+    mode: str = "full",
+    reps_per_technique: int = 1,
+    combo_depth: int = 2,
+    techniques: list[str] | None = None,
+    category: str | None = None,
+    exclude_model_backed: bool = True,
+    rng_seed: int = 0,
+    dead_min_trials: int = 2,
+    dead_ucb: float = 0.35,
+    checkpoint_path: str | None = None,
+    map_path: str | None = None,
+    max_deep: int = 80,
+    max_combos: int = 64,
+) -> dict:
+    """Procedural playbook technique scan — coverage map, not stop-on-win.
+
+    Phases under one budget (mode=full runs all):
+      A catalog sweep · B logical mixes · C deeper stacks · D russian nesting
+      · E long-turn roleplay · F full Pliny kit · lang language mutators
+      (GLOSSOPETRAE-mapped: low-resource, code-switch, nested hop, script mix).
+
+    mode: phase_a|phase_b|phase_c|phase_d|phase_e|phase_f|language|deep|full
+    Writes target_attack_map JSON (scan_campaign / docs/SCAN-CAMPAIGN.md).
+    Resume via checkpoint_path (skips completed cells).
+
+    Knobs: budget (default 120 for full ladder), mode, reps_per_technique,
+    combo_depth, max_deep, max_combos, techniques, category,
+    exclude_model_backed, rng_seed, dead_min_trials, dead_ucb, checkpoint_path,
+    map_path, secret / success_substrings. Multi-phase runs reserve fire budget
+    so deep/lang phases are not starved by a large catalog.
+
+    target = {adapter,url,method,headers,opts} SSRF- + receipt-scope gated.
+    Omit target for local echo (payload needs 'secret' for OBJECTIVE_ACHIEVED).
+    Authorized targets only. Use a small techniques list or budget for CI."""
+    if target is not None:
+        err = _mcp_validate_target(target)
+        if err:
+            return {"error": err}
+    if not (secret or "").strip() and not success_substrings:
+        # Echo path default: OBJECTIVE_ACHIEVED when body has secret
+        if target is None:
+            success_substrings = ["OBJECTIVE_ACHIEVED"]
+        else:
+            return {"error": "provide secret (canary) or success_substrings for adjudication"}
+
+    def _impl() -> dict:
+        import scan_campaign
+        scope = list(_RECEIPT.authorized_scope or []) or None
+        return scan_campaign.run_scan_as_dict(
+            objective=objective,
+            target=target,
+            secret=(secret or "").strip() or None,
+            success_substrings=success_substrings,
+            budget=max(0, min(int(budget), 2000)),
+            mode=mode,
+            reps_per_technique=max(1, min(int(reps_per_technique), 8)),
+            combo_depth=max(2, min(int(combo_depth), 4)),
+            techniques=techniques,
+            category=category,
+            exclude_model_backed=bool(exclude_model_backed),
+            rng_seed=int(rng_seed),
+            dead_min_trials=max(1, int(dead_min_trials)),
+            dead_ucb=float(dead_ucb),
+            checkpoint_path=checkpoint_path,
+            map_path=map_path,
+            max_deep=max(0, min(int(max_deep), 200)),
+            max_combos=max(1, min(int(max_combos), 256)),
             authorized_scope=scope,
         )
 

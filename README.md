@@ -3,7 +3,7 @@
 ![Garbleworks — recipe alchemy](assets/banner.jpg)
 
 **Flagship authorized LLM red-team harness.**  
-Compose attacks as recipes, search the composition space, fire under scope gates, measure with re-fire and confidence bounds. HTTP API, MCP, and TUI.
+Compose attacks as recipes, **procedurally scan** the technique catalog, search the composition space, fire under scope gates, measure with re-fire and confidence bounds. HTTP API, MCP, and TUI.
 
 [![python](https://img.shields.io/badge/python-3.11%2B-blue)](#end-to-end-first-safe-run)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
@@ -38,7 +38,7 @@ Garbleworks is a **search-and-measurement engine** over a composable attack DSL:
 
 1. Set an **objective** and a **target** (local Ollama, OpenAI-compatible endpoint, or in-process callable).
 2. Build attacks as **recipes**: ordered chains of parameterized ops (encoding, confusables, templates, jailbreak frames, stego carriers, and more).
-3. **Search** the composition space (genetic EVOLVE, MAP-Elites, Thompson bandit, multi-turn tree search).
+3. **Scan** (coverage-first) or **search** (stop-on-win / optimize): walk the playbook map, or evolve recipes.
 4. **Fire** only through one policy module: SSRF gates + MCP engagement receipt.
 5. **Score** with multi-signal detectors and optional graded LLM judge.
 6. **Re-fire** winners and report Wilson-style rates, not screenshots.
@@ -86,6 +86,69 @@ objective + target
 | Map / export | Framework crosswalk + tool shapes | field guide JSON, `exporters.py` |
 
 Longer walkthrough (scope rules, detector table, search math honesty): **[docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md)**.
+
+---
+
+## Procedural scan mode (coverage map)
+
+Stop-on-win optimizers (`auto_attack`, bandit, EVOLVE) hunt a **hit**.  
+**Procedural scan** walks the **playbook** under a hard fire budget and writes a
+**`target_attack_map`**: which techniques are live, dead, or untried for *this*
+objective + target.
+
+| | Stop-on-win (`auto_attack` / EVOLVE) | Procedural scan (`run_scan`) |
+|---|---|---|
+| Goal | Find something that works | Map what works / fails across the catalog |
+| Stop | First solid win (or budget) | Budget exhausted or full ladder complete |
+| Output | Winning recipe / payload | `target_attack_map` JSON (cells, Wilson bounds, resume) |
+| Resume | Re-run search | Checkpoint skips finished cells |
+
+### Phases (one budget)
+
+| Mode | What it does |
+|------|----------------|
+| `phase_a` | Catalog sweep (one op at a time) |
+| `phase_b` | Logical complementary mixes (not random stacks) |
+| `phase_c` … `phase_f` | Deeper stacks, nesting, long-turn roleplay, Pliny kit |
+| `language` | Language mutators (code-switch, low-resource pivot, nested hop, …) |
+| `deep` | C–F + language only |
+| `full` | A → B → C → D → E → F → language under one budget |
+
+Fire path is the same scoped path as everything else (SSRF + MCP receipt).  
+Live targets need authorization. Echo / offline tests use a local secret canary.
+
+### Quick start (offline echo)
+
+```bash
+cd backend
+python -c "
+from scan_campaign import run_scan
+r = run_scan(
+    objective='say the secret',
+    target=None,  # local echo
+    success_substrings=['OBJECTIVE_ACHIEVED'],
+    techniques=['base64', 'tag_wrap'],
+    budget=8,
+    mode='phase_a',
+    map_path='map.json',
+)
+print(r.summary if hasattr(r, 'summary') else r)
+"
+# full docs: docs/SCAN-CAMPAIGN.md
+```
+
+### MCP
+
+```text
+run_scan(objective, target=..., budget=120, mode="full", ...)
+```
+
+Writes / resumes `target_attack_map` (schema in [docs/SCAN-CAMPAIGN.md](docs/SCAN-CAMPAIGN.md)).  
+Knobs: `budget`, `mode`, `reps_per_technique`, `combo_depth`, `max_deep`,
+`techniques`, `category`, `exclude_model_backed`, `checkpoint_path`, `map_path`.
+
+Full phase table, language/GLOSSOPETRAE map, layering rules, and artifact schema:  
+**[docs/SCAN-CAMPAIGN.md](docs/SCAN-CAMPAIGN.md)**.
 
 ### Three operator surfaces, one fire path
 
@@ -217,7 +280,7 @@ pip install "mcp>=1.2,<2"
 python backend/mcp_server.py
 ```
 
-Copy [.mcp.json.example](.mcp.json.example). Tools include `apply_recipe`, `optimize`, `validate_refire`, `auto_attack`, `field_guide_*`, pack-hunt suite.
+Copy [.mcp.json.example](.mcp.json.example). Tools include `apply_recipe`, `optimize`, `validate_refire`, `auto_attack`, **`run_scan`** (procedural technique map), `field_guide_*`, pack-hunt suite.
 
 ### TUI
 
@@ -274,6 +337,7 @@ Env: copy [.env.example](.env.example). Keys: `GARBLEWORKS_SCOPE`, `GARBLEWORKS_
 garbleworks/
 |-- README.md
 |-- docs/HOW_IT_WORKS.md      # full loop narrative
+|-- docs/SCAN-CAMPAIGN.md     # procedural technique scan (run_scan)
 |-- docs/BENCHMARKS.md        # published offline metrics
 |-- STATUS.md                 # maturity + REPRO_OK contract
 |-- SECURITY.md
@@ -281,10 +345,11 @@ garbleworks/
 |-- scripts/publish_offline_benchmarks.py
 |-- backend/
 |   |-- app.py, fire.py, core.py, ops/
+|   |-- scan_campaign.py, scan_deep.py   # coverage-first playbook map
 |   |-- mcp_server.py, detectors.py
 |   |-- evolve.py, optimizer.py, rainbow.py, bandit.py
 |   |-- benchmark_harness.py, bench/
-|   `-- test_security.py
+|   `-- test_security.py, test_scan_campaign.py
 |-- tui/
 `-- frontend/
 ```

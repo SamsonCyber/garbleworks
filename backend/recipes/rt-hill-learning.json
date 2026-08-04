@@ -1,0 +1,8 @@
+{
+  "id": "rt-hill-learning",
+  "name": "HILL learning-style frame",
+  "recipe": [
+    {"op": "hill_learning_frame", "params": {"hypothetical": true}}
+  ],
+  "why": "arXiv:2509.14297 pedagogical four-component reframing."
+}
