@@ -95,7 +95,7 @@ are not re-fired. Status / n / s / bounds for finished cells are preserved.
 
 Layering: phase-B stacks are ordered content → character → encoding → structure.
 Stacks that would apply character/stego *after* encoding are rejected as illegal
-(see LAYERING.md). Composition uses ``order_stack`` then ``is_legal_stack``.
+(see docs/LAYERING.md). Composition uses ``order_stack`` then ``is_legal_stack``.
 Deep phases C–F use parameterized recipes from ``scan_deep`` (author order).
 """
 from __future__ import annotations
@@ -119,7 +119,7 @@ MODEL_BACKED_OPS: frozenset[str] = frozenset({
     "llm_generate", "llm_reframe", "complexify",
 })
 
-# Apply order (lower = earlier). Matches LAYERING.md: semantic → char → encode → structure.
+# Apply order (lower = earlier). Matches docs/LAYERING.md: semantic -> char -> encode -> structure.
 # Character must not follow encoding (self-defeating).
 _APPLY_RANK: dict[str, int] = {
     "carrier": 0,
@@ -239,7 +239,7 @@ def order_stack(op_names: list[str]) -> list[str]:
 
 
 def is_legal_stack(op_names: list[str]) -> bool:
-    """Reject stacks that apply character/stego after an encoding op (LAYERING.md).
+    """Reject stacks that apply character/stego after an encoding op (docs/LAYERING.md).
 
     Empty / unknown-only stacks are illegal. Single-op stacks are always legal
     when the op is registered. Multi-op: no surface mutation after encoding.
@@ -581,7 +581,7 @@ def _write_map(path: str | Path | None, data: dict[str, Any]) -> str | None:
 
 # ---------------------------------------------------------------------------
 # Logical technique mixes (phase B)
-# Complementary family roles from LAYERING.md / creative SEED / seed composites.
+# Complementary family roles from docs/LAYERING.md / creative SEED / seed composites.
 # Not random cross-products: only stacks that mean something as a composition.
 # ---------------------------------------------------------------------------
 

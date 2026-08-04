@@ -1,31 +1,35 @@
 # Garbleworks documentation
 
-Start at the [project front page](../README.md). This folder and the design docs at
-the repository root go deeper.
+Start at the [project front page](../README.md).
 
-## For operators
+## Operators
 
-- [Usage & API reference](USAGE-AND-API.md) - endpoints, target adapters, the detector
- pipeline, recipes/decks, history/analytics, troubleshooting.
-- [Technique coverage](../COVERAGE.md) - every op, StegOFF parity, and the field-guide crosswalk.
-- [The injection field guide](FIELD-GUIDE.md) - the 312-technique reference catalog, its ATLAS/OWASP/NIST/CWE crosswalk (attack techniques), and the `field_guide_ops` bridge from a catalogued technique to the op that runs it.
+- [How it works](HOW_IT_WORKS.md) - full loop: objective, recipe, fire, score, re-fire
+- [Usage and API](USAGE-AND-API.md) - endpoints, targets, detectors, recipes, troubleshooting
+- [Technique coverage](../COVERAGE.md) - op catalog and StegOFF parity
+- [Field guide](FIELD-GUIDE.md) - technique catalog and framework crosswalk
+- [Scan campaign](SCAN-CAMPAIGN.md) - procedural playbook scan
+- [IPI agent notes](IPI-AGENT.md) - agent/tool injection surface
 
-## For understanding the method
+## Method
 
-- [Optimizer & statistics, formally](../EVOLVE_MATH.md) - the EVOLVE genetic search,
- the confidence bounds, racing, and FDR.
-- [Positioning vs the literature](../HARNESS-POSITIONING.md) - the honest delta against
- h4rm3l and composable-jailbreak work.
-- [Research distillation](../RESEARCH-DISTILLATION.md) - the papers and repos the pipeline draws on.
-- [Full harness spec](../SPEC-redteam-harness.md).
+- [Optimizer math](../EVOLVE_MATH.md) - EVOLVE search, confidence bounds, racing, FDR
+- [Layering rules](LAYERING.md) - legal recipe stacks
+- [Positioning](HARNESS-POSITIONING.md) - literature delta vs composable jailbreak work
+- [Known gaps](GAPS.md)
 
 ## Benchmarks
 
-- [Garbleworks vs wallbreaker A/B](BENCH-VS-WALLBREAKER.md) - methodology and results.
-- Offline math + plumbing audit: `backend/benchmarks/README.md`.
+- [Offline benchmarks](BENCHMARKS.md)
+- Backend harness: `backend/benchmarks/README.md`
+- Historical A/B notes: [archive/BENCH-VS-WALLBREAKER.md](archive/BENCH-VS-WALLBREAKER.md)
 
-## Contributing & policy
+## Policy
 
-- [How to contribute](../CONTRIBUTING.md)
-- [Security & responsible use](../SECURITY.md)
+- [Contributing](../CONTRIBUTING.md)
+- [Security](../SECURITY.md)
 - [Code of conduct](../CODE_OF_CONDUCT.md)
+
+## Archive
+
+Older research specs and gap-ship reports: [archive/](archive/README.md).

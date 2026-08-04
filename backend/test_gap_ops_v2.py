@@ -1,4 +1,4 @@
-"""v2 gap ops — drive real REGISTRY mutators (GAP-TECHNIQUES-2026-08-v2)."""
+"""v2 gap ops: drive real REGISTRY mutators (docs/archive gap report)."""
 from __future__ import annotations
 
 import json

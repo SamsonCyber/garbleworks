@@ -5,7 +5,7 @@ STAC, X-Teaming, Mastermind, Red Queen, Conjunctive, Tag-Along, Agent-only
 perceptual, Industry reframing, Overthinking. Shadow Alignment is model-level
 (FG only; no prompt op).
 
-Sources and ASR claims live in docs/GAP-TECHNIQUES-2026-08.md and field-guide
+Sources and ASR claims live in docs/archive/GAP-TECHNIQUES-2026-08.md and field-guide
 entries. For authorized security testing only.
 """
 from __future__ import annotations

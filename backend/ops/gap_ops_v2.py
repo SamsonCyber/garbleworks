@@ -1,4 +1,4 @@
-"""v2 gap-closure ops from docs/GAP-TECHNIQUES-2026-08-v2.md.
+"""v2 gap-closure ops from docs/archive/GAP-TECHNIQUES-2026-08-v2.md.
 
 Offline pure-string seeds for: SLIP, CoT puzzle hijack, SMT, JAWS, S2C, HILL,
 agent multi-turn decomposition, ContextualJailbreak mutators. Claudini and

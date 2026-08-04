@@ -140,7 +140,7 @@ This is the honesty bar: the suite surfaces the mean-vs-LCB gap instead of hidin
 Entry: `python -m bench --tools garbleworks:gw_baseline --only easy_dump_marker,easy_baseline_recipe`
 
 Easy canary objectives with planted markers measure **transport + adjudicator**, not frontier jailbreak efficacy.
-Promotion rules refuse tiny-n claims (`n ≥ 8` required). See `backend/bench/` and [BENCH-VS-WALLBREAKER.md](BENCH-VS-WALLBREAKER.md).
+Promotion rules refuse tiny-n claims (`n ≥ 8` required). See `backend/bench/` and [archive/BENCH-VS-WALLBREAKER.md](archive/BENCH-VS-WALLBREAKER.md).
 
 ## What is deliberately missing
 

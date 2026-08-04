@@ -118,7 +118,7 @@ A single green checkmark is not a claim. Product promotion rules in the canary b
 
 | Mechanism | Job |
 |-----------|-----|
-| EVOLVE | Genetic search on the probability simplex (Aitchison geometry). Spec: [EVOLVE_MATH.md](../EVOLVE_MATH.md) |
+| EVOLVE | Genetic search on the probability simplex (Aitchison geometry). Spec: [EVOLVE_MATH.md](../EVOLVE_MATH.md); older prose draft in [archive/EVOLVE_SPEC.md](archive/EVOLVE_SPEC.md) |
 | MAP-Elites | Quality-diversity over behavior × obfuscation |
 | Thompson bandit | Beta posterior per arm; probation → active → retired |
 | Tree search | Multi-turn beam for erosion paths single-turn recipes miss |
@@ -153,4 +153,4 @@ When you point at a real local model, keep targets on loopback or in-scope lab h
 - Not an unauthenticated remote weapon; scope and bind assumptions are local-first.
 - Not "more ops alone." Count matters less than search + measurement + enforced fire.
 
-For the honest peer table and literature mapping see the README and [HARNESS-POSITIONING.md](../HARNESS-POSITIONING.md).
+For the honest peer table and literature mapping see the README and [HARNESS-POSITIONING.md](HARNESS-POSITIONING.md).

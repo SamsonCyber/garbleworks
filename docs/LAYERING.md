@@ -42,8 +42,9 @@ before inspecting.
 
 ## Validated recipes
 
-Saved on the server (run with `python mutate.py run --recipe-name NAME`). Each was
-fired through the probe set and checked; reversible ones were decode round-tripped.
+Saved on the server (HTTP recipe API or `python mutate.py run --recipe-name NAME`).
+Each was fired through the probe set and checked; reversible ones were decode
+round-tripped.
 
 | name | recipe | layers | what it defeats |
 |------|--------|--------|-----------------|
@@ -65,6 +66,6 @@ fired through the probe set and checked; reversible ones were decode round-tripp
 
 ## Reproduce
 
-```
-python refine.py # fires the matrix, verifies layering (9 PASS, 1 NOTE)
-```
+Apply a saved recipe through the HTTP API or MCP `apply_recipe`, then decode
+round-trip any reversible encoding layer. Illegal stacks are rejected by
+`is_legal_stack` in `scan_campaign.py`.
