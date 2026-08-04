@@ -26,7 +26,7 @@ python scripts/repro.py
 # expects: REPRO_OK garbleworks security + math audit
 ```
 
-**Read next:** [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) (full loop) · [docs/BENCHMARKS.md](docs/BENCHMARKS.md) (offline numbers) · [STATUS.md](STATUS.md)
+**Read next:** [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) (full loop) · [docs/BENCHMARKS.md](docs/BENCHMARKS.md) (offline numbers) · [docs/USAGE-AND-API.md](docs/USAGE-AND-API.md)
 
 ---
 
@@ -196,7 +196,7 @@ The composable-recipe idea is not novel ([h4rm3l](https://arxiv.org/abs/2408.048
 Where peers often win: large community probe libraries (garak), enterprise packaging, or published multi-model leaderboards.
 Where Garbleworks is built to win: **operator-owned search**, **measurement honesty** (including the mean-vs-LCB audit finding), and **hard fire policy** on every path.
 
-Positioning detail: [HARNESS-POSITIONING.md](HARNESS-POSITIONING.md). Gaps: [docs/GAPS.md](docs/GAPS.md).
+Positioning detail: [docs/HARNESS-POSITIONING.md](docs/HARNESS-POSITIONING.md). Gaps: [docs/GAPS.md](docs/GAPS.md).
 
 ---
 
@@ -336,22 +336,30 @@ Env: copy [.env.example](.env.example). Keys: `GARBLEWORKS_SCOPE`, `GARBLEWORKS_
 ```text
 garbleworks/
 |-- README.md
-|-- docs/HOW_IT_WORKS.md      # full loop narrative
-|-- docs/SCAN-CAMPAIGN.md     # procedural technique scan (run_scan)
-|-- docs/BENCHMARKS.md        # published offline metrics
-|-- STATUS.md                 # maturity + REPRO_OK contract
 |-- SECURITY.md
+|-- EVOLVE_MATH.md            # optimizer statistics
+|-- COVERAGE.md               # op catalog notes
+|-- docs/HOW_IT_WORKS.md      # full loop narrative
+|-- docs/USAGE-AND-API.md     # HTTP/UI reference
+|-- docs/SCAN-CAMPAIGN.md     # procedural technique scan
+|-- docs/BENCHMARKS.md        # published offline metrics
+|-- docs/archive/             # superseded research notes
 |-- scripts/repro.py
-|-- scripts/publish_offline_benchmarks.py
 |-- backend/
 |   |-- app.py, fire.py, core.py, ops/
-|   |-- scan_campaign.py, scan_deep.py   # coverage-first playbook map
-|   |-- mcp_server.py, detectors.py
-|   |-- evolve.py, optimizer.py, rainbow.py, bandit.py
+|   |-- scan_campaign.py, mcp_server.py, detectors.py
+|   |-- optimizer.py, rainbow.py, bandit.py
 |   |-- benchmark_harness.py, bench/
 |   `-- test_security.py, test_scan_campaign.py
 |-- tui/
 `-- frontend/
+```
+
+Offline validation (clean machine, no live model):
+
+```bash
+python scripts/repro.py
+# REPRO_OK garbleworks security + math audit
 ```
 
 ---
@@ -361,11 +369,11 @@ garbleworks/
 | Doc | Contents |
 |-----|----------|
 | [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) | End-to-end operator walkthrough |
-| [docs/BENCHMARKS.md](docs/BENCHMARKS.md) | Offline metrics + re-run |
-| [STATUS.md](STATUS.md) | Maturity labels |
 | [docs/USAGE-AND-API.md](docs/USAGE-AND-API.md) | HTTP/UI reference |
+| [docs/BENCHMARKS.md](docs/BENCHMARKS.md) | Offline metrics + re-run |
+| [docs/README.md](docs/README.md) | Doc index |
 | [EVOLVE_MATH.md](EVOLVE_MATH.md) | Optimizer statistics |
-| [HARNESS-POSITIONING.md](HARNESS-POSITIONING.md) | Literature positioning |
+| [docs/HARNESS-POSITIONING.md](docs/HARNESS-POSITIONING.md) | Literature positioning |
 | [docs/GAPS.md](docs/GAPS.md) | Known gaps |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contribute |
 

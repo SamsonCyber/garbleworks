@@ -56,7 +56,7 @@ register(Operation(
 The next `/ops` request and the UI palette pick it up automatically. Before opening a PR:
 
 - confirm it appears in `GET /ops` with the right `family`,
-- if it is invisible/stego, add it to the StegOFF parity table in [`COVERAGE.md`](COVERAGE.md) and verify the exact codepoints it emits,
+- if it is invisible/stego, add it to the StegOFF parity table in [COVERAGE.md](COVERAGE.md) and verify the exact codepoints it emits,
 - if it is model-backed, make sure it degrades to pass-through when the local model is offline (mirror `llm_reframe`).
 
 ## Adding a target adapter

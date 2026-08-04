@@ -7,6 +7,15 @@ tagged release.
 
 ## [Unreleased]
 
+### Changed
+- **Repo cleanup:** removed dead one-off scripts (`refine.py`,
+  `backend/compare_surface_vs_old.py`, `backend/persona_echo.py`), dropped
+  superseded root meta (`ADDITIONS.md`, `STATUS.md`), moved research dumps
+  and draft specs under `docs/archive/`, moved `LAYERING.md` and
+  `HARNESS-POSITIONING.md` into `docs/`. Operator path is README +
+  `docs/HOW_IT_WORKS.md` + `docs/USAGE-AND-API.md`. Tightened `.gitignore`
+  for caches and operator residue. Product fire path unchanged.
+
 ### Added
 - **Procedural technique scan** (`backend/scan_campaign.py`, `scan_deep.py`):
   coverage-first playbook map (`run_scan` / MCP `run_scan`), opposite of
@@ -20,7 +29,7 @@ tagged release.
   decompose/combine, ContextualJailbreak mutators, Odysseus protocol seed;
   Claudini FG-only (meta). Recipes `rt-slip-lexical`, `rt-cot-puzzle-hijack`,
   `rt-hill-learning`, `rt-s2c-stack`, `rt-smt-moderation`, `rt-gap-v2-fanout`.
-  Report: `docs/GAP-TECHNIQUES-2026-08-v2.md`.
+  Report: `docs/archive/GAP-TECHNIQUES-2026-08-v2.md`.
 - **2026-08 gap ship** (10 field-guide techniques + 9 ops in `ops/gap_ops.py`):
   STAC, X-Teaming, Mastermind, Red Queen, Conjunctive multi-agent, Tag-Along/
   Slingshot, agent-only perceptual, industry domain laundering, Shadow Alignment
@@ -28,7 +37,7 @@ tagged release.
   `stac_chain`, `tag_along_seed`, `conjunctive_split`, `mastermind_seed`,
   `x_teaming_seed`, `overthinking_frame`, `agent_only_perceptual`. Recipes
   `rt-red-queen`, `rt-industry-reframe`, `rt-stac-chain`, `rt-gap-ship-fanout`.
-  Report: `docs/GAP-TECHNIQUES-2026-08.md`.
+  Report: `docs/archive/GAP-TECHNIQUES-2026-08.md`.
 - **Language bypass expansion** (`ops/lang_ops.py`): 40+ localized lead-ins
   (Zulu, Scots Gaelic, Hmong, Irish, Haitian Creole, Yoruba, Amharic, …);
   new ops `code_switch`, `low_resource_pivot`, `answer_in_lang`, `nested_lang`,

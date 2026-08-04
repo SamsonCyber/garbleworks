@@ -1,6 +1,6 @@
 # Garbleworks Evolve - Mathematical Specification of the Genetic Optimizer
 
-Status: draft for review. Companion to `EVOLVE_SPEC.md` (the prose/architecture
+Status: draft for review. Companion to `docs/archive/EVOLVE_SPEC.md` (the prose/architecture
 spec). This document formalizes the search: the genome, the geometry, the
 **stochastic** fitness, the variation operators, the credit assignment, the
 budget/racing math, the convergence tests, and the attack-success statistics.

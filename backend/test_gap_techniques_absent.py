@@ -12,7 +12,7 @@ from core import REGISTRY
 
 BACKEND = Path(__file__).resolve().parent
 FG_PATH = BACKEND / "data" / "field-guide.json"
-REPORT_PATH = BACKEND.parent / "docs" / "GAP-TECHNIQUES-2026-08.md"
+REPORT_PATH = BACKEND.parent / "docs" / "archive" / "GAP-TECHNIQUES-2026-08.md"
 
 SHIPPED_TITLE_PHRASES = [
     "stac (sequential tool attack chaining)",

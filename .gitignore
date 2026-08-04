@@ -1,6 +1,8 @@
 # Python
 __pycache__/
+**/__pycache__/
 *.py[cod]
+*$py.class
 *.egg-info/
 .venv/
 venv/
@@ -13,6 +15,8 @@ venv/
 .ruff_cache/
 .coverage
 htmlcov/
+.tox/
+.nox/
 
 # Runtime / operator state (never commit attack history)
 backend/sessions/
@@ -27,8 +31,11 @@ backend/research_attempts*.jsonl
 backend/console_state*
 backend/fire_history*
 backend/uvicorn*.log
+backend/grok_packet.txt
+backend/grok_reply.json
 outputs/
 *.log
+*.sqlite3
 
 # Bench live results
 backend/bench/results/

@@ -2,7 +2,7 @@
 
 Implements the hierarchical MAP-Elites + live multi-feature calibration +
 attribution + Pareto/utility reporting architecture described in
-BEYOND_LCB_MEAN_SPEC.md.
+docs/archive/BEYOND_LCB_MEAN_SPEC.md.
 
 This is the new primary "map the reliable attack surface" mode.
 The existing optimizer.py run_evolve remains available for focused deep dives

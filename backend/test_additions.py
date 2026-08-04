@@ -1,4 +1,4 @@
-"""Tests for the research-distillation additions (ADDITIONS.md B1/B2/B5/B7/B8 + bandit/discover/export).
+"""Tests for bandit, discover, export, and adaptive op additions.
 
 All offline: LLM-backed paths are exercised via their pass-through/fail-safe
 branches (unreachable Ollama URL), so nothing here needs a model or network.

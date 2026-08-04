@@ -93,7 +93,7 @@ Phase B does **not** pair techniques at random. It builds stacks from:
 3. Phase-A winners/near-misses as preferred anchors inside those roles
 
 Apply order: content → character → encoding → structure. Stacks that apply
-character/stego after encoding are illegal (`is_legal_stack` / LAYERING.md).
+character/stego after encoding are illegal (`is_legal_stack` / [LAYERING.md](LAYERING.md)).
 Combo rows in the map include a `mix` label naming the recipe used.
 
 ## Offline test path

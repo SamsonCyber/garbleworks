@@ -96,5 +96,5 @@ When you add a garbleworks op that implements a catalogued technique, wire it in
 ## See also
 
 - [Technique coverage](../COVERAGE.md) - the op-level view, including StegOFF parity
-- [Positioning vs the literature](../HARNESS-POSITIONING.md)
+- [Positioning vs the literature](HARNESS-POSITIONING.md)
 - Project front page: [`../README.md`](../README.md)
