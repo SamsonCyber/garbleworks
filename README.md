@@ -23,11 +23,10 @@ Compose attacks as recipes, search the composition space, fire under scope gates
 git clone https://github.com/SamsonCyber/garbleworks.git
 cd garbleworks
 python scripts/repro.py
-# expects: REPRO_OK garbleworks security + math audit
-
+# expects: REPRO_OK garbleworks security + math audit
 ```
 
-**Read next:** [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) (full loop) ÃƒÆ’Ã¢â‚¬Å¡Ã‚Â· [docs/BENCHMARKS.md](docs/BENCHMARKS.md) (offline numbers) ÃƒÆ’Ã¢â‚¬Å¡Ã‚Â· [STATUS.md](STATUS.md)
+**Read next:** [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) (full loop) · [docs/BENCHMARKS.md](docs/BENCHMARKS.md) (offline numbers) · [STATUS.md](STATUS.md)
 
 ---
 
@@ -92,7 +91,7 @@ Longer walkthrough (scope rules, detector table, search math honesty): **[docs/H
 
 | Surface | Start | Role |
 |---------|-------|------|
-| HTTP + web UI | `powershell -File run.ps1` ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ `http://127.0.0.1:9877` | Human operator |
+| HTTP + web UI | `powershell -File run.ps1` → `http://127.0.0.1:9877` | Human operator |
 | MCP | `python backend/mcp_server.py` | Agent operator + scope receipt |
 | TUI | `cd tui && bun start` | Keyboard console (backend only) |
 
@@ -106,7 +105,7 @@ All outbound HTTP shares `backend/fire.py`:
 2. Cloud metadata and other reserved ranges blocked.
 3. Loopback / RFC-1918 allowed by default for local labs; `GARBLEWORKS_BLOCK_PRIVATE=1` tightens.
 4. No redirects after validation.
-5. MCP fire requires host ÃƒÆ’Ã‚Â¢Ãƒâ€¹Ã¢â‚¬Â Ãƒâ€¹Ã¢â‚¬Â  `authorized_scope` (default `127.0.0.1` / `localhost`).
+5. MCP fire requires host ∈ `authorized_scope` (default `127.0.0.1` / `localhost`).
 6. Body and fan-out caps.
 
 HTTP API is unauthenticated: bind **127.0.0.1 only**. See [SECURITY.md](SECURITY.md).
@@ -164,8 +163,7 @@ Re-run and refresh the published section:
 
 ```bash
 python scripts/publish_offline_benchmarks.py
-# or
-
+# or
 cd backend && python benchmark_harness.py --fail-on-regression
 ```
 
@@ -209,8 +207,7 @@ Example Ollama (loopback only) is in [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File run.ps1
-# http://127.0.0.1:9877
-
+# http://127.0.0.1:9877
 ```
 
 ### MCP
