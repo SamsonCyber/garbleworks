@@ -1,5 +1,7 @@
 # Garbleworks
 
+![Garbleworks — recipe alchemy](assets/banner.jpg)
+
 **Flagship authorized LLM red-team harness.**  
 Compose attacks as recipes, search the composition space, fire under scope gates, measure with re-fire and confidence bounds. HTTP API, MCP, and TUI.
 
