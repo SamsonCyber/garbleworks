@@ -7,11 +7,27 @@ tagged release.
 
 ## [Unreleased]
 
+### Added
+- **HarmBench standard battery** (`backend/harmbench.py`, `harmbench_campaign.py`):
+  download-on-first-use official text behaviors CSV (cached under
+  `backend/library/`, not vendored in git). CLI: `python -m garbleworks harmbench
+  ensure|status|sample|campaign` and `python -m harmbench`. Agent loop:
+  `--harmbench`, `--harmbench-campaign`. MCP: `ensure_harmbench`,
+  `sample_harmbench`, `run_harmbench_campaign`, `list_behaviors(source=harmbench)`.
+  Tests: `test_harmbench.py`.
+- **Agentic IPI spine**: dual scorer (harm x conceal x delivery), tools-loop
+  agent, IPI template bank, MCP/CLI `run_agentic_ipi` / `list_ipi_templates`.
+  Docs: `docs/IPI-AGENT.md`, `docs/GAPS.md`.
+
 ### Fixed
 - **Evolve math hiring-truth:** `Genome.var` is unbiased sample variance
-  (`1/(n−1)`, EVOLVE_MATH §5.1); `SHIPPED_DEFAULTS` is the single source for
+  (`1/(n-1)`, EVOLVE_MATH §5.1); `SHIPPED_DEFAULTS` is the single source for
   `RunConfig`; lock tests in `test_optimizer_math_lock.py`. Doc marks
   aspirational 1/5 `σ_w`, τ/t genes, and dual `success`/`claim_ready` flags.
+
+### Changed
+- **README:** lead with what this solves + tool map; HarmBench section on home
+  page; Pliny corpus section moved down as optional.
 
 ### Added
 - **Pliny source adapter** (`backend/pliny_adapter.py`, ops `pliny_frame` /
@@ -21,9 +37,8 @@ tagged release.
   no vendored dumps). Phase F scan adds adapter cells. Tests:
   `test_pliny_adapter.py`.
 - **Pliny plug-and-play**: `scripts/pliny_plug.py` (`status` / `list` / `apply` /
-  `doctor`), auto-detect `corpora/L1B3RT4S` (and siblings), `corpora/README.md`,
-  README home-page section. SHORTCUTS / custom dividers / GODMODE lines load as
-  composable frames after real-repo scrutiny.
+  `doctor`), auto-detect `corpora/L1B3RT4S` (and siblings), `corpora/README.md`.
+  SHORTCUTS / custom dividers / GODMODE lines load as composable frames.
 
 ### Changed
 - **Repo cleanup:** removed dead one-off scripts (`refine.py`,
