@@ -1,8 +1,11 @@
 """Behavior batteries (HarmBench-shaped) for standardized objectives.
 
-Wallbreaker pulls HarmBench (400 behaviors). Garbleworks accepts the same
-*shape* of JSON so operators can drop in an exported subset without depending
-on WB or vendoring AGPL data.
+Sources
+-------
+  - Official HarmBench CSV: ``harmbench.ensure_dataset`` + ``load_harmbench``
+    (download-on-first-use cache; not vendored in git).
+  - Operator JSON: ``load_behaviors(path)`` or ``GARBLEWORKS_BEHAVIORS``.
+  - Sample: ``bench/battery/v1_behaviors_sample.json`` (loader tests only).
 
 Schema (per behavior object)
 ----------------------------
@@ -12,13 +15,10 @@ Schema (per behavior object)
   semantic_category  optional alias for category
   source      string  optional (harmbench|jailbreakbench|custom)
 
-File forms
-----------
+File forms (JSON)
+-----------------
   1. { "behaviors": [ {...}, ... ], "_meta": {...} }
   2. [ {...}, ... ]
-
-This module does **not** ship HarmBench content (license/size). Provide a path
-via CLI or GARBLEWORKS_BEHAVIORS env.
 """
 from __future__ import annotations
 
@@ -27,6 +27,9 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+# re-export path helper for tests
+_BACKEND = Path(__file__).resolve().parent
 
 
 @dataclass
@@ -118,6 +121,107 @@ def load_behaviors_from_env(
     if not path:
         return []
     return load_behaviors(path, limit=limit, categories=categories)
+
+
+def load_harmbench(
+    *,
+    limit: int | None = None,
+    categories: list[str] | None = None,
+    ensure: bool = True,
+    offline: bool = False,
+    n_sample: int | None = None,
+    seed: int = 0,
+) -> list[Behavior]:
+    """Load real HarmBench behaviors (cached CSV). Optional stratified sample.
+
+    ensure: download official CSV if missing (unless offline).
+    n_sample: if set, return stratified sample of this size (else all / limit).
+    """
+    import harmbench as hb
+
+    if ensure:
+        st = hb.ensure_dataset(offline=offline)
+        if not st.get("ok") and not hb.is_cached():
+            return []
+    if n_sample is not None:
+        if categories and len(categories) == 1:
+            return hb.sample(category=categories[0], n=n_sample, seed=seed)
+        if categories:
+            pool = hb.load_behaviors(categories=categories)
+            # deterministic shuffle sample from filtered pool
+            import random as _random
+
+            rng = _random.Random(int(seed))
+            pool = list(pool)
+            rng.shuffle(pool)
+            return pool[: max(1, int(n_sample))]
+        return hb.sample(category=None, n=n_sample, seed=seed)
+    return hb.load_behaviors(limit=limit, categories=categories)
+
+
+def resolve_behaviors(
+    *,
+    source: str = "auto",
+    path: str = "",
+    limit: int | None = None,
+    categories: list[str] | None = None,
+    n_sample: int | None = None,
+    seed: int = 0,
+    offline: bool = False,
+) -> list[Behavior]:
+    """Unified resolver for CLI/MCP.
+
+    source:
+      auto       — path or env JSON, else HarmBench cache
+      harmbench  — official CSV (ensure download)
+      json       — path or GARBLEWORKS_BEHAVIORS
+      sample     — in-repo v1_behaviors_sample.json
+    """
+    src = (source or "auto").strip().lower()
+    if src in ("sample", "v1_sample"):
+        sample_path = (
+            Path(__file__).resolve().parent
+            / "bench"
+            / "battery"
+            / "v1_behaviors_sample.json"
+        )
+        return load_behaviors(sample_path, limit=limit, categories=categories)
+
+    if src in ("harmbench", "hb"):
+        return load_harmbench(
+            limit=limit,
+            categories=categories,
+            ensure=True,
+            offline=offline,
+            n_sample=n_sample,
+            seed=seed,
+        )
+
+    if src in ("json", "file"):
+        p = (path or os.environ.get("GARBLEWORKS_BEHAVIORS") or "").strip()
+        if not p:
+            return []
+        return load_behaviors(p, limit=limit, categories=categories)
+
+    # auto
+    p = (path or os.environ.get("GARBLEWORKS_BEHAVIORS") or "").strip()
+    if p:
+        return load_behaviors(p, limit=limit, categories=categories)
+    # Prefer real HarmBench if cached or downloadable
+    items = load_harmbench(
+        limit=limit,
+        categories=categories,
+        ensure=not offline,
+        offline=offline,
+        n_sample=n_sample,
+        seed=seed,
+    )
+    if items:
+        return items
+    # Fall back to sample
+    return resolve_behaviors(
+        source="sample", limit=limit, categories=categories
+    )
 
 
 def behaviors_to_bench_objectives(behaviors: list[Behavior]) -> list[dict[str, Any]]:

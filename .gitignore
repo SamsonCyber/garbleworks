@@ -21,6 +21,9 @@ htmlcov/
 # Runtime / operator state (never commit attack history)
 backend/sessions/
 backend/exports/
+# HarmBench official CSV cache (download-on-first-use; do not vendor)
+backend/library/harmbench_behaviors.csv
+backend/library/*.csv
 backend/data/technique_logs.db
 backend/data/*.db
 backend/*.db

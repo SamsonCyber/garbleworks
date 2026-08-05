@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Gap Report: Garbleworks vs Wallbreaker</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0b0d12;
+    --panel: #12151c;
+    --panel2: #181c26;
+    --border: #2a3142;
+    --text: #e8ecf4;
+    --muted: #8b95a8;
+    --gw: #7c5cff;
+    --gw-dim: rgba(124, 92, 255, 0.22);
+    --wb: #22d3a6;
+    --wb-dim: rgba(34, 211, 166, 0.18);
+    --closed: #34d399;
+    --open: #fbbf24;
+    --wont: #64748b;
+    --high: #f87171;
+    --med: #fbbf24;
+    --low: #94a3b8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.45;
+  }
+  header {
+    padding: 1.75rem 1.5rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #141824 0%, var(--bg) 100%);
+  }
+  header h1 {
+    margin: 0 0 0.35rem;
+    font-size: 1.55rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  header p {
+    margin: 0;
+    color: var(--muted);
+    max-width: 70rem;
+    font-size: 0.95rem;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.9rem;
+  }
+  .pill {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: var(--panel);
+  }
+  .pill strong { color: var(--text); }
+  .legend-dot {
+    display: inline-block;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    margin-right: 0.3rem;
+    vertical-align: middle;
+  }
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 1.25rem 1.25rem 3rem;
+    display: grid;
+    gap: 1.1rem;
+  }
+  .row {
+    display: grid;
+    gap: 1.1rem;
+  }
+  @media (min-width: 900px) {
+    .row.two { grid-template-columns: 1fr 1fr; }
+    .row.metrics { grid-template-columns: repeat(4, 1fr); }
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.1rem 1.15rem;
+  }
+  .card h2 {
+    margin: 0 0 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .card h2 .badge {
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 0.12rem 0.45rem;
+    border-radius: 6px;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .metric {
+    text-align: center;
+    padding: 0.85rem 0.5rem;
+  }
+  .metric .v {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+  .metric .l {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+  }
+  .metric .s {
+    font-size: 0.72rem;
+    margin-top: 0.35rem;
+  }
+  .up { color: var(--closed); }
+  .warn { color: var(--open); }
+  .chart-wrap {
+    position: relative;
+    height: 320px;
+  }
+  .chart-wrap.tall { height: 380px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.5rem 0.45rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .score {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+  }
+  .score.gw { color: var(--gw); }
+  .score.wb { color: var(--wb); }
+  .barcell {
+    min-width: 7rem;
+  }
+  .barpair {
+    display: grid;
+    gap: 0.22rem;
+  }
+  .barpair .rowbar {
+    display: grid;
+    grid-template-columns: 1.6rem 1fr 1.4rem;
+    gap: 0.3rem;
+    align-items: center;
+    font-size: 0.68rem;
+    color: var(--muted);
+  }
+  .track {
+    height: 0.42rem;
+    background: #1c2230;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .fill {
+    height: 100%;
+    border-radius: 99px;
+  }
+  .fill.gw { background: var(--gw); }
+  .fill.wb { background: var(--wb); }
+  .status {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.12rem 0.4rem;
+    border-radius: 5px;
+  }
+  .status.closed { background: rgba(52,211,153,0.15); color: var(--closed); }
+  .status.open { background: rgba(251,191,36,0.15); color: var(--open); }
+  .status.wont { background: rgba(100,116,139,0.2); color: var(--wont); }
+  .status.partial { background: rgba(124,92,255,0.18); color: #b8a6ff; }
+  .pri.high { color: var(--high); font-weight: 700; }
+  .pri.med { color: var(--med); font-weight: 600; }
+  .pri.low { color: var(--low); }
+  .note {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin: 0.5rem 0 0;
+  }
+  .wins {
+    display: grid;
+    gap: 0.65rem;
+  }
+  @media (min-width: 700px) {
+    .wins { grid-template-columns: 1fr 1fr; }
+  }
+  .winbox {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+  }
+  .winbox h3 {
+    margin: 0 0 0.45rem;
+    font-size: 0.88rem;
+  }
+  .winbox.gw h3 { color: var(--gw); }
+  .winbox.wb h3 { color: var(--wb); }
+  .winbox ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+  .winbox li { margin: 0.25rem 0; }
+  footer {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 1.25rem 2rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+  a { color: #a78bfa; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Gap Report: Garbleworks vs Wallbreaker</h1>
+  <p>
+    Honest product comparison (capability, not ASR bragging). Scores are 0–5
+    operator judgment from repo inventory + <code>docs/GAPS.md</code> after the
+    agentic IPI dual-scorer ship. Wallbreaker is AGPL sibling: subprocess bench only, no code merge.
+  </p>
+  <div class="meta">
+    <span class="pill"><span class="legend-dot" style="background:var(--gw)"></span><strong>Garbleworks</strong> (GW)</span>
+    <span class="pill"><span class="legend-dot" style="background:var(--wb)"></span><strong>Wallbreaker</strong> (WB)</span>
+    <span class="pill">Date: <strong>2026-08-04</strong></span>
+    <span class="pill">Source: GAPS + README + spine + SPEC</span>
+    <span class="pill">Scale: <strong>0–5 maturity</strong></span>
+  </div>
+</header>
+
+<main>
+  <section class="row metrics">
+    <div class="card metric">
+      <div class="v" style="color:var(--closed)">8</div>
+      <div class="l">Gaps closed (was open)</div>
+      <div class="s up">incl. agentic IPI dual scorer</div>
+    </div>
+    <div class="card metric">
+      <div class="v" style="color:var(--open)">6</div>
+      <div class="l">Still open (actionable)</div>
+      <div class="s warn">excl. won't-ship HB-400</div>
+    </div>
+    <div class="card metric">
+      <div class="v" style="color:var(--gw)">3.9</div>
+      <div class="l">GW mean score</div>
+      <div class="s">across 15 dimensions</div>
+    </div>
+    <div class="card metric">
+      <div class="v" style="color:var(--wb)">3.7</div>
+      <div class="l">WB mean score</div>
+      <div class="s">GW leads measurement / search</div>
+    </div>
+  </section>
+
+  <section class="row two">
+    <div class="card">
+      <h2>Capability radar <span class="badge">0–5 maturity</span></h2>
+      <div class="chart-wrap tall">
+        <canvas id="radar"></canvas>
+      </div>
+      <p class="note">Higher = more product-complete for that axis. Not “who is safer.”</p>
+    </div>
+    <div class="card">
+      <h2>Head-to-head deltas <span class="badge">GW − WB</span></h2>
+      <div class="chart-wrap tall">
+        <canvas id="delta"></canvas>
+      </div>
+      <p class="note">Positive bar = Garbleworks ahead. Negative = Wallbreaker ahead.</p>
+    </div>
+  </section>
+
+  <section class="row two">
+    <div class="card">
+      <h2>GAPS.md status stack <span class="badge">post agentic IPI ship</span></h2>
+      <div class="chart-wrap">
+        <canvas id="status"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Open residual by priority <span class="badge">count</span></h2>
+      <div class="chart-wrap">
+        <canvas id="priority"></canvas>
+      </div>
+      <p class="note">High rows for dual scorer + delivery closed this goal. Residual High is empty; open is Med/Low/Operator.</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Dimension matrix <span class="badge">scored</span></h2>
+    <div style="overflow-x:auto">
+      <table id="matrix">
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th>GW</th>
+            <th>WB</th>
+            <th>Bars</th>
+            <th>Lead</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Who wins where</h2>
+    <div class="wins">
+      <div class="winbox gw">
+        <h3>Garbleworks edge</h3>
+        <ul>
+          <li>Wilson LCB / claim gate / delivery_fail honesty</li>
+          <li>Genetic + MAP-Elites + treesearch closed loop</li>
+          <li>Field-guide crosswalk (~346 entries)</li>
+          <li>Engagement / SSRF scope gates</li>
+          <li>MCP operator surface + agentic IPI dual scorer (mocks)</li>
+          <li>Document carrier template bank on spine</li>
+        </ul>
+      </div>
+      <div class="winbox wb">
+        <h3>Wallbreaker edge</h3>
+        <ul>
+          <li>Full agent REPL UX (Claude Code-style loop)</li>
+          <li>Parseltongue / P4RS3LT0NGV3 (up to 222 transforms)</li>
+          <li>Persona author (ENI) + leaked sysprompt corpus</li>
+          <li>Multimodal image-edit attack channel</li>
+          <li>HarmBench 400 behaviors in-tree</li>
+          <li>Live multi-step tool-using agent as default UX</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>GAPS checklist (honest status) <span class="badge">from docs/GAPS.md</span></h2>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Gap</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Evidence / residual</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Validate re-fire (one-shot ≠ bypass)</td>
+            <td class="pri high">was High</td>
+            <td><span class="status closed">Closed</span></td>
+            <td><code>validate_refire</code> + Wilson LCB</td>
+          </tr>
+          <tr>
+            <td>HarmBench-shaped battery ingest</td>
+            <td class="pri med">was Med</td>
+            <td><span class="status closed">Closed</span></td>
+            <td>Sample JSON; full 400 external only</td>
+          </tr>
+          <tr>
+            <td>Tiny-n promotions blocked</td>
+            <td class="pri high">was High</td>
+            <td><span class="status closed">Closed</span></td>
+            <td><code>promotion_decision</code>, n≥30 design</td>
+          </tr>
+          <tr>
+            <td>tool_error not ASR=0</td>
+            <td class="pri high">was High</td>
+            <td><span class="status closed">Closed</span></td>
+            <td>Complete-case outcomes</td>
+          </tr>
+          <tr>
+            <td>Agentic IPI + dual harm/conceal scorer</td>
+            <td class="pri high">High</td>
+            <td><span class="status closed">Closed v1</span></td>
+            <td><code>scorer_agentic</code> + mocks; no live driver</td>
+          </tr>
+          <tr>
+            <td>Delivery/ingest first-class</td>
+            <td class="pri high">High</td>
+            <td><span class="status closed">Closed</span></td>
+            <td><code>delivery_fail</code> never → no_harm; claim gate</td>
+          </tr>
+          <tr>
+            <td>Document/CSV IPI templates</td>
+            <td class="pri med">Med</td>
+            <td><span class="status closed">Closed v1</span></td>
+            <td>tool_result / csv / report_fill</td>
+          </tr>
+          <tr>
+            <td>Interactive TUI</td>
+            <td class="pri med">Med</td>
+            <td><span class="status partial">Partial</span></td>
+            <td>OpenTUI v0.1; not agent REPL</td>
+          </tr>
+          <tr>
+            <td>Live multi-step tool agent driver</td>
+            <td class="pri med">Med</td>
+            <td><span class="status open">Open</span></td>
+            <td>Protocol + mocks only</td>
+          </tr>
+          <tr>
+            <td>MCP run_agentic_ipi</td>
+            <td class="pri med">Med</td>
+            <td><span class="status open">Open</span></td>
+            <td>Python spine ready; MCP later</td>
+          </tr>
+          <tr>
+            <td>BH-FDR default gate</td>
+            <td class="pri med">Med</td>
+            <td><span class="status open">Open</span></td>
+            <td>EVOLVE_MATH only; not production default</td>
+          </tr>
+          <tr>
+            <td>Powered frontier scoreboard n≥30</td>
+            <td class="pri med">Operator</td>
+            <td><span class="status open">Open</span></td>
+            <td>Path exists; needs live API run</td>
+          </tr>
+          <tr>
+            <td>Persona author / sysprompt corpus</td>
+            <td class="pri low">Low</td>
+            <td><span class="status open">Open</span></td>
+            <td>WB specialty; GW personas.json + ops</td>
+          </tr>
+          <tr>
+            <td>Multimodal image-edit channel</td>
+            <td class="pri low">Low</td>
+            <td><span class="status open">Open</span></td>
+            <td>Out of scope text-first lab</td>
+          </tr>
+          <tr>
+            <td>Full HarmBench 400 in-repo</td>
+            <td class="pri low">—</td>
+            <td><span class="status wont">Won't ship</span></td>
+            <td>License/size; <code>GARBLEWORKS_BEHAVIORS</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Catalog size (rough, inventory) <span class="badge">not a quality claim</span></h2>
+    <div class="chart-wrap">
+      <canvas id="catalog"></canvas>
+    </div>
+    <p class="note">
+      WB transform count from README (Parseltongue 59 + optional P4RS3LT0NGV3 222).
+      GW ops ~140 class (HARNESS-POSITIONING); field-guide entries counted in-tree (~346).
+      Different units: do not treat as one-dimensional superiority.
+    </p>
+  </section>
+</main>
+
+<footer>
+  Generated for operator planning. Sources:
+  <code>docs/GAPS.md</code>, <code>docs/IPI-AGENT.md</code>,
+  <code>docs/archive/SPEC-DGX-SPARK-GENERATOR.md</code> §2.1,
+  Wallbreaker README, garbleworks spine after agentic IPI ship.
+  License note: Wallbreaker AGPL-3.0 — subprocess A/B only.
+</footer>
+
+<script>
+const labels = [
+  "Agent REPL UX",
+  "Transform catalog",
+  "Attack loops",
+  "Stats / claim honesty",
+  "Agentic IPI dual scorer",
+  "Persona / sysprompt",
+  "Multimodal image",
+  "HarmBench batteries",
+  "Field guide / crosswalk",
+  "Scope / engagement gates",
+  "Closed-loop search",
+  "Live tool agent driver",
+  "MCP operator surface",
+  "TUI polish",
+  "Doc/CSV IPI templates",
+];
+
+const gw = [2, 4, 5, 5, 4, 1, 0, 3, 5, 5, 5, 2, 5, 3, 4];
+const wb = [5, 5, 4, 3, 3, 5, 5, 5, 2, 2, 4, 4, 3, 5, 3];
+
+const rows = labels.map((name, i) => ({
+  name,
+  gw: gw[i],
+  wb: wb[i],
+  delta: gw[i] - wb[i],
+  note: [
+    "MCP + TUI v0.1; not full REPL",
+    "GW ~140 ops; WB up to 222 via MCP",
+    "Both strong; GW evolve/rainbow/tree",
+    "GW Wilson + claim_gate + delivery_fail",
+    "GW mocks+Protocol shipped; live driver open",
+    "WB ENI + corpus; GW personas.json",
+    "WB only (GW low priority)",
+    "WB in-tree 400; GW sample + external",
+    "GW field-guide ~346 crosswalk",
+    "GW SSRF + authority receipts",
+    "GW genetic/QD/bandit loop",
+    "WB default agent loop; GW mocks",
+    "GW dense MCP tools",
+    "WB REPL polish; GW OpenTUI v0.1",
+    "GW 3 paste-ready shapes on spine",
+  ][i],
+}));
+
+// Matrix
+const tbody = document.querySelector("#matrix tbody");
+rows.forEach(r => {
+  const lead = r.delta > 0 ? "GW" : r.delta < 0 ? "WB" : "Tie";
+  const leadColor = lead === "GW" ? "var(--gw)" : lead === "WB" ? "var(--wb)" : "var(--muted)";
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td>${r.name}</td>
+    <td class="score gw">${r.gw}</td>
+    <td class="score wb">${r.wb}</td>
+    <td class="barcell">
+      <div class="barpair">
+        <div class="rowbar"><span>GW</span><div class="track"><div class="fill gw" style="width:${r.gw/5*100}%"></div></div><span>${r.gw}</span></div>
+        <div class="rowbar"><span>WB</span><div class="track"><div class="fill wb" style="width:${r.wb/5*100}%"></div></div><span>${r.wb}</span></div>
+      </div>
+    </td>
+    <td style="color:${leadColor};font-weight:700">${lead}${r.delta !== 0 ? " (" + (r.delta > 0 ? "+" : "") + r.delta + ")" : ""}</td>
+    <td style="color:var(--muted)">${r.note}</td>`;
+  tbody.appendChild(tr);
+});
+
+Chart.defaults.color = "#8b95a8";
+Chart.defaults.borderColor = "#2a3142";
+Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+
+new Chart(document.getElementById("radar"), {
+  type: "radar",
+  data: {
+    labels,
+    datasets: [
+      {
+        label: "Garbleworks",
+        data: gw,
+        borderColor: "#7c5cff",
+        backgroundColor: "rgba(124,92,255,0.18)",
+        pointBackgroundColor: "#7c5cff",
+        borderWidth: 2,
+      },
+      {
+        label: "Wallbreaker",
+        data: wb,
+        borderColor: "#22d3a6",
+        backgroundColor: "rgba(34,211,166,0.12)",
+        pointBackgroundColor: "#22d3a6",
+        borderWidth: 2,
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      r: {
+        min: 0,
+        max: 5,
+        ticks: { stepSize: 1, backdropColor: "transparent" },
+        grid: { color: "#2a3142" },
+        angleLines: { color: "#2a3142" },
+        pointLabels: { font: { size: 10 }, color: "#c5cde0" },
+      },
+    },
+    plugins: {
+      legend: { position: "bottom" },
+    },
+  },
+});
+
+const deltaColors = rows.map(r =>
+  r.delta > 0 ? "rgba(124,92,255,0.85)" : r.delta < 0 ? "rgba(34,211,166,0.85)" : "rgba(100,116,139,0.6)"
+);
+
+new Chart(document.getElementById("delta"), {
+  type: "bar",
+  data: {
+    labels: labels.map(l => l.length > 18 ? l.slice(0, 16) + "…" : l),
+    datasets: [{
+      label: "GW − WB",
+      data: rows.map(r => r.delta),
+      backgroundColor: deltaColors,
+      borderRadius: 4,
+    }],
+  },
+  options: {
+    indexAxis: "y",
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        min: -5,
+        max: 5,
+        grid: { color: "#2a3142" },
+        title: { display: true, text: "Δ (positive = GW ahead)" },
+      },
+      y: { grid: { display: false } },
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => {
+            const r = rows[ctx.dataIndex];
+            return ` GW ${r.gw} vs WB ${r.wb} (Δ ${r.delta > 0 ? "+" : ""}${r.delta})`;
+          },
+        },
+      },
+    },
+  },
+});
+
+new Chart(document.getElementById("status"), {
+  type: "doughnut",
+  data: {
+    labels: ["Closed", "Partial", "Open", "Won't ship"],
+    datasets: [{
+      data: [7, 1, 6, 1],
+      backgroundColor: [
+        "rgba(52,211,153,0.85)",
+        "rgba(124,92,255,0.75)",
+        "rgba(251,191,36,0.8)",
+        "rgba(100,116,139,0.7)",
+      ],
+      borderWidth: 0,
+    }],
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: "bottom" },
+    },
+  },
+});
+
+new Chart(document.getElementById("priority"), {
+  type: "bar",
+  data: {
+    labels: ["High (open)", "Medium (open)", "Low (open)", "Operator", "Won't ship"],
+    datasets: [{
+      label: "Open residual gaps",
+      data: [0, 3, 2, 1, 1],
+      backgroundColor: [
+        "rgba(248,113,113,0.85)",
+        "rgba(251,191,36,0.8)",
+        "rgba(148,163,184,0.75)",
+        "rgba(96,165,250,0.75)",
+        "rgba(100,116,139,0.7)",
+      ],
+      borderRadius: 6,
+    }],
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: { stepSize: 1 },
+        grid: { color: "#2a3142" },
+      },
+      x: { grid: { display: false } },
+    },
+    plugins: { legend: { display: false } },
+  },
+});
+
+new Chart(document.getElementById("catalog"), {
+  type: "bar",
+  data: {
+    labels: ["Transforms / ops", "Field-guide entries", "IPI templates (spine)", "HB behaviors in-repo"],
+    datasets: [
+      {
+        label: "Garbleworks",
+        data: [140, 346, 5, 0],
+        backgroundColor: "rgba(124,92,255,0.8)",
+        borderRadius: 4,
+      },
+      {
+        label: "Wallbreaker",
+        data: [222, 0, 0, 400],
+        backgroundColor: "rgba(34,211,166,0.8)",
+        borderRadius: 4,
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: { color: "#2a3142" },
+        title: { display: true, text: "Count (approx / different units)" },
+      },
+      x: { grid: { display: false } },
+    },
+    plugins: { legend: { position: "bottom" } },
+  },
+});
+</script>
+</body>
+</html>

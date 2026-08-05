@@ -11,7 +11,10 @@ Exposes both halves of the kit over the Model Context Protocol so any MCP client
     prefill_attack      multi-turn assistant prefill / response-priming (Haiku canary win path)
     auto_attack         multi-strategy --auto ladder (baseline→pack_hunt→optimize→prefill)
     validate_refire     re-fire a payload N times; Wilson ASR (one-shot is not a bypass)
-    list_behaviors      load HarmBench-shaped behavior JSON
+    list_behaviors      load behaviors (source=harmbench|json|sample|auto)
+    ensure_harmbench    download/cache official HarmBench CSV
+    sample_harmbench    stratified sample from real HarmBench
+    run_harmbench_campaign  technique ladder over HarmBench sample
     optimize            genetic evolve against a live SSRF-scoped target
     pack_hunt           decomposition attack (advise or run)
     run_scan            procedural playbook technique scan → target_attack_map
@@ -45,7 +48,7 @@ if str(_BACKEND) not in sys.path:
 import asyncio
 
 import ops  # noqa: F401  registers the operation catalog
-from core import REGISTRY, run_recipe
+from core import REGISTRY, get_op, list_ops, run_recipe
 import optimizer          # the genetic Evolve optimizer (EVOLVE_MATH)
 import register as _register   # the register / tone-neutralization layer
 import logs as _logs      # SQLite technique-log store (joined to the crosswalk)
@@ -220,8 +223,9 @@ async def generate_framings(objective: str, techniques: list[str] | None = None)
         names = techniques or _DEFAULT_TECHNIQUES
         out: list[dict] = []
         for name in names:
-            if name not in REGISTRY:
-                out.append({"technique": name, "framing": "", "ok": False, "error": "unknown op"})
+            if get_op(name) is None:
+                why = "disabled" if name in REGISTRY else "unknown op"
+                out.append({"technique": name, "framing": "", "ok": False, "error": why})
                 continue
             try:
                 variants = run_recipe(objective, [{"op": name, "params": {}}], max_variants=1)[0]
@@ -340,21 +344,23 @@ async def apply_recipe(input: str, recipe: list[dict], max_variants: int = 20) -
 
 @mcp.tool()
 def list_techniques(category: str | None = None) -> list[dict]:
-    """The Garbleworks op catalog. Optional category filter (character, encoding,
-    structure, prose, template, sampler, language, jailbreak, stego, llm, carrier).
-    Returns [{name, category, description, params, model_backed}]. model_backed=true
-    means the op may load an ML model / call an LLM on first use (slow first call,
-    cached after) — prefer the pure-python ops for fast batches."""
+    """The Garbleworks op catalog (enabled ops only). Optional category filter.
+
+    Returns [{name, category, description, params, model_backed, module, enabled}].
+    Soft-disabled modules/ops (core.disable / disable_module) do not appear.
+    model_backed=true means the op may load ML / call an LLM on first use.
+    """
     out = []
-    for name, op in sorted(REGISTRY.items()):
-        if category and op.category != category:
-            continue
+    for row in list_ops(enabled_only=True, category=category):
+        name = row["name"]
         out.append({
-            "name": name, "category": op.category,
-            "description": op.description,
+            "name": name,
+            "category": row["category"],
+            "description": row["description"],
+            "module": row.get("module"),
+            "enabled": row.get("enabled", True),
             "model_backed": name in _MODEL_BACKED_OPS,
-            "params": [{"name": p.name, "type": p.type, "default": p.default,
-                        "options": p.options} for p in op.params],
+            "params": row.get("params") or [],
         })
     return out
 
@@ -1056,30 +1062,126 @@ async def list_behaviors(
     path: str = "",
     limit: int = 50,
     category: str = "",
+    source: str = "auto",
 ) -> dict:
-    """Load a HarmBench-shaped behaviors JSON (operator-supplied; not vendored).
+    """List behaviors for attack batteries.
 
-    path empty → GARBLEWORKS_BEHAVIORS env. Returns {count, behaviors:[{id,category,behavior}]}.
+    source:
+      auto       — JSON path/env if set, else real HarmBench cache
+      harmbench  — official HarmBench CSV (download-on-first-use)
+      json       — path or GARBLEWORKS_BEHAVIORS only
+      sample     — small in-repo loader test set
+
+    path: optional JSON file when source is json/auto.
+    category: optional SemanticCategory filter.
     """
     import behaviors as beh
 
     def _impl() -> dict:
         cats = [category] if category.strip() else None
         try:
-            if path.strip():
-                items = beh.load_behaviors(path, limit=limit or None, categories=cats)
-            else:
-                items = beh.load_behaviors_from_env(limit=limit or None, categories=cats)
+            items = beh.resolve_behaviors(
+                source=source or "auto",
+                path=path or "",
+                limit=limit or None,
+                categories=cats,
+            )
         except Exception as e:
             return {"error": str(e)[:300]}
         return {
             "count": len(items),
+            "source": source or "auto",
             "behaviors": [
                 {"id": b.id, "category": b.category, "behavior": b.behavior,
                  "source": b.source}
                 for b in items
             ],
         }
+
+    return await asyncio.to_thread(_impl)
+
+
+@mcp.tool()
+def ensure_harmbench(force: bool = False, offline: bool = False) -> dict:
+    """Download/cache the official HarmBench text behaviors CSV (first use).
+
+    Cached under backend/library/harmbench_behaviors.csv (or GARBLEWORKS_HARMBENCH_CSV).
+    Does not vendor the file in git. Authorized red-team use only.
+    """
+    import harmbench as hb
+
+    return hb.ensure_dataset(offline=offline, force=force)
+
+
+@mcp.tool()
+def sample_harmbench(
+    n: int = 8,
+    category: str = "",
+    seed: int = 0,
+    ensure: bool = True,
+) -> dict:
+    """Stratified sample from real HarmBench (unbiased battery like Wallbreaker).
+
+    ensure=True downloads the CSV if missing. Returns {count, behaviors, status}.
+    """
+    import harmbench as hb
+
+    if ensure:
+        st = hb.ensure_dataset(offline=False)
+        if not st.get("ok") and not hb.is_cached():
+            return {"error": st.get("error") or "HarmBench unavailable", "ensure": st}
+    items = hb.sample(
+        category=category.strip() or None,
+        n=max(1, min(int(n), 100)),
+        seed=int(seed),
+    )
+    return {
+        "count": len(items),
+        "behaviors": [
+            {"id": b.id, "category": b.category, "behavior": b.behavior}
+            for b in items
+        ],
+        "status": hb.status(),
+    }
+
+
+@mcp.tool()
+async def run_harmbench_campaign(
+    n: int = 5,
+    category: str = "",
+    seed: int = 0,
+    ladder: str = "plain,enc:base64,enc:zero_width,tag_wrap",
+    target: dict | None = None,
+    dry_run: bool = True,
+    timeout: float = 30.0,
+) -> dict:
+    """Run a HarmBench sample through the technique ladder (Wallbreaker-class campaign).
+
+    Default dry_run=True (sample + plan only). Set dry_run=False and pass SSRF-scoped
+    target={adapter,url,...} to fire. Grades COMPLIED/PARTIAL via non-refusal heuristic
+    (not a powered LLM-judge ASR claim).
+
+    ladder: comma techniques (plain, enc:base64, enc:zero_width, tag_wrap).
+    """
+    import harmbench_campaign as hbc
+
+    if target is not None and not dry_run:
+        err = _mcp_validate_target(target)
+        if err:
+            return {"error": err}
+
+    steps = tuple(x.strip() for x in (ladder or "").split(",") if x.strip())
+
+    def _impl() -> dict:
+        return hbc.run_campaign(
+            n=max(1, min(int(n), 50)),
+            category=category.strip() or None,
+            seed=int(seed),
+            ladder=steps or None,
+            target=target,
+            dry_run=bool(dry_run) or target is None,
+            timeout=float(timeout),
+        )
 
     return await asyncio.to_thread(_impl)
 
@@ -1117,8 +1219,10 @@ async def optimize(objective: str, target: dict, budget: int = 30, pop: int = 8,
     except Exception:
         pass
     return {k: res.get(k) for k in (
-        "best_prompt", "best_fitness_heldout", "success", "best_seeds",
-        "best_composer", "best_eta", "stop_reason", "target_queries", "register_L")}
+        "best_prompt", "best_fitness_heldout", "success", "success_rule",
+        "claim_ready", "claim_mode", "heldout_lcb", "n_final_used",
+        "best_seeds", "best_composer", "best_eta", "stop_reason",
+        "search_stop_reason", "target_queries", "register_L")}
 
 
 # ---------------------------------------------------------------------------
@@ -1490,6 +1594,149 @@ def mission_brief() -> dict:
         "evidence_required": r.evidence_required,
         "operator_envelope": authority.harness_operator_instructions(r),
     }
+
+
+@mcp.tool()
+def list_ipi_templates() -> list[dict]:
+    """List agentic IPI document/carrier templates (tool_result, CSV, report_fill, …).
+
+    Returns template id, surfaces, detectability, description, stable marker.
+    Use with run_agentic_ipi. Does not fire a target.
+    """
+    from spine.ipi_ops import list_ipi_templates as _list
+
+    return _list()
+
+
+@mcp.tool()
+def run_agentic_ipi(
+    agent: str = "mock_obey",
+    templates: list[str] | None = None,
+    budget: int = 8,
+    user_task: str = "",
+    goal: str = "",
+    base_url: str = "",
+    model: str = "gpt-4o-mini",
+) -> dict:
+    """Run agentic IPI on the shared spine dual scorer (harm × conceal × delivery).
+
+    agent: mock_obey | mock_summarize | mock_snitch | mock_no_ingest | mock_detect
+           | openai_tools (needs base_url for live; offline tests use chat_fn in Python)
+    templates: optional template id list (default: primary three)
+    budget: target-agent trial budget
+    user_task / goal: optional objective overrides
+    base_url / model: for agent=openai_tools OpenAI-compatible tools loop
+
+    Returns outcomes, complete_case (incl. n_delivery_fail), claim gate, best_eval
+    multi-channel fields. Does not claim full agent REPL parity with Wallbreaker.
+    """
+    from spine.ipi_ops import run_agentic_ipi as _run
+
+    overrides: dict = {"budget": max(1, min(int(budget), 40))}
+    if user_task:
+        overrides["user_task"] = user_task
+    if goal:
+        overrides["goal"] = goal
+    agent_kwargs: dict = {}
+    if (base_url or "").strip():
+        agent_kwargs["base_url"] = base_url.strip()
+        agent_kwargs["model"] = model or "gpt-4o-mini"
+    try:
+        return _run(
+            objective=overrides if (user_task or goal) else None,
+            agent=agent or "mock_obey",
+            template_ids=list(templates) if templates else None,
+            agent_kwargs=agent_kwargs or None,
+            budget=overrides["budget"],
+        )
+    except Exception as e:
+        return {"error": f"{type(e).__name__}: {e}"[:400]}
+
+
+@mcp.tool()
+def score_document_detectability(body: str) -> dict:
+    """Static chrome score for an IPI document/payload (no model call).
+
+    Flags Unicode Tags, ACTION_REQUIRED, system chrome, tool breakout.
+    Measurement aid only; high risk predicts refuse/detect on some agents.
+    """
+    from spine.detectability import score_document
+
+    return score_document(body or "")
+
+
+@mcp.tool()
+def mcp_spine_map() -> dict:
+    """G7: map MCP tools to spine / fire / guide / search surfaces.
+
+    Returns tools that hit shared spine (run_campaign, agentic IPI), fire
+    policy, and field-guide-only tools. No second fire path.
+    """
+    from spine.mcp_map import fire_tools, list_mcp_spine_map, spine_tools
+
+    rows = list_mcp_spine_map()
+    return {
+        "tools": rows,
+        "spine_tools": spine_tools(),
+        "fire_tools": fire_tools(),
+        "count": len(rows),
+    }
+
+
+@mcp.tool()
+def rank_strategy_claims(
+    results: list[dict],
+    fdr_q: float | None = None,
+    fdr_p0: float = 0.5,
+) -> dict:
+    """Rank multi-strategy complete-case results; optional BH-FDR (G5).
+
+    results: list of {strategy, successes, n_completed, queries_spent, budget,
+    estimand} or StrategyRunResult-shaped dicts.
+    fdr_q: None (default, off) or e.g. 0.10 to enable Benjamini-Hochberg.
+    """
+    from spine.claim_gate import rank_strategies
+
+    return rank_strategies(
+        list(results or []),
+        fdr_q=fdr_q,
+        fdr_p0=float(fdr_p0),
+    )
+
+
+@mcp.tool()
+def run_campaign_tool(
+    objective: dict,
+    strategy: str | None = None,
+    agent: str | None = None,
+    target: dict | None = None,
+) -> dict:
+    """Run spine.campaign.run_campaign (chat or agentic_ipi).
+
+    objective: CampaignObjective-shaped dict (id, goal, mode, secret or
+    harm_tools, …). agent: mock_* name for agentic mode. target: optional
+    HTTP target for chat strategies (SSRF + scope gated when URL present).
+    """
+    from spine.campaign import run_campaign
+
+    if target:
+        err = _mcp_validate_target(target)
+        if err:
+            return {"error": err}
+
+    def _impl() -> dict:
+        res = run_campaign(
+            objective,
+            strategy=strategy,
+            agent=agent,
+            target=target,
+        )
+        return res.as_dict()
+
+    try:
+        return _impl()
+    except Exception as e:
+        return {"error": f"{type(e).__name__}: {e}"[:400]}
 
 
 if __name__ == "__main__":

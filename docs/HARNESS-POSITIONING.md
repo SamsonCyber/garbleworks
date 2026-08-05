@@ -74,10 +74,11 @@ Four things h4rm3l does not do, in rough order of importance:
 2. **Statistical rigor.** h4rm3l reports ASR. Garbleworks treats fitness as a
  random variable: **Wilson / empirical-Bernstein confidence bounds**,
  **successive-halving racing**, **winner's-curse held-out re-estimation**, and
- **Benjamini-Hochberg FDR** before any per-strategy claim (`EVOLVE_MATH`
- §5, §11, §14). This is the differentiator worth protecting - a cross-model
- weak-point dataset is only bounty-actionable if its "technique X breaks family
- Y" claims survive multiple-comparison correction.
+ optional **Benjamini-Hochberg FDR** on multi-strategy claim batches
+ (`rank_strategies(fdr_q=...)`, EVOLVE_MATH §14; **default off**). Dual product
+ flags separate mean success from LCB `claim_ready`. A cross-model weak-point
+ dataset is only bounty-actionable if "technique X breaks family Y" claims
+ survive re-fire + (when multi-test) FDR correction.
 
 3. **The register / L(x) analytical layer.** A morpheme-loadedness model with a
  live `p_refuse(L) = σ(α₀ + α₁L)` calibration that names *which lexical features*

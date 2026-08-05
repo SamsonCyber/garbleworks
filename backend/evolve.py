@@ -235,9 +235,10 @@ class _CoverageLedger:
             self.methods[method] += 1
             for st in recipe:
                 name = str(st.get("op") or "")
-                if not name or name not in REGISTRY:
+                from core import get_op
+                op = get_op(name) if name else None
+                if op is None:
                     continue
-                op = REGISTRY[name]
                 self.ops[name] += 1
                 self.families[op.tactic_family] += 1
                 self.categories[op.category] += 1
@@ -313,8 +314,10 @@ def safe_ops(
     cats = set(categories or BREADTH_CATEGORIES)
     if not include_character:
         cats.discard("character")
+    from core import enabled_ops
+
     return sorted(
-        n for n, op in REGISTRY.items()
+        n for n, op in enabled_ops().items()
         if op.category in cats
     )
 
@@ -322,9 +325,11 @@ def safe_ops(
 def ops_by_family(
     categories: frozenset[str] | None = None,
 ) -> dict[str, list[str]]:
+    from core import enabled_ops
+
     cats = categories or BREADTH_CATEGORIES
     out: dict[str, list[str]] = {}
-    for n, op in REGISTRY.items():
+    for n, op in enabled_ops().items():
         if op.category not in cats:
             continue
         out.setdefault(op.tactic_family, []).append(n)
@@ -336,9 +341,11 @@ def ops_by_family(
 def ops_by_category(
     categories: frozenset[str] | None = None,
 ) -> dict[str, list[str]]:
+    from core import enabled_ops
+
     cats = categories or BREADTH_CATEGORIES
     out: dict[str, list[str]] = {}
-    for n, op in REGISTRY.items():
+    for n, op in enabled_ops().items():
         if op.category not in cats:
             continue
         out.setdefault(op.category, []).append(n)
@@ -581,8 +588,12 @@ def _method_free_form(rng: random.Random, min_len: int, max_len: int) -> list[di
         n = rng.choices(pool, weights=weights, k=1)[0]
         if n not in chosen:
             # family diversity soft constraint
-            fam = REGISTRY[n].tactic_family
-            if any(REGISTRY[c].tactic_family == fam for c in chosen):
+            from core import get_op
+            op_n = get_op(n)
+            if op_n is None:
+                continue
+            fam = op_n.tactic_family
+            if any((get_op(c) and get_op(c).tactic_family == fam) for c in chosen):
                 if rng.random() < 0.7:
                     continue
             chosen.append(n)

@@ -569,7 +569,8 @@ def build_basket_expanded(
     for cat in cat_order:
         names = list(creative.SEED.get(cat) or [])
         # Also include any registered op in that category for true breadth
-        for n, op in REGISTRY.items():
+        from core import enabled_ops
+        for n, op in enabled_ops().items():
             if getattr(op, "category", None) == cat and n not in names:
                 names.append(n)
         picked = 0

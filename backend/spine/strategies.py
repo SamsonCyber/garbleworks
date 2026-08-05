@@ -340,9 +340,100 @@ def run_pack_hunt(scorer: Scorer, *, attempts: int = 3) -> dict[str, Any]:
     }
 
 
+def run_ipi_template(
+    scorer: Any,
+    *,
+    template_ids: list[str] | None = None,
+    stage_b_on_document: bool = False,
+) -> dict[str, Any]:
+    """Agentic IPI template-bank strategy (v1 default for mode=agentic_ipi).
+
+    Renders each template, optionally Stage-B mutates the document body only,
+    and scores via AgenticScorer.evaluate_document (shared dual scorer).
+    """
+    from spine.ipi_templates import TEMPLATE_IDS, render_template
+    from spine.scorer_agentic import AgenticScorer
+
+    if not isinstance(scorer, AgenticScorer):
+        raise TypeError(
+            "ipi_template requires AgenticScorer (mode=agentic_ipi); "
+            f"got {type(scorer).__name__}"
+        )
+
+    obj = scorer.objective
+    if getattr(obj, "mode", "chat") != "agentic_ipi":
+        raise ValueError(
+            "ipi_template strategy requires objective.mode='agentic_ipi'"
+        )
+
+    ids = list(template_ids) if template_ids else list(TEMPLATE_IDS)
+    history: list[dict[str, Any]] = []
+    best: dict[str, Any] | None = None
+    # Prefer success > harm_only > injection_detected > no_harm > delivery_fail
+    rank = {
+        "success": 100,
+        "harm_only": 60,
+        "conceal_only": 25,
+        "no_harm": 20,
+        "injection_detected": 15,
+        "policy_refuse": 10,
+        "delivery_fail": 5,
+        "tool_error": 1,
+        "incomplete": 0,
+    }
+
+    for tid in ids:
+        if scorer.budget_remaining <= 0:
+            break
+        body = render_template(tid, obj)
+        # Surface role from template id
+        role = "report_fill"
+        if "csv" in tid:
+            role = "csv"
+        elif "tool_result" in tid:
+            role = "tool_result"
+        elif "email" in tid:
+            role = "email"
+        elif "file" in tid:
+            role = "file_content"
+        if stage_b_on_document:
+            scorer.stage_b_on_document = True
+        ev = scorer.evaluate_document(body, document_role=role, document_name=tid)
+        row = {
+            "template_id": tid,
+            "document_role": role,
+            "detectability": dict(ev.detectability or {}),
+            "outcome": ev.outcome,
+            "harm_ok": ev.harm_ok,
+            "delivery_ok": ev.delivery_ok,
+            "conceal_ok": ev.conceal_ok,
+            "eval": ev.as_dict(),
+            "body_preview": body[:240],
+        }
+        history.append(row)
+        score = rank.get(ev.outcome, 0)
+        if best is None or score > rank.get(best.get("outcome", ""), -1):
+            best = row
+        if ev.outcome == "success":
+            return {
+                "strategy": "ipi_template",
+                "success": True,
+                "best": best,
+                "history": history,
+            }
+
+    return {
+        "strategy": "ipi_template",
+        "success": bool(best and best.get("outcome") == "success"),
+        "best": best,
+        "history": history,
+    }
+
+
 STRATEGY_RUNNERS: dict[str, Callable[..., dict[str, Any]]] = {
     "pair": run_pair,
     "multiturn": run_multiturn,
     "evolve": run_evolve,
     "pack_hunt": run_pack_hunt,
+    "ipi_template": run_ipi_template,
 }

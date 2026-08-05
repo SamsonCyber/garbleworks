@@ -87,6 +87,47 @@ def test_weights_stay_valid_under_mutation():
         assert 0.0 <= g.eta <= 1.0
 
 
+def test_compute_claim_fields_dual_flags():
+    """G4: success uses mean; claim_ready uses LCB (not the same under small n)."""
+    g = O.Genome(y=[0.0], composer="concat", eta=0.0)
+    for _ in range(4):
+        g.add_sample(1.0)
+    de = 0.01
+    fields = O.compute_claim_fields(
+        held=g,
+        delta_eff=de,
+        success_threshold=0.7,
+        claim_mode="mean",
+        n_final_used=4,
+    )
+    assert fields["success"] is True
+    assert fields["success_rule"] == "heldout_mean"
+    assert fields["claim_mode"] == "mean"
+    assert "claim_ready" in fields
+    assert fields["heldout_mean"] >= 0.7
+    assert fields["heldout_n"] == 4
+    # With n=4 perfect scores, LCB is often still < 0.7 under EB radius
+    assert fields["heldout_lcb"] <= fields["heldout_mean"]
+    # claim_ready must equal LCB ≥ θ (not blindly True because success is True)
+    assert fields["claim_ready"] is (fields["heldout_lcb"] >= 0.7)
+
+    empty = O.Genome(y=[0.0], composer="concat", eta=0.0)
+    z = O.compute_claim_fields(
+        held=empty, delta_eff=de, success_threshold=0.7, n_final_used=0
+    )
+    assert z["success"] is False
+    assert z["claim_ready"] is False
+
+
+def test_resolve_n_final_strict_raises_floor():
+    cfg = O.RunConfig(ask="x", target={}, n_final=4, n_final_strict=20, claim_mode="mean")
+    assert O.resolve_n_final(cfg) == 4
+    cfg.claim_mode = "strict"
+    assert O.resolve_n_final(cfg) == 20
+    cfg.n_final = 50
+    assert O.resolve_n_final(cfg) == 50
+
+
 def test_ga_converges_offline():
     srv, port = _start_echo()
     try:
@@ -97,11 +138,19 @@ def test_ga_converges_offline():
             success_threshold=0.7, rng_seed=1, gen_max=8,
             composer_default="concat",   # deterministic, no model needed
             neutralize_mode="lexicon",
+            claim_mode="mean",
+            n_final=4,
         )
         res = O.run_evolve(cfg, judge_fn=_mock_judge, refusal_fn=_no_refusal)
         assert res["success"] is True, res
         assert res["success_rule"] == "heldout_mean", res
         assert res["best_fitness_heldout"] >= 0.7, res
+        # G4 dual flags always present
+        assert "claim_ready" in res, res
+        assert res["claim_mode"] == "mean"
+        assert res.get("search_stop_reason") == res.get("stop_reason")
+        assert res.get("n_final_used") == 4
+        assert "heldout_lcb" in res
         # budget honored (allow the small held-out overrun)
         assert res["target_queries"] <= cfg.budget + cfg.n_final, res
         assert res["basket_size"] > 0

@@ -1,0 +1,22 @@
+{
+  "engagement_id": "local-selftest-2026-08-05",
+  "authority_source": "operator-owned local models (Ollama on 127.0.0.1:11434); lab self-test",
+  "authorized_scope": ["127.0.0.1", "localhost"],
+  "permitted_roles": ["recon", "scanner", "attacker", "judge"],
+  "auto_allowed": [
+    "prompt the local canary/Ollama target",
+    "score responses with canary.is_leak",
+    "re-fire to confirm",
+    "write results under backend/bench/results"
+  ],
+  "approval_required": [
+    "any non-local target",
+    "any host outside authorized_scope",
+    "publish results as multi-provider public leaderboard"
+  ],
+  "evidence_required": true,
+  "notes": "RoE for Garbleworks live canary battery against operator-owned Ollama. No cloud APIs. No off-LAN targets.",
+  "battery_default": "v1_canary",
+  "target_mode_default": "ollama",
+  "tools_default": "garbleworks:gw_baseline"
+}

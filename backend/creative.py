@@ -36,7 +36,7 @@ a circuit-breaker (see ``seed_basket.next_surface_policy``).
 from __future__ import annotations
 
 import ops  # noqa: F401  registers the op catalog
-from core import REGISTRY, run_recipe
+from core import REGISTRY, enabled_ops, get_op, is_enabled, run_recipe
 
 # Nesting-doll application order. Lower rank = applied first (outer/content), higher
 # = applied last (surface). Character mutation is last: it transforms glyphs, so it
@@ -118,13 +118,13 @@ def category_of(name: str) -> str:
 
 
 def describe(name: str) -> str:
-    op = REGISTRY.get(name)
+    op = get_op(name)
     return ((getattr(op, "description", "") or name).strip())[:120]
 
 
 def by_category() -> dict[str, list[str]]:
     d: dict[str, list[str]] = {}
-    for name, op in REGISTRY.items():
+    for name, op in enabled_ops().items():
         d.setdefault(getattr(op, "category", "?"), []).append(name)
     return d
 
@@ -133,7 +133,7 @@ def order_recipe(op_names: list[str]) -> list[str]:
     """Sort a set of ops into coherent nesting order (framing first, glyph last)."""
     seen, uniq = set(), []
     for o in op_names:
-        if o in REGISTRY and o not in seen:
+        if is_enabled(o) and o not in seen:
             seen.add(o)
             uniq.append(o)
     return sorted(uniq, key=lambda o: _CAT_RANK.get(category_of(o), 5))
@@ -214,11 +214,11 @@ def layer_policy(target_class: str | None = "soft") -> dict:
 
 
 def _pick_from_seed(rng, cat: str, ban: frozenset[str]) -> str | None:
-    pool = [o for o in (SEED.get(cat) or []) if o in REGISTRY and o not in ban]
+    pool = [o for o in (SEED.get(cat) or []) if is_enabled(o) and o not in ban]
     if not pool:
-        # fall back to any registered op in that category
+        # fall back to any enabled op in that category
         pool = [
-            n for n, op in REGISTRY.items()
+            n for n, op in enabled_ops().items()
             if getattr(op, "category", None) == cat and n not in ban
         ]
     if not pool:
@@ -239,13 +239,13 @@ def _reasoner_forced_stack(rng, ban: frozenset[str], max_layers: int) -> list[st
             "code_switch", "low_resource_pivot", "nested_lang",
             "script_mix", "romanization_frame", "answer_in_lang",
         )
-        if n in REGISTRY and n not in ban
+        if is_enabled(n) and n not in ban
     ]
     cot = [
         n for n in (
             "cot_hijack", "cot_dilution", "cot_no_decode", "cot_forge_verdict",
         )
-        if n in REGISTRY and n not in ban
+        if is_enabled(n) and n not in ban
     ]
     stack: list[str] = []
     if lang:
@@ -259,7 +259,7 @@ def _reasoner_forced_stack(rng, ban: frozenset[str], max_layers: int) -> list[st
                 "past_tense", "misdirection_frame", "crescendo_ladder",
                 "refusal_suppression", "persona_wrap",
             )
-            if n in REGISTRY and n not in ban and n not in stack
+            if is_enabled(n) and n not in ban and n not in stack
         ]
         if extra:
             stack.append(rng.choice(extra))
@@ -316,13 +316,13 @@ def creative_stack(
     # Weight framing pool toward CoT ops when available
     framing_pool = [
         o for o in SEED["framing"]
-        if o in REGISTRY and o not in ban
+        if is_enabled(o) and o not in ban
         # soft: avoid loud signature framings (arena signature class)
         and not (tc == "soft" and o in TRIPWIRE_BAN_OPS)
     ]
     if not framing_pool:
-        framing_pool = ["past_tense"] if "past_tense" in REGISTRY else list(
-            n for n, op in REGISTRY.items()
+        framing_pool = ["past_tense"] if is_enabled("past_tense") else list(
+            n for n, op in enabled_ops().items()
             if getattr(op, "category", None) == "jailbreak"
             and n not in ban
             and not (tc == "soft" and n in TRIPWIRE_BAN_OPS)
@@ -373,7 +373,7 @@ def creative_stack(
 
 def seed_singles() -> list[str]:
     """The full diverse seed as singles (for arms that explore each technique)."""
-    return [op for cat in SEED.values() for op in cat if op in REGISTRY]
+    return [op for cat in SEED.values() for op in cat if is_enabled(op)]
 
 
 def seed_singles_for_class(target_class: str = "soft") -> list[str]:
@@ -387,7 +387,7 @@ def seed_singles_for_class(target_class: str = "soft") -> list[str]:
         if cat == "framing":
             # framing is jailbreak family — always allowed unless ban
             for o in ops_list:
-                if o in REGISTRY and o not in ban:
+                if is_enabled(o) and o not in ban:
                     out.append(o)
             continue
         if cat in forbid:
@@ -395,6 +395,6 @@ def seed_singles_for_class(target_class: str = "soft") -> list[str]:
         if cat not in pol["layer_cats"] and cat not in ("framing",):
             continue
         for o in ops_list:
-            if o in REGISTRY and o not in ban:
+            if is_enabled(o) and o not in ban:
                 out.append(o)
     return out

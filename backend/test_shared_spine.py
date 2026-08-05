@@ -155,7 +155,11 @@ def test_default_strategy_is_semantic_not_evolve():
 # Four strategies on shared path
 # --------------------------------------------------------------------------- #
 
-@pytest.mark.parametrize("strategy", list(STRATEGY_NAMES))
+# Chat strategies only; ipi_template is agentic_ipi (see test_agentic_ipi.py).
+_CHAT_STRATEGY_NAMES = tuple(s for s in STRATEGY_NAMES if s != "ipi_template")
+
+
+@pytest.mark.parametrize("strategy", list(_CHAT_STRATEGY_NAMES))
 def test_each_strategy_shared_contract(strategy: str):
     obj = _obj(
         id=f"run-{strategy}",

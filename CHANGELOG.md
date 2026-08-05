@@ -7,6 +7,12 @@ tagged release.
 
 ## [Unreleased]
 
+### Fixed
+- **Evolve math hiring-truth:** `Genome.var` is unbiased sample variance
+  (`1/(n−1)`, EVOLVE_MATH §5.1); `SHIPPED_DEFAULTS` is the single source for
+  `RunConfig`; lock tests in `test_optimizer_math_lock.py`. Doc marks
+  aspirational 1/5 `σ_w`, τ/t genes, and dual `success`/`claim_ready` flags.
+
 ### Added
 - **Pliny source adapter** (`backend/pliny_adapter.py`, ops `pliny_frame` /
   `pliny_list_frames`): always-on builtin structural kit (anchors, format-split,

@@ -806,12 +806,43 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument(
         "--behaviors",
         default="",
-        help="HarmBench-shaped JSON; print objectives (no fire) or use with --auto first id",
+        help="HarmBench-shaped JSON path; or use --harmbench for official CSV battery",
     )
     p.add_argument(
         "--list-behaviors",
         action="store_true",
-        help="list behaviors from --behaviors or GARBLEWORKS_BEHAVIORS and exit",
+        help="list behaviors (JSON path / env / --harmbench) and exit",
+    )
+    p.add_argument(
+        "--harmbench",
+        action="store_true",
+        help="use real HarmBench battery (download-on-first-use cache)",
+    )
+    p.add_argument(
+        "--harmbench-n",
+        type=int,
+        default=8,
+        help="with --harmbench: stratified sample size (default 8)",
+    )
+    p.add_argument(
+        "--harmbench-category",
+        default="",
+        help="with --harmbench: SemanticCategory filter (e.g. cybercrime_intrusion)",
+    )
+    p.add_argument(
+        "--harmbench-campaign",
+        action="store_true",
+        help="run technique ladder over HarmBench sample (not single --auto objective)",
+    )
+    p.add_argument(
+        "--harmbench-ladder",
+        default="plain,enc:base64,enc:zero_width,tag_wrap",
+        help="comma techniques for --harmbench-campaign",
+    )
+    p.add_argument(
+        "--harmbench-dry-run",
+        action="store_true",
+        help="sample/plan HarmBench campaign without firing target",
     )
     p.add_argument(
         "--confirm-n",
@@ -821,19 +852,71 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = p.parse_args(argv)
 
-    # Behavior battery list (HarmBench-shaped)
-    if args.list_behaviors or args.behaviors:
+    # --- HarmBench campaign (full battery path, Wallbreaker-class) ---
+    if args.harmbench_campaign or (
+        args.harmbench and args.harmbench_dry_run and not (args.auto or "").strip()
+    ):
+        import harmbench_campaign as hbc
+
+        ladder = tuple(
+            x.strip() for x in (args.harmbench_ladder or "").split(",") if x.strip()
+        )
+        target = None
+        dry = bool(args.harmbench_dry_run) or not (args.target or "").strip()
+        if not dry and args.target:
+            if args.target in ("local", "canary", "local-canary"):
+                # Campaign grades compliance, not canary leak — still need a fire target
+                srv, _port, target, _sec = make_local_canary_target(
+                    secret=args.secret or None
+                )
+            else:
+                tpath = Path(args.target)
+                if tpath.is_file():
+                    target = json.loads(tpath.read_text(encoding="utf-8"))
+                else:
+                    target = target_from_url(args.target)
+        out = hbc.run_campaign(
+            n=int(args.harmbench_n),
+            category=(args.harmbench_category or None) or None,
+            seed=int(args.seed),
+            ladder=ladder,
+            target=target,
+            dry_run=dry,
+            offline=False,
+        )
+        text = json.dumps(out, indent=2, default=str)
+        if args.out:
+            Path(args.out).write_text(text, encoding="utf-8")
+        if not args.quiet:
+            print(text)
+        return 0 if out.get("ok") else 1
+
+    # Behavior battery list (JSON and/or real HarmBench)
+    if args.list_behaviors or args.behaviors or args.harmbench:
         import behaviors as beh
-        bpath = args.behaviors or ""
+
         try:
-            if bpath:
-                blist = beh.load_behaviors(bpath)
+            if args.harmbench:
+                cats = [args.harmbench_category] if args.harmbench_category else None
+                blist = beh.load_harmbench(
+                    categories=cats,
+                    ensure=True,
+                    n_sample=int(args.harmbench_n) if not args.list_behaviors else None,
+                    seed=int(args.seed),
+                    limit=int(args.harmbench_n) if args.list_behaviors else None,
+                )
+                # list without sample: show first N from full load
+                if args.list_behaviors and blist is not None:
+                    if args.harmbench_n and len(blist) > args.harmbench_n:
+                        blist = blist[: int(args.harmbench_n)]
+            elif args.behaviors:
+                blist = beh.load_behaviors(args.behaviors)
             else:
                 blist = beh.load_behaviors_from_env()
         except Exception as e:
             print(f"error: behaviors load failed: {e}", file=sys.stderr)
             return 2
-        if args.list_behaviors or not args.auto:
+        if args.list_behaviors or (not args.auto and not args.harmbench):
             print(json.dumps([
                 {"id": b.id, "category": b.category, "behavior": b.behavior[:200],
                  "source": b.source}
@@ -841,9 +924,9 @@ def main(argv: list[str] | None = None) -> int:
             ], indent=2))
             if args.list_behaviors:
                 return 0 if blist else 1
-            if not args.auto and args.behaviors:
+            if not args.auto and args.behaviors and not args.harmbench:
                 return 0 if blist else 1
-        # --auto with --behaviors: use first behavior as objective if --auto empty
+        # --auto with battery: use first behavior as objective if --auto empty
         if blist and not (args.auto or "").strip():
             args.auto = blist[0].behavior
 

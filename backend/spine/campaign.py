@@ -14,7 +14,9 @@ from spine.scorer import FireFn, JudgeFn, Scorer
 from spine.strategies import STRATEGY_RUNNERS
 
 DEFAULT_STRATEGY = "pair"
-STRATEGY_NAMES = ("pair", "multiturn", "evolve", "pack_hunt")
+STRATEGY_NAMES = ("pair", "multiturn", "evolve", "pack_hunt", "ipi_template")
+CHAT_STRATEGIES = frozenset({"pair", "multiturn", "evolve", "pack_hunt"})
+AGENTIC_STRATEGIES = frozenset({"ipi_template"})
 
 
 @dataclass
@@ -134,45 +136,79 @@ def run_campaign(
     judge_fn: JudgeFn | None = None,
     stage_b_force: bool = False,
     strategy_kwargs: dict[str, Any] | None = None,
+    agent: Any = None,
 ) -> StrategyRunResult:
-    """Public shared entry for all four strategy classes.
+    """Public shared entry for chat + agentic IPI strategy classes.
 
     Default strategy is pair (semantic). Recipe composition is never the default
     search state (recipe_is_default_genome=False always on this path).
+
+    For mode=agentic_ipi / strategy=ipi_template, pass ``agent`` (AgentTarget,
+    mock name, or openai_tools/tools_loop). Tools-loop accepts agent_kwargs
+    (chat_fn, base_url, model, delivery_markers) via strategy_kwargs['agent_kwargs']
+    or the agent_kwargs parameter.
     """
     if isinstance(objective, dict):
         objective = CampaignObjective.from_dict(objective)
 
     name = (strategy or DEFAULT_STRATEGY).strip().lower()
+    # Auto-select ipi_template when objective is agentic and strategy omitted
+    if strategy is None and getattr(objective, "mode", "chat") == "agentic_ipi":
+        name = "ipi_template"
     if name not in STRATEGY_RUNNERS:
         raise ValueError(
             f"unknown strategy {name!r}; choose one of {STRATEGY_NAMES}"
         )
 
-    own_srv = None
-    if fire_fn is None:
-        if target is not None:
-            fire_fn = _fire_from_target(target)
-        else:
-            secret = objective.secret or "CANARY_SPINE_TEST_9f3a2b7c"
-            if not objective.secret:
-                objective.secret = secret
-                if not objective.success_detectors:
-                    from spine.objective import SuccessDetector
-                    objective.success_detectors = [
-                        SuccessDetector("secret_canary", secret, "canary_crossed"),
-                    ]
-            fire_fn = make_deterministic_fire(secret)
+    mode = getattr(objective, "mode", "chat") or "chat"
+    if mode == "agentic_ipi" and name in CHAT_STRATEGIES:
+        raise ValueError(
+            f"strategy {name!r} is chat-only; use ipi_template for mode=agentic_ipi"
+        )
+    if mode == "chat" and name in AGENTIC_STRATEGIES:
+        raise ValueError(
+            f"strategy {name!r} requires objective.mode='agentic_ipi'"
+        )
 
-    scorer = Scorer(
-        objective,
-        fire_fn,
-        judge_fn=judge_fn,
-        stage_b_force=stage_b_force,
-    )
+    own_srv = None
+    # agent_kwargs may be nested in strategy_kwargs (pop so runner does not see it)
+    skw = dict(strategy_kwargs or {})
+    agent_kwargs = dict(skw.pop("agent_kwargs", None) or {})
+    if mode == "agentic_ipi" or name in AGENTIC_STRATEGIES:
+        from spine.agent_target import resolve_agent
+        from spine.scorer_agentic import AgenticScorer
+
+        # Prefer objective delivery_markers when not overridden
+        if "delivery_markers" not in agent_kwargs and getattr(
+            objective, "delivery_markers", None
+        ):
+            agent_kwargs["delivery_markers"] = list(objective.delivery_markers)
+        agent_impl = resolve_agent(agent, **agent_kwargs)
+        scorer = AgenticScorer(objective, agent_impl)  # type: ignore[assignment]
+    else:
+        if fire_fn is None:
+            if target is not None:
+                fire_fn = _fire_from_target(target)
+            else:
+                secret = objective.secret or "CANARY_SPINE_TEST_9f3a2b7c"
+                if not objective.secret:
+                    objective.secret = secret
+                    if not objective.success_detectors:
+                        from spine.objective import SuccessDetector
+                        objective.success_detectors = [
+                            SuccessDetector("secret_canary", secret, "canary_crossed"),
+                        ]
+                fire_fn = make_deterministic_fire(secret)
+
+        scorer = Scorer(
+            objective,
+            fire_fn,
+            judge_fn=judge_fn,
+            stage_b_force=stage_b_force,
+        )
     t0 = time.perf_counter()
     runner = STRATEGY_RUNNERS[name]
-    kw = dict(strategy_kwargs or {})
+    kw = skw
     try:
         detail = runner(scorer, **kw)
         err = None
