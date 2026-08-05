@@ -22,11 +22,11 @@ It is **not** for defeating the safety controls of third-party production models
 
 | Repo idea | Role in Garbleworks |
 | --- | --- |
-| L1B3RT4S-style markdown/json tree | Data adapter: structural markers → composable recipe steps |
-| CL4R1T4S-style text | Same load rules if present on disk |
-| G0DM0D3 | Not an adapter (chat UI) |
-| OBLITERATUS | Not an adapter (weight surgery) |
-| GLOSSOPETRAE | Not vendored (JS); language ideas map to lang ops |
+| L1B3RT4S-style tree | Data adapter: `!SHORTCUTS.json` commands, custom GODMODE lines, dump dividers → composable recipe steps |
+| CL4R1T4S-style text | Same structural load if present on disk (format/chrome markers) |
+| G0DM0D3 | Not a string-op adapter (chat UI product) |
+| OBLITERATUS | Not a string-op adapter (weight / abliteration surgery) |
+| GLOSSOPETRAE | Not vendored (JS); `scan_deep.GLOSSOPETRAE_MAP` → language ops |
 
 See `backend/pliny_adapter.py` and op `pliny_frame`.
 
