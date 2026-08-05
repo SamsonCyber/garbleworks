@@ -1,6 +1,6 @@
 # Garbleworks
 
-![Garbleworks - recipe alchemy](assets/banner-chimera.jpg)
+![Garbleworks - recipe alchemy](assets/banner-hellbeast.jpg)
 
 **Authorized LLM red-team harness.** Compose attacks as recipes, scan the technique catalog, search the composition space, run standard batteries (HarmBench) and agentic IPI trials, fire under scope gates, measure with re-fire and confidence bounds. HTTP API, MCP, CLI, and TUI.
 
