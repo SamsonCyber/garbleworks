@@ -2,19 +2,19 @@
 
 ![Garbleworks - recipe alchemy](assets/banner.jpg)
 
-**Authorized LLM red-team harness.** Compose attacks as recipes, scan the technique catalog, search the composition space, fire under scope gates, measure with re-fire and confidence bounds. HTTP API, MCP, and TUI.
+**Authorized LLM red-team harness.** Compose attacks as recipes, scan the technique catalog, search the composition space, run standard batteries (HarmBench) and agentic IPI trials, fire under scope gates, measure with re-fire and confidence bounds. HTTP API, MCP, CLI, and TUI.
 
 [![python](https://img.shields.io/badge/python-3.11%2B-blue)](#end-to-end-first-safe-run)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
-[![ops](https://img.shields.io/badge/ops-152-orange)](#recipe-dsl)
-[![interface](https://img.shields.io/badge/interface-HTTP%20%2B%20MCP%20%2B%20TUI-purple)](#interfaces)
+[![ops](https://img.shields.io/badge/ops-179-orange)](#recipe-dsl)
+[![interface](https://img.shields.io/badge/interface-HTTP%20%2B%20MCP%20%2B%20CLI%20%2B%20TUI-purple)](#interfaces-quick-start)
 [![ci](https://img.shields.io/github/actions/workflow/status/SamsonCyber/garbleworks/ci.yml?branch=main)](https://github.com/SamsonCyber/garbleworks/actions)
 
 > **Authorized security testing only.** Use on models you own or run locally, in-scope bounty targets, written pentests, CTFs, and labs you control. Do not use this to defeat third-party production safety without authorization. See [SECURITY.md](SECURITY.md).
 
 | Maturity | State |
 |----------|--------|
-| Implemented | HTTP API, recipe DSL, fire path, MCP, TUI, HarmBench campaign, agentic IPI spine, exporters |
+| Implemented | Recipe DSL, one fire path, HTTP/MCP/CLI/TUI, HarmBench campaign, agentic IPI dual scorer + tools-loop, procedural scan, claim gates, exporters |
 | Independently validated | `python scripts/repro.py` (security tests + math audit, no live model) |
 | Maintained | Public under [SamsonCyber/garbleworks](https://github.com/SamsonCyber/garbleworks), Apache-2.0 |
 
@@ -26,24 +26,25 @@ Fixed jailbreak lists rot. One lucky hit is not a finding. Production safety wor
 
 1. **Composition** of small transforms (not one opaque string).
 2. **Search** over that space (genetic, bandit, QD, tree).
-3. **Outbound fire gates** so a bad or injected target URL cannot hit your private LAN or cloud instance-metadata endpoints (SSRF protection on the fire path).
+3. **Outbound fire gates** so a bad or injected target URL cannot hit private LAN or cloud instance-metadata endpoints (SSRF protection on the fire path).
 4. **Measured success rates** with confidence bounds (re-fire N times, Wilson intervals). One lucky chat reply is not a finding.
 5. **Standards map** so findings land in auditor language (OWASP LLM Top 10, MITRE ATLAS, CWE).
-6. **Standard batteries** (HarmBench) and **agentic IPI** scoring (harm tool x conceal x delivery) so canary plumbing is not confused with tool-agent efficacy.
+6. **Standard batteries** (official HarmBench download-on-first-use) so results are not hand-picked prompts.
+7. **Agentic IPI** scoring (harm tool x conceal x delivery) so canary plumbing and unread injects are not mislabeled as technique fail.
 
-Garbleworks is that closed loop. The op/recipe idea is not novel (h4rm3l, WildTeaming). The product claim is **search + honest measurement + enforced outbound policy**.
+Garbleworks is that closed loop. The op/recipe idea is not novel (h4rm3l, WildTeaming). The product claim is **search + honest measurement + enforced outbound policy + agent-and-battery surfaces on one spine**.
 
 How the loop runs:
 
 1. Set an **objective** and a **target** (local Ollama, OpenAI-compatible endpoint, or in-process callable).
-2. Build attacks as **recipes**: ordered chains of parameterized ops (encoding, confusables, templates, jailbreak frames, stego carriers, and more).
-3. **Scan** (coverage-first) or **search** (stop-on-win / optimize): walk the playbook map, or evolve recipes.
-4. **Fire** only through one module (`fire.py`): block private/metadata ranges, then enforce the MCP engagement host allowlist when a receipt is present.
-5. **Score** with multi-signal detectors and optional graded LLM judge.
-6. **Re-fire** winners N times and report success rate with Wilson-style confidence bounds.
-7. **Map** findings to OWASP LLM Top 10 / MITRE ATLAS / NIST / CWE via the field guide; **export** to promptfoo / garak / PyRIT shapes.
+2. Build attacks as **recipes**, **templates**, or a **HarmBench sample**.
+3. **Scan** (coverage map), **search** (stop-on-win / EVOLVE), **campaign** (HarmBench ladder), or **agentic IPI** (tools-loop + dual scorer).
+4. **Fire** only through `fire.py`: block private/metadata ranges; MCP engagement host allowlist when a receipt is present.
+5. **Score** with detectors, optional graded LLM judge, or agentic multi-channel outcomes.
+6. **Re-fire** winners N times; report rates with Wilson-style bounds; refuse promote on delivery_fail-heavy or plumbing-only estimands.
+7. **Map** findings to OWASP / ATLAS / NIST / CWE; **export** to promptfoo / garak / PyRIT shapes.
 
-Core unit:
+Core unit (chat / recipe path):
 
 ```text
 synonym:limit=3 homoglyph:coverage=0.5 zero_width:every=2 tag_wrap
@@ -57,7 +58,7 @@ Four primitives, one composed candidate. The harness searches compositions inste
 
 | Surface | Start | Role |
 |---------|-------|------|
-| CLI | `python -m garbleworks` | One harness entry: scan, modules, harmbench, auto, mcp |
+| CLI | `python -m garbleworks` | One harness: `scan`, `modules`, `harmbench`, `auto`, `serve`, `mcp` |
 | HTTP + web UI | `powershell -File run.ps1` | Human operator at `http://127.0.0.1:9877` |
 | MCP | `python backend/mcp_server.py` | Agent operator + scope receipt |
 | TUI | `cd tui && bun start` | Keyboard console (backend only) |
@@ -66,12 +67,14 @@ There is **one fire path** (`backend/fire.py`). No second unchecked outbound pat
 
 | Capability | How you run it |
 |------------|----------------|
-| Recipe compose / mutate | HTTP UI, MCP `apply_recipe`, ops catalog |
-| Procedural technique scan | MCP `run_scan`, `docs/SCAN-CAMPAIGN.md` |
+| Recipe compose / mutate | HTTP UI, MCP `apply_recipe`, ops catalog (~179 ops) |
+| Procedural technique scan | MCP `run_scan` ([docs/SCAN-CAMPAIGN.md](docs/SCAN-CAMPAIGN.md)) |
 | Stop-on-win auto ladder | `python -m garbleworks auto -- --auto "..." --target local` |
-| **HarmBench battery** | `python -m garbleworks harmbench ensure` then `sample` / `campaign` ([section](#harmbench-standard-battery)) |
-| Agentic IPI (dual scorer) | `python -m spine.ipi_cli`, MCP `run_agentic_ipi` ([docs/IPI-AGENT.md](docs/IPI-AGENT.md)) |
-| Validate re-fire | MCP `validate_refire`, CLI `--validate` |
+| **HarmBench battery** | `python -m garbleworks harmbench ensure\|sample\|campaign` ([below](#harmbench-standard-battery)) |
+| **Agentic IPI dual scorer** | `python -m spine.ipi_cli`, MCP `run_agentic_ipi` ([docs/IPI-AGENT.md](docs/IPI-AGENT.md)) |
+| Tools-loop agent target | `agent=openai_tools` / `tools_loop` (offline `chat_fn` or live `base_url`) |
+| Claim gates | Wilson LCB, delivery_fail majority reject, optional BH-FDR, dual `success` / `claim_ready` |
+| Validate re-fire | MCP `validate_refire`, agent_loop `--validate` |
 | Field guide + crosswalk | MCP `field_guide_*` |
 | Offline math + SSRF audit | `python scripts/repro.py` |
 
@@ -82,36 +85,60 @@ python scripts/repro.py
 # expects: REPRO_OK garbleworks security + math audit
 
 cd backend
-python -m garbleworks harmbench ensure    # download official HarmBench CSV (cached, not in git)
-python -m garbleworks harmbench status
+python -m garbleworks harmbench ensure
 python -m garbleworks harmbench campaign -n 5 --dry-run
+python -m spine.ipi_cli list-templates
+python -m spine.ipi_cli run --agent mock_obey --templates report_fill --budget 4
 ```
 
-**Primary tree / one harness:** [docs/PRIMARY.md](docs/PRIMARY.md)
+**Primary tree:** [docs/PRIMARY.md](docs/PRIMARY.md) · **Gaps (honest):** [docs/GAPS.md](docs/GAPS.md)
 
-**Read next:** [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) · [docs/BENCHMARKS.md](docs/BENCHMARKS.md) · [docs/USAGE-AND-API.md](docs/USAGE-AND-API.md) · [docs/GAPS.md](docs/GAPS.md) · [HarmBench](#harmbench-standard-battery) · [Pliny (optional)](#pliny-corpus-optional)
+**Read next:** [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) · [docs/BENCHMARKS.md](docs/BENCHMARKS.md) · [docs/USAGE-AND-API.md](docs/USAGE-AND-API.md) · [docs/IPI-AGENT.md](docs/IPI-AGENT.md) · [Pliny (optional)](#pliny-corpus-optional)
 
 ---
 
 ## HarmBench (standard battery)
 
-Wallbreaker-class path: pull the **real** [HarmBench](https://github.com/centerforaisafety/HarmBench) text behavior set into the attack loop (download on first use, not vendored in git).
+Pull the **real** [HarmBench](https://github.com/centerforaisafety/HarmBench) text behavior set into the attack loop (download on first use; CSV cached under `backend/library/`, **not** vendored in git). Same operator need as Wallbreaker-class harnesses: unbiased battery, not hand-picked prompts.
 
 | Command | What it does |
 |---------|----------------|
-| `python -m garbleworks harmbench ensure` | Download/cache official CSV under `backend/library/` |
-| `python -m garbleworks harmbench status` | Cache path, count, categories |
-| `python -m garbleworks harmbench sample -n 8` | Stratified sample across categories |
-| `python -m garbleworks harmbench campaign -n 5 --dry-run` | Plan battery + technique ladder (no fire) |
-| `python -m garbleworks harmbench campaign -n 5 --target URL` | Run ladder against a scoped target |
-| `python -m harmbench …` | Same module, direct entry |
+| `python -m garbleworks harmbench ensure` | Download/cache official CSV |
+| `python -m garbleworks harmbench status` | Path, count, categories |
+| `python -m garbleworks harmbench sample -n 8` | Stratified sample |
+| `python -m garbleworks harmbench campaign -n 5 --dry-run` | Plan battery + technique ladder |
+| `python -m garbleworks harmbench campaign -n 5 --target URL` | Fire ladder at a scoped target |
+| `python -m harmbench …` | Direct module entry |
 | `python -m agent_loop --harmbench-campaign --harmbench-n 8` | Agent-loop flags |
 
 MCP: `ensure_harmbench`, `sample_harmbench`, `run_harmbench_campaign`, `list_behaviors(source="harmbench")`.
 
-Override cache path with `GARBLEWORKS_HARMBENCH_CSV`. Still supports operator JSON via `GARBLEWORKS_BEHAVIORS` / `--behaviors`.
+Override cache with `GARBLEWORKS_HARMBENCH_CSV`. Operator JSON still works via `GARBLEWORKS_BEHAVIORS` / `--behaviors`.
 
-**Honesty:** default campaign grades COMPLIED/PARTIAL with a non-refusal heuristic so offline runs work without a cloud judge. That is a battery runner, not a powered multi-model ASR leaderboard. Use re-fire / live judge paths for confirmatory claims. See [docs/GAPS.md](docs/GAPS.md).
+**Honesty:** default campaign grades COMPLIED/PARTIAL with a non-refusal heuristic so offline runs work without a cloud judge. That is a battery **runner**, not a published multi-model ASR leaderboard. Pair with re-fire / live judge / `bench.live_efficacy` for confirmatory claims.
+
+---
+
+## Agentic IPI (dual scorer)
+
+Chat canary is not tool-agent red-team. Agentic mode scores three channels:
+
+| Channel | Meaning |
+|---------|---------|
+| **Delivery** | Did the inject enter model-visible context? Fail → `delivery_fail` (not technique fail) |
+| **Harm** | Did a hard-matched tool call fire (`HarmToolSpec`)? |
+| **Conceal** | Did user-visible text avoid forbidden tokens? |
+
+Outcomes: `success`, `harm_only`, `conceal_only` / `no_harm`, `delivery_fail`, `injection_detected`, plus error classes. Claim gate refuses promote when delivery_fail is all or majority of completed trials.
+
+| Entry | Notes |
+|-------|--------|
+| `python -m spine.ipi_cli list-templates` | tool_result / CSV / report_fill / email / file carriers |
+| `python -m spine.ipi_cli run --agent mock_obey` | Offline mocks |
+| `python -m spine.ipi_cli run --agent openai_tools --base-url …` | Live tools-loop |
+| MCP `run_agentic_ipi` / `list_ipi_templates` | Same spine path |
+
+Agents: `mock_obey`, `mock_summarize`, `mock_snitch`, `mock_no_ingest`, `mock_detect`, `openai_tools` / `tools_loop`. Full notes: [docs/IPI-AGENT.md](docs/IPI-AGENT.md).
 
 ---
 
@@ -120,33 +147,31 @@ Override cache path with `GARBLEWORKS_HARMBENCH_CSV`. Still supports operator JS
 ```text
 objective + target
         |
-        v
-   compose recipe ----> apply_recipe ----> variants
-        ^                                      |
-        |                                      v
-   search loop                          fire (scoped)
-   EVOLVE / MAP-Elites /                       |
-   Thompson bandit / tree search               v
-        |                               target adapter
-        |                                      |
-        |                                      v
-        +--------- history / bandit <--- detectors + judge
-                                               |
-                                               v
-                              report + export + field-guide crosswalk
+        +-- recipe path ---- compose/apply --> fire (scoped) --> detectors/judge
+        |                         ^                    |
+        |                         |                    v
+        |                    EVOLVE / bandit /    re-fire + Wilson
+        |                    MAP-Elites / tree         |
+        |                                              v
+        |                                    claim gate + export + field guide
+        |
+        +-- HarmBench ---- sample battery --> technique ladder --> fire --> COMPLIED/held
+        |
+        +-- agentic IPI -- templates/tools-loop --> dual scorer (delivery/harm/conceal)
 ```
 
 | Stage | What happens | Code |
 |-------|----------------|------|
-| Compose | Ordered op chain (UI, MCP, or optimizer) | `core.run_recipe`, `ops/*` |
-| Apply | Expand one input into variants (fan-out caps) | `core.py`, `app.py` |
+| Compose | Ordered op chain (UI, MCP, optimizer) | `core.run_recipe`, `ops/*` |
+| Battery | Official HarmBench CSV sample | `harmbench.py`, `harmbench_campaign.py` |
+| Agentic | Document carriers + tools-loop | `spine/scorer_agentic.py`, `tools_loop_agent.py` |
 | Fire | HTTP or local callable under shared policy | `fire.py`, `targets.py` |
-| Detect | Multi-signal hit rules + optional LLM judge | `detectors.py` |
+| Detect / score | Multi-signal hit rules, LLM judge, or dual channels | `detectors.py`, `spine/*` |
 | Search | Prefer recipes that work; retire ones that do not | `evolve.py`, `optimizer.py`, `rainbow.py`, `bandit.py`, `treesearch.py` |
-| Measure | Wilson bounds, validate re-fire (N times) | `validate_refire.py`, `benchmark_harness.py` |
+| Measure | Wilson bounds, validate re-fire, dual success/claim_ready | `validate_refire.py`, `bench/metrics.py` |
 | Map / export | Framework crosswalk + tool shapes | field guide JSON, `exporters.py` |
 
-Longer walkthrough (scope rules, detector table, search math honesty): **[docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md)**.
+Longer walkthrough: **[docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md)**.
 
 ---
 
@@ -170,13 +195,12 @@ objective + target.
 |------|----------------|
 | `phase_a` | Catalog sweep (one op at a time) |
 | `phase_b` | Logical complementary mixes (not random stacks) |
-| `phase_c` â€¦ `phase_f` | Deeper stacks, nesting, long-turn roleplay, Pliny kit |
-| `language` | Language mutators (code-switch, low-resource pivot, nested hop, â€¦) |
-| `deep` | Câ€“F + language only |
-| `full` | A â†’ B â†’ C â†’ D â†’ E â†’ F â†’ language under one budget |
+| `phase_c` … `phase_f` | Deeper stacks, nesting, long-turn roleplay, Pliny kit |
+| `language` | Language mutators (code-switch, low-resource pivot, nested hop, …) |
+| `deep` | C–F + language only |
+| `full` | A → B → C → D → E → F → language under one budget |
 
-Fire path is the same scoped path as everything else (SSRF + MCP receipt).  
-Live targets need authorization. Echo / offline tests use a local secret canary.
+Fire path is the same scoped path as everything else. Live targets need authorization.
 
 ### Quick start (offline echo)
 
@@ -195,31 +219,9 @@ r = run_scan(
 )
 print(r.summary if hasattr(r, 'summary') else r)
 "
-# full docs: docs/SCAN-CAMPAIGN.md
 ```
 
-### MCP
-
-```text
-run_scan(objective, target=..., budget=120, mode="full", ...)
-```
-
-Writes / resumes `target_attack_map` (schema in [docs/SCAN-CAMPAIGN.md](docs/SCAN-CAMPAIGN.md)).  
-Knobs: `budget`, `mode`, `reps_per_technique`, `combo_depth`, `max_deep`,
-`techniques`, `category`, `exclude_model_backed`, `checkpoint_path`, `map_path`.
-
-Full phase table, language/GLOSSOPETRAE map, layering rules, and artifact schema:  
-**[docs/SCAN-CAMPAIGN.md](docs/SCAN-CAMPAIGN.md)**.
-
-### Three operator surfaces, one fire path
-
-| Surface | Start | Role |
-|---------|-------|------|
-| HTTP + web UI | `powershell -File run.ps1` â†’ `http://127.0.0.1:9877` | Human operator |
-| MCP | `python backend/mcp_server.py` | Agent operator + scope receipt |
-| TUI | `cd tui && bun start` | Keyboard console (backend only) |
-
-There is no second, unchecked fire path.
+Full phase table and schema: **[docs/SCAN-CAMPAIGN.md](docs/SCAN-CAMPAIGN.md)**.
 
 ### Scope and SSRF (non-negotiable)
 
@@ -229,7 +231,7 @@ All outbound HTTP shares `backend/fire.py`:
 2. Cloud metadata and other reserved ranges blocked.
 3. Loopback / RFC-1918 allowed by default for local labs; `GARBLEWORKS_BLOCK_PRIVATE=1` tightens.
 4. No redirects after validation.
-5. MCP fire requires host âˆˆ `authorized_scope` (default `127.0.0.1` / `localhost`).
+5. MCP fire requires host in `authorized_scope` (default `127.0.0.1` / `localhost`).
 6. Body and fan-out caps.
 
 HTTP API is unauthenticated: bind **127.0.0.1 only**. See [SECURITY.md](SECURITY.md).
@@ -239,34 +241,55 @@ HTTP API is unauthenticated: bind **127.0.0.1 only**. See [SECURITY.md](SECURITY
 ## Why this over alternatives (honest)
 
 The composable-recipe idea is not novel ([h4rm3l](https://arxiv.org/abs/2408.04811), [WildTeaming](https://arxiv.org/abs/2406.18510)).
-**The closed loop is the product:** search, scoped fire, re-fire, reportable bounds, standards map.
+**The product is the closed loop:** search, scoped fire, re-fire, reportable bounds, standards map, standard batteries, and agentic multi-channel scoring on one fire path.
 
-| Capability | Fixed payload lists | garak / PyRIT | h4rm3l | Garbleworks |
-|---|:---:|:---:|:---:|:---:|
-| Composable attack DSL | - | partial | yes | yes |
-| Genetic + quality-diversity search | - | - | bandit synth | EVOLVE + MAP-Elites |
-| Wilson / complete-case ASR + promotion gates | - | partial | - | yes (see gaps) |
-| Validate re-fire (N times) | - | yes | - | yes |
-| Graded LLM judge (4-level) | - | partial | - | yes |
-| Thompson bandit + recipe lifecycle | - | - | - | yes |
-| Multi-turn beam tree search | - | partial | - | yes |
-| OWASP / ATLAS / NIST / CWE crosswalk + export | - | partial | - | yes |
-| Enforced SSRF + MCP scope receipt | - | policy only | - | **enforced** |
-| Offline math + plumbing audit you can re-run | - | - | - | **yes** |
+Peers below are different jobs. Rows are “has a first-class operator path today,” not marketing fluff.
 
-Where peers often win: large community probe libraries (garak), enterprise packaging, or published multi-model leaderboards.
-Where Garbleworks is built to win: **operator-owned search**, **measurement honesty** (including the mean-vs-LCB audit finding), and **hard fire policy** on every path.
+| Capability | Fixed lists | garak / PyRIT | h4rm3l | Wallbreaker-class agent REPL | **Garbleworks** |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Composable attack DSL | - | partial | yes | transforms / Parseltongue | **yes** (~179 ops) |
+| Genetic + quality-diversity search | - | - | bandit synth | attack loops | **EVOLVE + MAP-Elites** |
+| Thompson bandit + recipe lifecycle | - | - | - | partial | **yes** |
+| Multi-turn beam tree search | - | partial | - | multi-turn loops | **yes** |
+| Procedural coverage scan (`target_attack_map`) | - | probe dump | - | scan tools | **yes** (`run_scan`) |
+| Wilson / complete-case ASR + promotion gates | - | partial | - | validate re-fire | **yes** (dual `success` / `claim_ready`) |
+| Validate re-fire (N times) | - | yes | - | yes | **yes** |
+| Delivery_fail ≠ technique fail (claim gate) | - | - | - | operator judgment | **enforced** |
+| Agentic IPI dual scorer (harm x conceal x delivery) | - | agent probes | - | tool agent UX | **yes** (spine + mocks + tools-loop) |
+| Official HarmBench battery in attack loop | - | adapters | - | **yes** (in-tree) | **yes** (download-on-first-use + campaign) |
+| Graded LLM judge (4-level) | - | partial | - | judge | **yes** |
+| OWASP / ATLAS / NIST / CWE crosswalk + export | - | partial | - | - | **yes** |
+| Enforced SSRF + MCP scope receipt | - | policy only | - | config | **enforced on every fire** |
+| Offline math + plumbing audit you can re-run | - | - | - | - | **yes** (`repro.py`) |
+| Full interactive agent REPL (Claude Code-style) | - | - | - | **yes** | partial (MCP + TUI v0.1; not a REPL) |
+| Persona author (ENI) / sysprompt corpus mimicry | - | - | - | **yes** | low / optional personas |
+| Multimodal image-edit attack channel | - | partial | - | **yes** | not shipped (text-first) |
+| Full HB-400 **vendored in git** | - | - | - | often yes | **no** (cache on first use) |
 
-Positioning detail: [docs/HARNESS-POSITIONING.md](docs/HARNESS-POSITIONING.md). Gaps: [docs/GAPS.md](docs/GAPS.md).
+### Where Garbleworks leads
+
+- **Measurement honesty:** complete-case ASR, delivery_fail not folded into no_harm, dual mean vs LCB flags, optional BH-FDR on multi-strategy ranks, offline math audit you can re-run.
+- **Operator-owned search** on a composable DSL (genetic + QD + bandit + tree), not only fixed probes.
+- **Hard fire policy** on every path (HTTP, MCP, campaign, auto).
+- **Two estimands on one spine:** chat/recipe efficacy and agentic IPI (tool harm + conceal + delivery).
+- **HarmBench campaign** without AGPL merge and without shipping the full corpus in git.
+
+### Where peers still win (do not paper over)
+
+- **garak / PyRIT:** huge community probe libraries and enterprise packaging.
+- **Wallbreaker-class REPL:** full interactive agent UX, persona author (ENI), multimodal image channel, HB often in-tree for zero-setup UX.
+- **Published multi-model ASR leaderboards:** GW has dry-run schema + operator runbook; live powered tables remain operator-funded ([docs/LIVE-ASR-RUNBOOK.md](docs/LIVE-ASR-RUNBOOK.md)).
+
+Positioning: [docs/HARNESS-POSITIONING.md](docs/HARNESS-POSITIONING.md). Residual gaps: [docs/GAPS.md](docs/GAPS.md).
 
 ---
 
 ## Benchmarks (offline, re-runnable)
 
-Full tables and interpretation: **[docs/BENCHMARKS.md](docs/BENCHMARKS.md)**.
+Full tables: **[docs/BENCHMARKS.md](docs/BENCHMARKS.md)**.
 
-**What we publish:** math golden checks, Wilson coverage Monte Carlo, open/closed-loop echo latency and hit rates, genetic optimizer audit, export structural checks, SSRF/scope rejects.
-**What we do not claim yet:** multi-provider live ASR leaderboard (roadmap).
+**What we publish:** math golden checks, Wilson coverage Monte Carlo, open/closed-loop echo latency and hit rates, genetic optimizer audit, export structural checks, SSRF/scope rejects, dual success/claim_ready hygiene.
+**What we do not claim as product defaults:** multi-provider live ASR leaderboard numbers (operator runbook only).
 
 ### Snapshot (2026-08-02T20:29:46Z, Python 3.11, full suite ~31 s)
 
@@ -274,26 +297,16 @@ Full tables and interpretation: **[docs/BENCHMARKS.md](docs/BENCHMARKS.md)**.
 |-------|--------|------------------|
 | Math closed form | pass | 14 / 14 formula checks |
 | Wilson coverage MC | pass | mean coverage **0.9085** (nominal 0.9); min 0.849 |
-| LCB gate audit | pass | `lcb_success_reachable_under_defaults=**false**`; n_needed_perfect=80 |
-| Open loop (echo) | pass | 80 fires; plaintext hit rate 1.0; **p50 ~2 ms** (loopback); **152** registered ops |
+| LCB gate audit | pass | dual flags: mean `success` vs LCB `claim_ready` |
+| Open loop (echo) | pass | 80 fires; plaintext hit rate 1.0; **p50 ~2 ms** (loopback) |
 | Closed loop | pass | 10 runs; hit rate 1.0; p50 ~568 ms |
-| Optimizer GA | pass | success_flag_rate 1.0; **lcb_stop_rate 0.0** (mean-based success confirmed) |
+| Optimizer GA | pass | success_flag_rate 1.0; LCB claim path documented separately |
 | Export | pass | promptfoo + garak + PyRIT structural OK |
 | Security | pass | 6 / 6 SSRF + scope checks |
 
-Numbers regenerate via `python scripts/publish_offline_benchmarks.py`. Full detail in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
-
-Re-run and refresh the published section:
-
 ```bash
 python scripts/publish_offline_benchmarks.py
-# or
 cd backend && python benchmark_harness.py --fail-on-regression
-```
-
-Independent gate (CI-class):
-
-```bash
 python scripts/repro.py
 ```
 
@@ -310,7 +323,7 @@ python scripts/repro.py
 ]
 ```
 
-Live registry after `import ops`: **152** ops across encoding, character, template, jailbreak, structure, prose, sampler, stego, language, carrier, llm.
+Live registry after `import ops`: on the order of **~179** ops across encoding, character, template, jailbreak, structure, prose, sampler, stego, language, carrier, llm, gap techniques, Pliny frames.
 Coverage notes: [COVERAGE.md](COVERAGE.md).
 
 ### Targets
@@ -320,12 +333,22 @@ Coverage notes: [COVERAGE.md](COVERAGE.md).
 | `raw` | HTTP with `{payload}` body template + JSON `response_path` |
 | Provider helpers | Anthropic / Gemini-style shapes on a permitted endpoint |
 | Local callable | In-process dry run |
-
-Example Ollama (loopback only) is in [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) and `backend/TARGET-*.json` samples.
+| Tools-loop | OpenAI-compatible chat+tools (`openai_tools` agent) |
 
 ---
 
 ## Interfaces (quick start)
+
+### CLI (primary)
+
+```bash
+cd backend
+python -m garbleworks scan
+python -m garbleworks harmbench status
+python -m garbleworks harmbench campaign -n 5 --dry-run
+python -m garbleworks auto -- --auto "authorized objective" --target local --mode local
+python -m spine.ipi_cli run --agent mock_obey --templates report_fill
+```
 
 ### HTTP API + web UI
 
@@ -341,7 +364,16 @@ pip install "mcp>=1.2,<2"
 python backend/mcp_server.py
 ```
 
-Copy [.mcp.json.example](.mcp.json.example). Tools include `apply_recipe`, `optimize`, `validate_refire`, `auto_attack`, **`run_scan`** (procedural technique map), `field_guide_*`, pack-hunt suite.
+Copy [.mcp.json.example](.mcp.json.example).
+
+| Cluster | Tools (examples) |
+|---------|------------------|
+| Compose / search | `apply_recipe`, `optimize`, `auto_attack`, `pack_hunt*` |
+| Coverage | `run_scan` |
+| Measurement | `validate_refire`, `rank_strategy_claims` |
+| HarmBench | `ensure_harmbench`, `sample_harmbench`, `run_harmbench_campaign`, `list_behaviors` |
+| Agentic IPI | `list_ipi_templates`, `run_agentic_ipi`, `score_document_detectability` |
+| Map | `field_guide_*`, `mcp_spine_map` |
 
 ### TUI
 
@@ -351,51 +383,36 @@ bun install
 bun start
 ```
 
-MCP tools also include `apply_recipe`, `optimize`, `validate_refire`, `auto_attack`, **`run_scan`**, HarmBench (`ensure_harmbench`, `sample_harmbench`, `run_harmbench_campaign`), agentic IPI (`list_ipi_templates`, `run_agentic_ipi`), and `field_guide_*`.
-
 ---
 
 ## Pliny corpus (optional)
 
 Builtin Pliny-family **structure** ships with the repo: GODMODE / NEW PARADIGM anchors, ResponseFormat split, Family-27 misdirection, operator signature chrome. No dump required.
 
-Optional **external** dumps (L1B3RT4S, CL4R1T4S) load as **composable frames**, not opaque mega-prompt paste. They become extra recipe steps (`corpus.shortcut.*`, custom dump dividers, corpus GODMODE lines) on the same fire path as everything else.
-
-### Zero config
+Optional **external** dumps (L1B3RT4S, CL4R1T4S) load as **composable frames**, not opaque mega-prompt paste. They become extra recipe steps on the same fire path.
 
 ```bash
 python scripts/pliny_plug.py doctor
 python scripts/pliny_plug.py apply builtin.godmode "authorized objective"
-```
 
-### Plug L1B3RT4S in 30 seconds
-
-```bash
-# from repo root - dump stays local, never committed
+# optional external dump (never committed)
 git clone --depth 1 https://github.com/elder-plinius/L1B3RT4S.git corpora/L1B3RT4S
-python scripts/pliny_plug.py status
 python scripts/pliny_plug.py list --source corpus
-python scripts/pliny_plug.py apply corpus.shortcut.jailbreak "authorized objective"
 ```
-
-Or point anywhere:
 
 ```bash
 export GARBLEWORKS_PLINY_CORPUS=/path/to/L1B3RT4S   # POSIX
 # $env:GARBLEWORKS_PLINY_CORPUS = "D:\datasets\L1B3RT4S"  # Windows
 ```
 
-Auto-detect also watches `corpora/CL4R1T4S`, `corpora/pliny`, and a sibling `../L1B3RT4S` clone.
-
 | Source | In Garbleworks |
 |--------|----------------|
 | Builtin kit | Always on (`pliny_frame`, phase F) |
-| L1B3RT4S | Drop into `corpora/L1B3RT4S` or set env |
-| CL4R1T4S | Same (`corpora/CL4R1T4S`) |
+| L1B3RT4S / CL4R1T4S | Drop into `corpora/…` or set env |
 | G0DM0D3 / OBLITERATUS | Not string adapters (UI / weight surgery) |
 | GLOSSOPETRAE | Language ideas map to in-tree lang ops |
 
-Details: [corpora/README.md](corpora/README.md) · [SECURITY.md](SECURITY.md) · ops `pliny_frame` / `pliny_list_frames`.
+Details: [corpora/README.md](corpora/README.md) · ops `pliny_frame` / `pliny_list_frames`.
 
 ---
 
@@ -426,15 +443,18 @@ powershell -ExecutionPolicy Bypass -File run.ps1
 
 4. Fire a trivial recipe at `http://127.0.0.1:9001/` from the UI.
 
-5. Security + math:
+5. Battery + agentic offline checks:
 
 ```powershell
 cd backend
-python -m pytest -q test_security.py
+python -m garbleworks harmbench ensure
+python -m garbleworks harmbench campaign -n 3 --dry-run
+python -m spine.ipi_cli run --agent mock_obey --templates report_fill --budget 3
+python -m pytest -q test_security.py test_harmbench.py test_agentic_ipi.py test_tools_loop_agent.py
 python benchmark_harness.py --fail-on-regression
 ```
 
-Env: copy [.env.example](.env.example). Keys: `GARBLEWORKS_SCOPE`, `GARBLEWORKS_BLOCK_PRIVATE`, `GARBLEWORKS_FIELDGUIDE`, `GARBLEWORKS_LLM_URL`.
+Env: copy [.env.example](.env.example). Keys: `GARBLEWORKS_SCOPE`, `GARBLEWORKS_BLOCK_PRIVATE`, `GARBLEWORKS_FIELDGUIDE`, `GARBLEWORKS_LLM_URL`, `GARBLEWORKS_HARMBENCH_CSV`, `GARBLEWORKS_BEHAVIORS`.
 
 ---
 
@@ -444,29 +464,23 @@ Env: copy [.env.example](.env.example). Keys: `GARBLEWORKS_SCOPE`, `GARBLEWORKS_
 garbleworks/
 |-- README.md
 |-- SECURITY.md
-|-- EVOLVE_MATH.md            # optimizer statistics
-|-- COVERAGE.md               # op catalog notes
-|-- docs/HOW_IT_WORKS.md      # full loop narrative
-|-- docs/USAGE-AND-API.md     # HTTP/UI reference
-|-- docs/SCAN-CAMPAIGN.md     # procedural technique scan
-|-- docs/BENCHMARKS.md        # published offline metrics
-|-- docs/archive/             # superseded research notes
-|-- scripts/repro.py
+|-- EVOLVE_MATH.md
+|-- COVERAGE.md
+|-- docs/
+|   |-- HOW_IT_WORKS.md, USAGE-AND-API.md, SCAN-CAMPAIGN.md
+|   |-- BENCHMARKS.md, GAPS.md, IPI-AGENT.md, PRIMARY.md
+|   |-- LIVE-ASR-RUNBOOK.md, HARNESS-POSITIONING.md
+|-- scripts/repro.py, scripts/pliny_plug.py
 |-- backend/
-|   |-- app.py, fire.py, core.py, ops/
-|   |-- scan_campaign.py, mcp_server.py, detectors.py
-|   |-- optimizer.py, rainbow.py, bandit.py
-|   |-- benchmark_harness.py, bench/
-|   `-- test_security.py, test_scan_campaign.py
+|   |-- app.py, fire.py, core.py, ops/, mcp_server.py
+|   |-- harmbench.py, harmbench_campaign.py, harness_cli.py
+|   |-- scan_campaign.py, agent_loop.py, behaviors.py
+|   |-- spine/   # campaign, dual scorer, IPI templates, tools-loop
+|   |-- bench/, optimizer.py, rainbow.py, bandit.py, treesearch.py
+|   `-- test_*.py
 |-- tui/
-`-- frontend/
-```
-
-Offline validation (clean machine, no live model):
-
-```bash
-python scripts/repro.py
-# REPRO_OK garbleworks security + math audit
+|-- frontend/
+|-- corpora/     # optional Pliny dumps (gitignored content)
 ```
 
 ---
@@ -477,27 +491,36 @@ python scripts/repro.py
 |-----|----------|
 | [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) | End-to-end operator walkthrough |
 | [docs/USAGE-AND-API.md](docs/USAGE-AND-API.md) | HTTP/UI reference |
+| [docs/IPI-AGENT.md](docs/IPI-AGENT.md) | Agentic IPI dual scorer + templates |
+| [docs/SCAN-CAMPAIGN.md](docs/SCAN-CAMPAIGN.md) | Procedural technique scan |
 | [docs/BENCHMARKS.md](docs/BENCHMARKS.md) | Offline metrics + re-run |
-| [docs/README.md](docs/README.md) | Doc index |
-| [EVOLVE_MATH.md](EVOLVE_MATH.md) | Optimizer statistics |
+| [docs/LIVE-ASR-RUNBOOK.md](docs/LIVE-ASR-RUNBOOK.md) | Operator live ASR path |
+| [docs/GAPS.md](docs/GAPS.md) | Closed vs open gaps (honest) |
 | [docs/HARNESS-POSITIONING.md](docs/HARNESS-POSITIONING.md) | Literature positioning |
-| [docs/GAPS.md](docs/GAPS.md) | Known gaps |
+| [EVOLVE_MATH.md](EVOLVE_MATH.md) | Optimizer statistics |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contribute |
 
 ---
 
-## Roadmap (not built yet)
+## Roadmap (residual)
 
-- [ ] Multi-model battery (HarmBench / JailbreakBench / StrongREJECT / AdvBench) with published Wilson CIs
+Shipped items are off this list. Remaining intentionally open:
+
+- [ ] Powered multi-model live ASR **leaderboard numbers** (schema + dry-run exist; live is operator cost)
+- [ ] Full interactive agent **REPL** UX (MCP + TUI v0.1 today; not Claude-Code parity)
 - [ ] Multimodal / vision channel in the recipe DSL
-- [ ] `pip install garbleworks` + CLI entry point
+- [ ] Persona author (ENI) / leaked sysprompt corpus mimicry
+- [ ] HarmBench campaign defaulting to **LLM-judge** ASR (heuristic runner ships)
+- [ ] `pip install garbleworks` packaged CLI on PyPI
 - [ ] Purple-team mode: ASR with each defense enabled
-- [ ] Default LCB promotion gate wired to search stop (today: audited as mean-based)
+
+See [docs/GAPS.md](docs/GAPS.md).
 
 ---
 
 ## References
 
+- HarmBench: Mazeika et al. 2024, [arXiv:2402.04249](https://arxiv.org/abs/2402.04249) · [github.com/centerforaisafety/HarmBench](https://github.com/centerforaisafety/HarmBench)
 - h4rm3l: Doumbouya et al. 2024, [arXiv:2408.04811](https://arxiv.org/abs/2408.04811)
 - WildTeaming: Jiang et al. 2024, [arXiv:2406.18510](https://arxiv.org/abs/2406.18510)
 - Rainbow Teaming: Samvelyan et al. 2024, [arXiv:2402.16822](https://arxiv.org/abs/2402.16822)
