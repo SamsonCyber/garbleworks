@@ -26,8 +26,10 @@ tagged release.
   aspirational 1/5 `σ_w`, τ/t genes, and dual `success`/`claim_ready` flags.
 
 ### Changed
-- **README:** lead with what this solves + tool map; HarmBench section on home
-  page; Pliny corpus section moved down as optional.
+- **README:** lead with what this solves + tool map; HarmBench + agentic IPI
+  sections; alternatives table includes Wallbreaker-class rows and where GW
+  leads vs where peers still win; Pliny corpus optional lower on the page;
+  roadmap stripped of already-shipped items.
 
 ### Added
 - **Pliny source adapter** (`backend/pliny_adapter.py`, ops `pliny_frame` /
@@ -86,7 +88,7 @@ tagged release.
  with modes `forge` / `safety_script` / `dilution` / `no_decode` / `hybrid` /
  `fanout`; new ops `cot_dilution`, `cot_no_decode`, `cot_forge_verdict`.
  Recipes `rt-cot-visible-reasoner.json`, `rt-obfuscate-then-cot.json`
- (Amazigh → CoT hybrid). Targets reasoners that decode obfuscation then refuse.
+ (Amazigh -> CoT hybrid). Targets reasoners that decode obfuscation then refuse.
 - **CoT/Amazigh wired into fire path**: unbanned `cot_hijack` from soft signature
  ban; PRIORITY + COMPOSITE seeds; creative.SEED framing/language/jailbreak;
  language-before-jailbreak stack order; strategies.json + arena ladders;
