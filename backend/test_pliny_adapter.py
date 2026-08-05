@@ -208,3 +208,18 @@ def test_surface_delta_empty_without_corpus(monkeypatch):
     d = PA.surface_delta()
     assert d["corpus_only"] == []
     assert d["new_compositions"] == 0
+
+
+def test_plug_status_and_auto_candidates(monkeypatch, tmp_path):
+    monkeypatch.delenv(PA.ENV_CORPUS, raising=False)
+    cands = PA.default_corpus_candidates()
+    assert any(p.name == "L1B3RT4S" for p in cands)
+    st = PA.plug_status()
+    assert st["builtin_frames"] >= 8
+    assert st["env_key"] == PA.ENV_CORPUS
+    # Drop a mini corpus on the default path shape and resolve via explicit path
+    root = tmp_path / "L1B3RT4S"
+    root.mkdir()
+    (root / "x.mkd").write_text("GODMODE: ENABLED fixture\n", encoding="utf-8")
+    assert PA.looks_like_corpus(root)
+    assert PA.resolve_corpus_path(root) == root.resolve()
