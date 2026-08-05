@@ -38,10 +38,9 @@ tagged release.
   aspirational 1/5 `σ_w`, τ/t genes, and dual `success`/`claim_ready` flags.
 
 ### Changed
-- **README:** lead with what this solves + tool map; HarmBench + agentic IPI
-  sections; alternatives table includes Wallbreaker-class rows and where GW
-  leads vs where peers still win; Pliny corpus optional lower on the page;
-  roadmap stripped of already-shipped items.
+- **README:** full sync with recent ship (history-guided mutator section,
+  multi-dataset loaders, scoreboard, HB judge plug, MCP-first surfaces,
+  updated alternatives table + roadmap). Pliny remains optional lower on page.
 
 ### Added
 - **Pliny source adapter** (`backend/pliny_adapter.py`, ops `pliny_frame` /
