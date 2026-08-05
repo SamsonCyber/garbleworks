@@ -15,8 +15,20 @@ It is **not** for defeating the safety controls of third-party production models
 
 ## What this repository does and does not contain
 
-- **Ships:** the transformation ops, the recipe DSL, the search/optimizer, the evaluation and statistics layer, target adapters, the MCP server, exporters, and the field-guide crosswalk.
-- **Does not ship:** any un-guardrailed model, and no bundled corpus of harmful payloads. The `llm`-family ops (`llm_reframe`, `llm_generate`, `complexify`) call a **local model that you supply** (for example via Ollama); when that model is unreachable they degrade to pass-through. If you make this repository public, keep it that way: do not commit model weights, a jailbreak-prompt corpus, or captured attack payloads.
+- **Ships:** the transformation ops, the recipe DSL, the search/optimizer, the evaluation and statistics layer, target adapters, the MCP server, exporters, and the field-guide crosswalk. Pliny-family **structural** primitives (GODMODE / NEW PARADIGM anchors, ResponseFormat split, Family-27 misdirection, operator signature chrome) ship as registered ops via the always-on builtin kit in `backend/pliny_adapter.py`.
+- **Does not ship:** any un-guardrailed model, and no bundled corpus of harmful payloads or full L1B3RT4S / CL4R1T4S liberation dumps. Optional local Pliny-style corpora load only from an operator path (`GARBLEWORKS_PLINY_CORPUS` or `pliny_frame` `corpus_path`); missing path degrades to the builtin kit with no network fetch. The `llm`-family ops (`llm_reframe`, `llm_generate`, `complexify`) call a **local model that you supply** (for example via Ollama); when that model is unreachable they degrade to pass-through. If you make this repository public, keep it that way: do not commit model weights, a jailbreak-prompt corpus, or captured attack payloads.
+
+### Optional Pliny corpus (operator-local)
+
+| Repo idea | Role in Garbleworks |
+| --- | --- |
+| L1B3RT4S-style markdown/json tree | Data adapter: structural markers → composable recipe steps |
+| CL4R1T4S-style text | Same load rules if present on disk |
+| G0DM0D3 | Not an adapter (chat UI) |
+| OBLITERATUS | Not an adapter (weight surgery) |
+| GLOSSOPETRAE | Not vendored (JS); language ideas map to lang ops |
+
+See `backend/pliny_adapter.py` and op `pliny_frame`.
 
 ## Engagement scope enforcement
 

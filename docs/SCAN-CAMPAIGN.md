@@ -19,7 +19,7 @@ then deep phases (nesting, roleplay, Pliny, language). Not stop-on-win
 | C | `phase_c` | Slightly further: double-frame, denser stacks |
 | D | `phase_d` | Russian nesting (`deep_inception` L7–9), nested_lang hops, heavy obfuscation |
 | E | `phase_e` | Long-turn roleplay: crescendo, manyshot, multiturn, long CoT |
-| F | `phase_f` | Full Pliny: GODMODE anchors, dividers, format-split, operator brand |
+| F | `phase_f` | Full Pliny kit via atomic ops + `pliny_frame` adapter cells (builtin; optional local corpus) |
 | Lang | `language` | Language mutators + mixes |
 | all deep | `deep` | C–F + lang only |
 | all | `full` | A → B → C → D → E → F → lang under one budget |
@@ -39,6 +39,13 @@ in-tree ops:
 | Nested hop | `nested_lang` (hops=1–2) + CoT no-decode stacks |
 
 Map artifact includes a `language` block with ops + `glossopetrae_map`.
+
+## Pliny corpus boundary
+
+Builtin structural frames and optional local dumps: `backend/pliny_adapter.py`.
+Set `GARBLEWORKS_PLINY_CORPUS` to a local L1B3RT4S-style tree to discover extra
+frames; leave unset for builtin only. Op: `pliny_frame`. Full dumps are not
+shipped in this repository (see SECURITY.md).
 
 ## Budget knobs
 
