@@ -22,7 +22,10 @@ vendor the JS engine; we map the idea onto Garbleworks language ops:
 
 Pliny liberation chrome (phase F) maps to registry ops already in-tree:
 anchor_token, response_format_split, operator_format_split, operator_signature
-(L1B3RT4S-style divider / GODMODE / format contract — see field-guide).
+(L1B3RT4S-style divider / GODMODE / format contract). The single boundary for
+builtin + optional local corpus is ``pliny_adapter`` / op ``pliny_frame``
+(see ``backend/pliny_adapter.py``). Phase F cells still call the atomic ops
+directly so scan mixes stay explicit and composable.
 
 Each template is (phase, cell_id, mix_label, steps) where steps are
 ``[{op, params}, ...]`` for ``run_recipe``.
@@ -381,6 +384,17 @@ def deep_phase_templates(
         _op("response_format_split", code_block=True),
         _op("operator_signature", mode="loud"),
     ])
+    # Adapter surface: same structural kit via pliny_frame (builtin id).
+    if _available("pliny_frame"):
+        add("f", "f_adapter_godmode", "pliny_adapter_godmode", [
+            _op("pliny_frame", frame_id="builtin.godmode"),
+        ])
+        add("f", "f_adapter_format", "pliny_adapter_format", [
+            _op("pliny_frame", frame_id="builtin.response_format_split"),
+        ])
+        add("f", "f_adapter_stack", "pliny_adapter_full_stack", [
+            _op("pliny_frame", frame_id="builtin.pliny_full_stack"),
+        ])
     add("f", "f_watto_creed", "watto_creed_anchor", [
         _op("anchor_token", token="watto_creed", position="wrap"),
         _op("operator_format_split", code_block=True),

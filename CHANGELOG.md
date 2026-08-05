@@ -7,6 +7,14 @@ tagged release.
 
 ## [Unreleased]
 
+### Added
+- **Pliny source adapter** (`backend/pliny_adapter.py`, ops `pliny_frame` /
+  `pliny_list_frames`): always-on builtin structural kit (anchors, format-split,
+  Family-27 misdirection, refusal suppression, operator signature) plus optional
+  local L1B3RT4S-style corpus via `GARBLEWORKS_PLINY_CORPUS` (no network fetch,
+  no vendored dumps). Phase F scan adds adapter cells. Tests:
+  `test_pliny_adapter.py`.
+
 ### Changed
 - **Repo cleanup:** removed dead one-off scripts (`refine.py`,
   `backend/compare_surface_vs_old.py`, `backend/persona_echo.py`), dropped
