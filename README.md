@@ -12,11 +12,7 @@
 
 > **Authorized security testing only.** Use on models you own or run locally, in-scope bounty targets, written pentests, CTFs, and labs you control. Do not use this to defeat third-party production safety without authorization. See [SECURITY.md](SECURITY.md).
 
-| Maturity | State |
-|----------|--------|
-| Implemented | Recipe DSL, one fire path, HTTP/MCP/CLI/TUI, history-guided mutator, HarmBench campaign (+ judge plug), multi-dataset loaders, agentic IPI dual scorer + tools-loop, procedural scan, claim gates, dry-run scoreboard (`live_asr.v1`), exporters |
-| Independently validated | `python scripts/repro.py` (security tests + math audit, no live model); mutator A/B offline (`mutator compare`) |
-| Maintained | Public under [SamsonCyber/garbleworks](https://github.com/SamsonCyber/garbleworks), Apache-2.0 |
+Public under [SamsonCyber/garbleworks](https://github.com/SamsonCyber/garbleworks), Apache-2.0. Offline gate: `python scripts/repro.py`.
 
 ---
 
