@@ -1,11 +1,18 @@
 # Garbleworks Evolve - Mathematical Specification of the Genetic Optimizer
 
-Status: draft for review. Companion to `docs/archive/EVOLVE_SPEC.md` (the prose/architecture
-spec). This document formalizes the search: the genome, the geometry, the
+Status: **living math contract** for `backend/optimizer.py` (not a frozen paper).
+Companion prose/architecture notes live in `docs/archive/EVOLVE_SPEC.md`.
+This document formalizes the search: the genome, the geometry, the
 **stochastic** fitness, the variation operators, the credit assignment, the
 budget/racing math, the convergence tests, and the attack-success statistics.
-It also specifies the new **analytical register layer** (Latin-root / tone
-neutralizer, §3), which the prose spec does not cover.
+It also specifies the **analytical register layer** (Latin-root / tone
+neutralizer, §3).
+
+**Shipped vs aspirational.** Where implementation defaults differ from the
+recommended math defaults, §16 lists both. Product success flags are dual
+(§6.1): search ranks on LCB, but the boolean `success` reported by the
+optimizer is held-out **mean** ≥ θ unless `claim_mode=strict` raises
+held-out samples enough for LCB ≥ θ (`claim_ready`).
 
 Where this contradicts `EVOLVE_SPEC.md`, the deltas are listed in §18. The
 headline correction: fitness is a **random variable**, so the prose spec's
@@ -81,15 +88,17 @@ g = (y, c, τ, η, t), w = softmax(y), y ∈ ℝ^M (defined up to an additive co
  **no exact-zero weights** anywhere in the search. This resolves the log-space
  operators in §2.3 / §8.1 / §9 / §12, which all require `w_i > 0`: "removing" a
  seed (§8.3 Drop) means flooring its `y_i` far below the mean, never zeroing
- `w_i`. The composer uses the **top-K** seeds by weight (`K = topk`, default 4);
- `supp_K(w)` denotes that index set.
-- `c ∈ C = {concat, template, llm}` - composer mode.
-- `τ ∈ [τ_min, τ_max]` - synthesis temperature (used only when `c = llm`).
-- `η ∈ [0,1]` - neutralization strength (§3), applied before composition.
-- `t ∈ 𝒯 ∪ {∅}` - template id (used only when `c = template`).
+ `w_i`. The composer uses the **top-K** seeds by weight (`K = topk`; math
+ default 4, shipped 3 — §16); `supp_K(w)` denotes that index set.
+- `c ∈ C = {concat, template, llm}` - composer mode (shipped).
+- `η ∈ [0,1]` - neutralization strength (§3), applied before composition (shipped).
+- `τ ∈ [τ_min, τ_max]` - synthesis temperature when `c = llm` (**aspirational** gene;
+ shipped composer does not store a continuous `τ` on `Genome`).
+- `t ∈ 𝒯 ∪ {∅}` - template id when `c = template` (**aspirational**; shipped code
+ uses a fixed template string for `composer=="template"`).
 
-Genes `(τ, η, t)` are inert under composers that ignore them but still mutate
-and recombine (neutral drift that becomes active if `c` flips).
+Shipped genome is effectively `(y, c, η)`. Aspirational genes may still appear
+in mutation prose (§8.4) as design notes.
 
 ### 2.3 Simplex geometry
 
@@ -178,17 +187,15 @@ A classifier fires on the **most** loaded token, not the average, so pool with a
 log-sum-exp that interpolates mean→max via inverse temperature `β ≥ 0`:
 
 ```
- 1 1 n
-L_β(x) = ─── · ln( ─── · Σ exp( β · ℓ(w_i) ) ), L_β(x) ∈ [0,1].
- β n i=1
+L_β(x) = (1/β) * ln( (1/n) * Σ_i exp(β * ℓ(w_i)) )   ∈ [0,1]
 ```
 
-The expression is `0/0` at `β = 0`; define `L_0 := (1/n) Σ_i ℓ(w_i)` (the mean),
-which is its `β → 0` limit. `β → ∞` recovers `max_i ℓ(w_i)` (the peak). Default
+The expression is undefined at `β = 0`; define `L_0 := (1/n) Σ_i ℓ(w_i)` (the mean),
+which is the `β → 0` limit. `β → ∞` recovers `max_i ℓ(w_i)` (the peak). Default
 `β ≈ 6` (peak-leaning, so the score tracks the single most-loaded token a
 classifier would trip on). `L ≜ L_β`. (`β` is only a pooling sharpness; nothing
-downstream differentiates `L` - neutralization in §3.5 is discrete-greedy or LLM
-sampling, both gradient-free - so no differentiability of `L` is needed or
+downstream differentiates `L`. Neutralization in §3.5 is discrete-greedy or LLM
+sampling, both gradient-free, so no differentiability of `L` is needed or
 claimed.)
 
 ### 3.5 Neutralization as constrained optimization
@@ -336,20 +343,18 @@ uses the variance-free Hoeffding radius (§5.2) until its second sample lands.
 
 Because `f ∈ [0,1]` is bounded and often low-variance (many exact 0s from the
 gate), use the empirical-Bernstein bound (tighter than Hoeffding when `Ŝ²` is
-small). With failure prob `δ`:
+small). With failure prob `δ` (or the optional-stopping `δ′` from below):
 
 ```
- ______________
- / 2 Ŝ²(g) ln(3/δ) 3 ln(3/δ)
-ε(g) = √ ──────────────────── + ──────────── ,
- n_g n_g
+ε(g) = sqrt( 2 * Ŝ²(g) * ln(3/δ) / n_g ) + 3 * ln(3/δ) / n_g
 
-UCB(g) = F̂(g) + ε(g), LCB(g) = F̂(g) − ε(g).
+UCB(g) = F̂(g) + ε(g)
+LCB(g) = F̂(g) − ε(g)
 ```
 
 At `n_g = 1` (no variance estimate) fall back to the Hoeffding radius
-`ε(g) = √( ln(2/δ) / (2 n_g) )` - valid because `f ∈ [0,1]` - until a second
-sample arrives.
+`ε(g) = sqrt( ln(2/δ) / (2 n_g) )` (valid because `f ∈ [0,1]`) until a second
+sample arrives. Shipped code: `optimizer.radius`.
 
 Selection uses `LCB` (conservative: don't promote a lucky genome); optimism for
 exploration uses `UCB` (§10, §11).
@@ -389,11 +394,22 @@ maximize F(g) over g ∈ G,
 subject to Σ_g n_g ≤ B (target-query budget).
 ```
 
-Two notions of success, kept distinct:
+Three notions of success, kept distinct (product code: `optimizer.compute_claim_fields`):
 
 - **Sample success** (cheap, per eval): `f(g) ≥ θ`.
-- **Confident success** (what we report): `LCB_δ(g) ≥ θ`, i.e. `F(g) ≥ θ` at
- confidence `1−δ`. The run's ASR (§14) is built from confident success.
+- **Reported success** (`success=True`, default product flag): held-out mean
+  `F̂_held ≥ θ` after `n_final` fresh queries (`success_rule=heldout_mean`).
+  This is **not** a confidence-bounded claim. Under default `n_final` and
+  `δ′ = δ/(μ·G_max)`, held-out LCB ≥ θ is often unreachable even when the mean
+  clears θ (offline audit: `n_needed_perfect ≈ 80` samples for LCB≥0.7 under
+  current δ′ with perfect mean).
+- **Claim-ready success** (`claim_ready=True`): held-out empirical-Bernstein
+  `LCB_δ′(g) ≥ θ`. Use this (or Wilson ASR over many asks, §14) when publishing
+  a finding. `claim_mode=strict` raises `n_final` toward `n_final_strict` so
+  claim_ready can become reachable.
+
+Search still **ranks and races** on in-search LCB (§5, §11). Do not cite
+`success` alone as “LCB-proven.”
 
 ---
 
@@ -726,35 +742,43 @@ every selection, and `ASR`. Treat it explicitly.
 
 ---
 
-## 16. Hyperparameters - defaults and derivations
+## 16. Hyperparameters - recommended vs shipped
 
-| Symbol | Meaning | Default | Note |
-|---|---|---|---|
-| `M` | basket size | 50-100 | Phase 1 output |
-| `K` (`topk`) | seeds per compose | 4 | prose spec |
-| `μ` (`pop`) | population | 8 | §11 tension applies |
-| `μ_e` (`elite`) | elites kept | 2 | guarantees monotone best |
-| `k_t` | tournament size | 2 | mild pressure (§7) |
-| `B` | **target-query budget** | **150** | **raised from 30** (§11.1) |
-| `n_0` | base queries/genome/gen | 2 | successive-halving base |
-| `θ` | success threshold | 0.7 | prose spec |
-| `δ` | LCB failure prob | 0.1 | selection/stopping confidence |
-| `σ_w` | weight step (Aitchison, per-mutation) | 0.5 | per-coord noise = `σ_w/√(M−1)` (§8.1); self-adapts (§8.2) |
-| `p_inj`,`p_drop` | structural mut. rates | 0.15, 0.10 | |
-| `p_c`,`p_t` | composer/template flip | 0.10, 0.10 | |
-| `σ_τ`,`σ_η` | temp / neutralization jitter | 0.1, 0.15 | |
-| `T_x` | categorical-inheritance softness | 0.2 | logistic on `F̂` diff (§9) |
-| `δ` per-look | corrected for optional stopping | `δ/(μ·G_max)` | §5.2 |
-| `β` | register pooling temp | 6 | peak-leaning (§3.4) |
-| `η` init | neutralization strength | 0.3 | mutated toward `η*` |
-| `S_stag`,`ε_stag` | stagnation window/eps | 3, 0.02 | §13 |
-| `d_min`,`S_div` | diversity floor/window | (calibrate) | §12 |
-| `q` | BH FDR level | 0.10 | §14.3 |
+Two columns on purpose. **Math default** is what the derivation assumes.
+**Shipped** is `backend/optimizer.RunConfig` as of this writing. Drift is a bug;
+update this table when code changes.
 
-`B=150` derivation: for `μ=8` at `n̄≈3` samples/genome that is `24` queries/gen ⇒
-`~6` generations, enough for truncation selection with `k_t=2` to make and verify
-progress (§7 takeover `τ ≈ (ln8 + ln ln8)/ln2 ≈ 4.1` generations) while leaving
-slack for racing to over-sample contenders (§11.2).
+| Symbol | Meaning | Math default | Shipped (`RunConfig`) | Note |
+|---|---|---|---|---|
+| `M` | basket size | 50–100 | `basket_max_size=48` (expanded basket) | Phase 1 output, capped |
+| `K` (`topk`) | seeds per compose | 4 | **3** | |
+| `μ` (`pop`) | population | 8 | 8 | §11 tension applies |
+| `μ_e` (`elite`) | elites kept | 2 | **1** | weaker elitism than §7 narrative |
+| `k_t` | tournament size | 2 | **3** | stronger selection pressure |
+| `B` | target-query budget | **150** | **150** | raised from prose 30 (§11.1) |
+| `n_0` | base queries/genome/gen | 2 | 2 | race base |
+| `n_max` | cap samples/genome in race | — | 6 | code only |
+| `n_final` | held-out re-fires | — | 4 (20 if `claim_mode=strict`) | dual flags §6.1 |
+| `G_max` | gen cap | — | 12 | used in `δ′=δ/(μ·G_max)` |
+| `θ` | success threshold | 0.7 | 0.70 | |
+| `δ` | LCB failure prob (per-test) | 0.1 | 0.10 | |
+| `δ′` per-look | optional-stopping | `δ/(μ·G_max)` | **yes** (`delta_eff`) | §5.2 union bound |
+| `σ_w` | Aitchison weight step | 0.5 | 0.5 | scale `σ_w/√(M−1)` (§8.1) |
+| crossover | on by default? | **off** | **on** (`True`) | §9 |
+| `S_stag`,`ε_stag` | stagnation | 3, 0.02 | **4, 0.03** | §13 |
+| `β` | register pooling temp | 6 | register module default | §3.4 |
+| `η` init | neutralization | 0.3 | ~0.3 ± noise | mutated |
+| `q` | BH FDR level | 0.10 | bench optional gate | §14.3; not default evolve stop |
+
+**Not fully shipped as genome genes:** continuous template id `t` and
+synthesis temperature `τ` appear in §2.2; the live `Genome` is
+`(y, composer, η)` with composer ∈ {concat, template, llm}. Treat `τ`/`t`
+mutation (§8.4) as aspirational unless code grows those fields.
+
+`B=150` derivation: for `μ=8` at `n̄≈3` samples/genome that is ~24 queries/gen ⇒
+~6 generations under a soft gen budget, enough for truncation selection while
+leaving slack for racing (§11.2). Held-out LCB claims still need larger
+`n_final` (see §6.1).
 
 ---
 
