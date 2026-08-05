@@ -246,7 +246,8 @@ def is_legal_stack(op_names: list[str]) -> bool:
     """
     if not op_names:
         return False
-    known = [o for o in op_names if o in REGISTRY]
+    from core import is_enabled
+    known = [o for o in op_names if is_enabled(o)]
     if not known:
         return False
     ordered = order_stack(known)
@@ -305,12 +306,12 @@ def resolve_catalog(
     registered ops appear automatically. When prioritize=True, jailbreak /
     template / language families are tried first under a tight budget.
     """
+    from core import enabled_names, is_enabled
+
     if techniques:
-        names = [t for t in techniques if t in REGISTRY]
+        names = [t for t in techniques if is_enabled(t)]
     else:
-        names = sorted(REGISTRY.keys())
-        if category:
-            names = [n for n in names if category_of(n) == category]
+        names = enabled_names(category=category) if category else enabled_names()
     out: list[str] = []
     for n in names:
         if exclude_model_backed and n in MODEL_BACKED_OPS:

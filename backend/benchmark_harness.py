@@ -164,16 +164,16 @@ def suite_math_closed_form() -> SuiteResult:
     exp = math.sqrt(math.log(2.0 / de) / (2.0 * 1))
     checks.append(("hoeffding_n1", abs(got - exp) < 1e-12, f"{got} vs {exp}"))
 
-    # Empirical Bernstein n=2, samples 0 and 1 → var=0.5
+    # Empirical Bernstein n=2, samples 0 and 1 → unbiased var = 0.5 (EVOLVE_MATH §5.1)
     g2 = O.Genome(y=[0.0], composer="concat", eta=0.0)
     g2.add_sample(0.0)
     g2.add_sample(1.0)
     ln = math.log(3.0 / de)
-    exp_eb = math.sqrt(2.0 * g2.var * ln / 2.0) + 3.0 * ln / 2.0
+    # Ŝ² = 1/(n-1) Σ(f−mean)² = ((0-0.5)²+(1-0.5)²)/1 = 0.5
+    checks.append(("sample_var_unbiased_n_minus_1", abs(g2.var - 0.5) < 1e-12, f"var={g2.var}"))
+    exp_eb = math.sqrt(2.0 * 0.5 * ln / 2.0) + 3.0 * ln / 2.0
     got_eb = O.radius(g2, de)
     checks.append(("eb_n2", abs(got_eb - exp_eb) < 1e-12, f"{got_eb} vs {exp_eb}"))
-    checks.append(("sample_var_population", abs(g2.var - 0.25) < 1e-12, f"var={g2.var}"))
-
     # Wilson closed form
     def wil(s, n, z=1.28):
         p = s / n

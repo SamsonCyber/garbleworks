@@ -1,4 +1,9 @@
-"""Importing this package registers every operation in the global REGISTRY."""
+"""Importing this package registers every op pack into core.REGISTRY.
+
+Add a module: new file under ops/ + import it here.
+Remove a module: drop the import (or core.disable_module at runtime).
+Soft-disable individual ops with core.disable / enable without editing fire code.
+"""
 from . import (  # noqa: F401
     char_ops,
     encode_ops,

@@ -156,12 +156,17 @@ def rank_strategies(
     results: list[dict[str, Any]],
     *,
     require_claim_fields: bool = True,
+    fdr_q: float | None = None,
+    fdr_p0: float = 0.5,
 ) -> dict[str, Any]:
     """Rank multi-strategy runs. Marks non-promotable claims; never silently promotes.
 
     Each result dict must carry (from StrategyRunResult.as_dict):
       strategy, successes, n_completed, queries_spent, budget, estimand
     or nested complete_case / stats.
+
+    Optional G5: pass fdr_q (e.g. 0.10) to apply Benjamini-Hochberg on
+    per-strategy binomial p-values (H1: ASR > fdr_p0). Default None = off.
     """
     rows: list[dict[str, Any]] = []
     for r in results:
@@ -217,10 +222,30 @@ def rank_strategies(
             "promotable": gate.get("promotable", False),
         })
 
+    fdr_block: dict[str, Any] | None = None
+    if fdr_q is not None:
+        from bench.metrics import bh_fdr_on_strategy_claims
+
+        fdr_block = bh_fdr_on_strategy_claims(rows, q=float(fdr_q), p0=float(fdr_p0))
+        # Annotate ranking rows with fdr_reject; do not flip promotable alone
+        by_label = {
+            c.get("strategy"): c for c in fdr_block.get("claims") or []
+        }
+        for row in rows:
+            ann = by_label.get(row["strategy"]) or {}
+            row["p_value"] = ann.get("p_value")
+            row["fdr_reject"] = bool(ann.get("fdr_reject"))
+            # Multi-strategy claim: promote only if gate says so AND BH rejects H0
+            if row.get("promotable") and not row["fdr_reject"]:
+                row["promotable"] = False
+                row["fdr_blocked"] = True
+            else:
+                row["fdr_blocked"] = False
+
     # Sort by LCB then ASR (promotable first only as annotation, not auto-promote)
     rows.sort(key=lambda x: (x["asr_lcb"], x["asr"], x["successes"]), reverse=True)
     any_promotable = any(x["promotable"] for x in rows)
-    return {
+    out: dict[str, Any] = {
         "ranking": rows,
         "any_promotable": any_promotable,
         "rule": (
@@ -228,7 +253,16 @@ def rank_strategies(
             "plumbing estimand never efficacy-promotable; "
             "delivery_fail majority never efficacy-promotable; "
             "silent promotion forbidden"
+            + (
+                f"; BH-FDR optional at q={fdr_q} (p0={fdr_p0})"
+                if fdr_q is not None
+                else "; BH-FDR off (pass fdr_q to enable)"
+            )
         ),
         "wilson_z": WILSON_Z,
         "wilson_coverage": WILSON_COVERAGE,
+        "fdr_q": fdr_q,
     }
+    if fdr_block is not None:
+        out["fdr"] = fdr_block
+    return out

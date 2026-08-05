@@ -245,8 +245,8 @@ def run_surface(cfg: SurfaceConfig,
     spent = 0
 
     # Seed with simple framing-heavy stacks (reuse existing logic lightly)
-    from core import REGISTRY
-    pool = [name for name, op in REGISTRY.items()
+    from core import enabled_ops
+    pool = [name for name, op in enabled_ops().items()
             if op.category in {"jailbreak", "template", "prose", "structure"}]
 
     for ask in cfg.asks:

@@ -198,29 +198,22 @@ downstream differentiates `L`. Neutralization in §3.5 is discrete-greedy or LLM
 sampling, both gradient-free, so no differentiability of `L` is needed or
 claimed.)
 
-### 3.5 Neutralization as constrained optimization
+### 3.5 Neutralization (ideal program vs shipped approx)
 
-Given text `x`, neutralization seeks a fluent rewrite that lowers register while
-preserving meaning. As a scalarized bi-objective with the gene `η` as the
-tradeoff weight:
+**Idealized program** (design target / llm-mode framing):
 
 ```
 N_η(x) = argmin_{x' ∈ R(x)} [ (1 − η) · D_sem(x, x') + η · L(x') ]
 ```
 
-- `R(x)` - the fluent-rewrite candidate set (lexicon-mode: low-valence
- near-synonym substitutions on the high-`ℓ` spans; llm-mode: model rewrites
- under a "preserve the request, lower the register, do not refuse/soften the
- ask" system prompt).
-- `D_sem(x,x') = 1 − cos(E(x), E(x'))` - embedding-cosine drift, `E` a sentence
- encoder.
-- `η = 0` ⇒ identity (fidelity only). `η = 1` ⇒ pure register-minimization (may
- gut the ask). Interior `η` trace the Pareto frontier of `(L, D_sem)`.
+with `D_sem` a semantic-drift measure and `R(x)` a fluent-rewrite set.
 
-Lexicon mode makes this a discrete greedy descent over spans (deterministic,
-`deterministic=True`); llm mode is a stochastic sampler (`deterministic=False`).
-Both return the candidate set for several `η` levels so a recipe can fan out
-neutralization strengths without a genome per strength.
+**Shipped lexicon mode** does **not** solve that continuous program. It runs
+**discrete greedy** low-valence substitutions on high-`ℓ` spans
+(`register.neutralize`), parameterized by `η`. Treat the `argmin` as the
+conceptual tradeoff the gene encodes, not a claim that the binary implements
+a global bi-objective solver. llm mode is a stochastic rewrite under a
+preserve-ask / lower-register prompt when a generator is wired.
 
 ### 3.6 Why η is a gene: the register-fidelity tradeoff
 
@@ -331,13 +324,15 @@ Spend `n_g` queries on `g`, obtaining samples `f_1,…,f_{n_g}`. Point estimate 
 sample variance:
 
 ```
-F̂(g) = (1/n_g) Σ f_j , Ŝ²(g) = (1/(n_g−1)) Σ (f_j − F̂)² (requires n_g ≥ 2) .
+F̂(g) = (1/n_g) Σ f_j
+Ŝ²(g) = (1/(n_g − 1)) Σ (f_j − F̂)²     (requires n_g ≥ 2; unbiased sample variance)
 ```
 
-The sample variance is undefined at `n_g = 1`. Racing (§11.2) must therefore
-never strand a live genome at one sample: the base allocation `n_0 = 2`
-guarantees `n_g ≥ 2` in the normal path, and any genome momentarily at `n_g = 1`
-uses the variance-free Hoeffding radius (§5.2) until its second sample lands.
+Shipped code (`Genome.var`) implements this **unbiased** estimator (divide by
+`n−1`), not the population form that divides by `n`. The sample variance is
+undefined at `n_g = 1` (code returns 0.0 and does not feed it into EB). Racing
+(§11.2) uses base allocation `n_0 = 2` so the normal path reaches `n ≥ 2`; any
+genome still at `n = 1` uses the variance-free Hoeffding radius (§5.2).
 
 ### 5.2 Confidence bounds (empirical Bernstein)
 
@@ -475,18 +470,17 @@ first draft fell into.
 want mean-preserving noise; logistic-normal is the default for direct step
 control.
 
-### 8.2 Self-adaptive step size (1/5 rule)
+### 8.2 Self-adaptive step size (1/5 rule) — aspirational
 
-Anneal `σ_w` by the classic Rechenberg rule so early generations explore and
-late ones refine. Over a window, with `p_s` = fraction of offspring that beat
-their parent's `LCB`:
+**Not shipped.** The live `mutate` path uses fixed `σ_w` from `RunConfig`
+(default 0.5). A Rechenberg 1/5 anneal would be:
 
 ```
-σ_w ← σ_w · exp( c · (p_s − 1/5) ) , c ≈ 0.2 .
+σ_w ← σ_w · exp( c · (p_s − 1/5) ) , c ≈ 0.2
 ```
 
-(Or per-genome log-normal self-adaptation `σ' = σ·exp(τ_0 𝒩(0,1))`,
-`τ_0 = 1/√(2M)`, if you prefer ES-style endogenous control.)
+with `p_s` = fraction of offspring that beat their parent's `LCB`. Documented
+here as a known upgrade path; do not claim it runs in `optimizer.py` today.
 
 ### 8.3 Structural mutations (sparse support)
 
@@ -502,21 +496,24 @@ Both operate on `y` (never on `w` directly), so the genome stays in the simplex
  clr, mutation, crossover, and `d_A` finite. This replaces "set to 0," which
  would have sent `ln w_j → −∞`.
 
-### 8.4 Composer / template / temperature / neutralization genes
+### 8.4 Composer / neutralization genes (shipped) and aspirational
 
-- Composer flip `c' ≠ c` with prob `p_c` (uniform over the other modes).
-- Template resample `t' ∼ Unif(𝒯)` with prob `p_t` (only meaningful if
- `c'=template`).
-- Temperature jitter `τ' = clip(τ + σ_τ·𝒩(0,1), τ_min, τ_max)`.
-- **Neutralization jitter** `η' = clip(η + σ_η·𝒩(0,1), 0, 1)`. This is how the
- GA climbs the §3.6 tradeoff toward the target-specific `η*`.
+**Shipped** (`Genome` + `mutate`):
+
+- Composer flip among allowed modes with prob `p_c = 0.10`.
+- Neutralization jitter `η' = clip(η + σ_η·𝒩(0,1), 0, 1)` with `σ_η = 0.15`
+  (applied with prob 0.5 per mutate).
+
+**Aspirational (not on Genome):** free template-id gene `t`, continuous
+synthesis temperature `τ`. Do not treat them as live search dimensions.
 
 ---
 
 ## 9. Crossover (convex / Aitchison recombination)
 
-Off by default (`--crossover`), primary operator is mutation. When on, blend two
-parents `g^a, g^b`:
+Shipped default: **on** (`RunConfig.crossover=True`; each child uses crossover
+with probability 0.5 when parents are chosen). Primary variation remains
+mutation. When crossover runs, blend two parents `g^a, g^b`:
 
 ```
 log-weights: y'' = λ·y^a + (1−λ)·y^b , λ ~ Beta(2,2) (⇔ clr blend, since clr(w)=y−ȳ)
@@ -742,43 +739,45 @@ every selection, and `ASR`. Treat it explicitly.
 
 ---
 
-## 16. Hyperparameters - recommended vs shipped
+## 16. Hyperparameters (single source of truth)
 
-Two columns on purpose. **Math default** is what the derivation assumes.
-**Shipped** is `backend/optimizer.RunConfig` as of this writing. Drift is a bug;
-update this table when code changes.
+**Shipped defaults live in code:** `optimizer.SHIPPED_DEFAULTS`, mirrored by
+`RunConfig` field defaults. `test_optimizer_math_lock.py` fails if they diverge.
+This table is a human-readable copy of that map (plus notes). If the table and
+code disagree, **code wins until this table is updated in the same PR**.
 
-| Symbol | Meaning | Math default | Shipped (`RunConfig`) | Note |
-|---|---|---|---|---|
-| `M` | basket size | 50–100 | `basket_max_size=48` (expanded basket) | Phase 1 output, capped |
-| `K` (`topk`) | seeds per compose | 4 | **3** | |
-| `μ` (`pop`) | population | 8 | 8 | §11 tension applies |
-| `μ_e` (`elite`) | elites kept | 2 | **1** | weaker elitism than §7 narrative |
-| `k_t` | tournament size | 2 | **3** | stronger selection pressure |
-| `B` | target-query budget | **150** | **150** | raised from prose 30 (§11.1) |
-| `n_0` | base queries/genome/gen | 2 | 2 | race base |
-| `n_max` | cap samples/genome in race | — | 6 | code only |
-| `n_final` | held-out re-fires | — | 4 (20 if `claim_mode=strict`) | dual flags §6.1 |
-| `G_max` | gen cap | — | 12 | used in `δ′=δ/(μ·G_max)` |
-| `θ` | success threshold | 0.7 | 0.70 | |
-| `δ` | LCB failure prob (per-test) | 0.1 | 0.10 | |
-| `δ′` per-look | optional-stopping | `δ/(μ·G_max)` | **yes** (`delta_eff`) | §5.2 union bound |
-| `σ_w` | Aitchison weight step | 0.5 | 0.5 | scale `σ_w/√(M−1)` (§8.1) |
-| crossover | on by default? | **off** | **on** (`True`) | §9 |
-| `S_stag`,`ε_stag` | stagnation | 3, 0.02 | **4, 0.03** | §13 |
-| `β` | register pooling temp | 6 | register module default | §3.4 |
-| `η` init | neutralization | 0.3 | ~0.3 ± noise | mutated |
-| `q` | BH FDR level | 0.10 | bench optional gate | §14.3; not default evolve stop |
+| Symbol / key | Meaning | Shipped value | Note |
+|---|---|---|---|
+| `budget` `B` | target-query budget | 150 | §11.1 |
+| `pop` `μ` | population | 8 | |
+| `gen_max` `G_max` | generation cap | 12 | `δ′ = δ/(μ·G_max)` |
+| `topk` `K` | seeds per compose | 3 | |
+| `elite` `μ_e` | elites kept | 1 | |
+| `tournament` `k_t` | tournament size | 3 | |
+| `n0` | base samples/genome/gen | 2 | race base |
+| `n_max` | sample cap in race | 6 | |
+| `n_final` | held-out re-fires | 4 | mean success §6.1 |
+| `n_final_strict` | strict claim floor | 20 | `claim_mode=strict` |
+| `success_threshold` `θ` | threshold | 0.70 | |
+| `delta` `δ` | per-test failure prob | 0.10 | |
+| `sigma_w` | Aitchison step | 0.5 | × `1/√(M−1)` |
+| `crossover` | enable crossover | True | 50% of children when True |
+| `stag_gens` / `stag_eps` | stagnation | 4 / 0.03 | |
+| `basket_max_size` | M cap | 48 | expanded basket |
+| `claim_mode` | mean vs strict | `"mean"` | dual flags §6.1 |
+| `p_inj` / `p_drop` | inject / drop rates | 0.15 / 0.10 | `mutate` |
+| `p_composer_flip` | composer flip | 0.10 | |
+| `sigma_eta` | η jitter σ | 0.15 | |
+| `crossover_tx` `T_x` | logistic soft | 0.2 | §9 |
+| `variance_estimator` | Ŝ² rule | `unbiased_n_minus_1` | §5.1 |
 
-**Not fully shipped as genome genes:** continuous template id `t` and
-synthesis temperature `τ` appear in §2.2; the live `Genome` is
-`(y, composer, η)` with composer ∈ {concat, template, llm}. Treat `τ`/`t`
-mutation (§8.4) as aspirational unless code grows those fields.
+**Aspirational (not shipped):** continuous `τ`, free template gene `t`, Rechenberg
+1/5 `σ_w` anneal (§8.2), continuous bi-objective solve for `N_η` (§3.5).
 
-`B=150` derivation: for `μ=8` at `n̄≈3` samples/genome that is ~24 queries/gen ⇒
-~6 generations under a soft gen budget, enough for truncation selection while
-leaving slack for racing (§11.2). Held-out LCB claims still need larger
-`n_final` (see §6.1).
+**Power honesty:** under default `δ′` and `n_final=4`, held-out LCB ≥ 0.7 is
+usually unreachable even with perfect mean (`n_needed_perfect ≈ 80` in the
+offline math audit). That is a statistical fact, not a bug. Use
+`claim_mode=strict` / larger `n_final` for claim-ready findings.
 
 ---
 

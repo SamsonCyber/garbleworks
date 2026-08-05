@@ -36,7 +36,10 @@ class GarbleworksRunner:
 
     def run(self, obj: Objective, *, base_url: str, secret: str) -> RunResult:
         t0 = time.perf_counter()
-        target = fire_target_dict(base_url)
+        # Remote target brains (MiniMax proxy canary) need longer HTTP timeout.
+        timeout = float(obj.timeout_s or 120.0)
+        timeout = max(30.0, min(timeout, 180.0))
+        target = fire_target_dict(base_url, timeout=timeout)
         try:
             fire_mod.validate_target_url(target["url"])
         except fire_mod.TargetError as e:
@@ -109,7 +112,13 @@ class GarbleworksRunner:
         )
 
     def _fire(self, target: dict, payload: str) -> tuple[str, int | None, str | None]:
-        fr = fire_mod.fire_once(target, payload, validate=False, timeout=30.0)
+        # Prefer opts.timeout from fire_target_dict (remote MiniMax canary).
+        to = 90.0
+        try:
+            to = float((target.get("opts") or {}).get("timeout") or 90.0)
+        except (TypeError, ValueError):
+            to = 90.0
+        fr = fire_mod.fire_once(target, payload, validate=False, timeout=to)
         return fr.text or "", fr.status, fr.error
 
     def _baseline(self, obj: Objective, target: dict, secret: str, t0: float) -> RunResult:

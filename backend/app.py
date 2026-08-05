@@ -38,7 +38,7 @@ import targets
 import detectors
 import fire as fire_mod  # aliased: the POST /fire endpoint below is named `fire` and would otherwise shadow this module
 import llm
-from core import REGISTRY, run_recipe
+from core import REGISTRY, get_op, is_enabled, list_ops as catalog_ops, run_recipe
 from ops.prose_ops import backend_status, translate_available
 import history
 import bandit
@@ -226,28 +226,31 @@ def health():
 
 @app.get("/ops")
 def list_ops():
-    """Operation registry with dynamic enrichment for ops whose options
-    are loaded from external sources (personas, templates, exemplars)."""
+    """Live operation catalog (enabled ops only) with dynamic enrichment.
+
+    Soft-disabled ops/modules (core.disable / disable_module) do not appear.
+    Same enable set as MCP list_techniques and harness list_ops.
+    """
     by_cat: dict[str, list] = {}
-    for op in REGISTRY.values():
-        d = op.as_dict()
+    for row in catalog_ops(enabled_only=True):
+        d = dict(row)
         # Enrich persona_seed: persona names come from personas.json,
         # frame_style options come from templates/*.txt on disk.
-        if op.name == "persona_seed":
+        if d.get("name") == "persona_seed":
             try:
                 from ops.template_ops import _load_personas, _TEMPLATES_DIR
                 personas = _load_personas()
                 templates = []
                 if _TEMPLATES_DIR.exists():
                     templates = sorted(p.stem for p in _TEMPLATES_DIR.glob("*.txt"))
-                for p in d.get("params", []):
-                    if p["name"] == "persona":
+                for p in d.get("params", []) or []:
+                    if p.get("name") == "persona":
                         p["options"] = ["none"] + [pe["name"] for pe in personas]
-                    elif p["name"] == "frame_style":
+                    elif p.get("name") == "frame_style":
                         p["options"] = templates if templates else ["minimal"]
             except Exception:
                 pass  # fall back to static defaults in op definition
-        by_cat.setdefault(op.category, []).append(d)
+        by_cat.setdefault(d.get("category") or "other", []).append(d)
     return by_cat
 
 
@@ -390,8 +393,10 @@ def list_strategies():
             continue
         # Flag any op the registry no longer has, so the UI can warn instead of
         # silently loading a broken template after an op rename.
-        missing = sorted({step.get("op") for step in recipe
-                          if step.get("op") not in REGISTRY})
+        missing = sorted({
+            step.get("op") for step in recipe
+            if step.get("op") and not is_enabled(str(step.get("op")))
+        })
         item = {
             "name": s.get("name", ""),
             "title": s.get("title", s.get("name", "")),

@@ -141,14 +141,153 @@ class Operation:
 
 
 # Global registry. Ops register themselves on import (see ops/*).
+# Soft-disable keeps the op defined but out of live catalog / run_recipe.
 REGISTRY: dict[str, Operation] = {}
+_DISABLED: set[str] = set()
+# module name (e.g. ops.char_ops) -> op names registered from that module
+MODULE_OPS: dict[str, set[str]] = {}
 
 
-def register(op: Operation) -> Operation:
+def register(op: Operation, *, module: str | None = None) -> Operation:
+    """Register an op. Optional module labels the pack (default: caller module)."""
+    import inspect
+
     if op.name in REGISTRY:
         raise ValueError(f"duplicate operation name: {op.name}")
     REGISTRY[op.name] = op
+    if module is None:
+        # Caller of register() is the ops pack (not this frame).
+        frame = inspect.currentframe()
+        try:
+            if frame is not None and frame.f_back is not None:
+                module = str(frame.f_back.f_globals.get("__name__", "unknown"))
+            else:
+                module = "unknown"
+        finally:
+            del frame
+    MODULE_OPS.setdefault(module, set()).add(op.name)
+    _DISABLED.discard(op.name)
     return op
+
+
+def unregister(name: str) -> bool:
+    """Hard-remove an op from the registry. Returns False if unknown."""
+    if name not in REGISTRY:
+        return False
+    del REGISTRY[name]
+    _DISABLED.discard(name)
+    for mod, names in list(MODULE_OPS.items()):
+        names.discard(name)
+        if not names:
+            del MODULE_OPS[mod]
+    return True
+
+
+def disable(name: str) -> bool:
+    """Soft-disable: op stays registered but is absent from live catalog and recipes."""
+    if name not in REGISTRY:
+        return False
+    _DISABLED.add(name)
+    return True
+
+
+def enable(name: str) -> bool:
+    """Re-enable a soft-disabled op."""
+    if name not in REGISTRY:
+        return False
+    _DISABLED.discard(name)
+    return True
+
+
+def is_enabled(name: str) -> bool:
+    return name in REGISTRY and name not in _DISABLED
+
+
+def get_op(name: str) -> Operation | None:
+    """Return an op only if registered and enabled."""
+    if name in _DISABLED:
+        return None
+    return REGISTRY.get(name)
+
+
+def enabled_ops() -> dict[str, Operation]:
+    """Map of name → Operation for soft-enabled ops only (compose/search pools)."""
+    return {n: op for n, op in REGISTRY.items() if n not in _DISABLED}
+
+
+def enabled_names(*, category: str | None = None) -> list[str]:
+    """Sorted enabled op names, optional category filter."""
+    names: list[str] = []
+    for n, op in enabled_ops().items():
+        if category is not None and op.category != category:
+            continue
+        names.append(n)
+    return sorted(names)
+
+
+def iter_enabled_ops():
+    """Yield (name, op) for every enabled operation, sorted by name."""
+    ops = enabled_ops()
+    for n in sorted(ops):
+        yield n, ops[n]
+
+
+def list_ops(*, enabled_only: bool = True, category: str | None = None) -> list[dict]:
+    """Live catalog for UI/MCP/CLI. Enabled-only by default."""
+    out: list[dict] = []
+    for name, op in sorted(REGISTRY.items()):
+        if enabled_only and name in _DISABLED:
+            continue
+        if category and op.category != category:
+            continue
+        d = op.as_dict()
+        d["enabled"] = name not in _DISABLED
+        d["module"] = next(
+            (m for m, names in MODULE_OPS.items() if name in names),
+            "unknown",
+        )
+        out.append(d)
+    return out
+
+
+def list_modules() -> list[dict]:
+    """Module packs (ops.* files) with counts and enabled state."""
+    rows: list[dict] = []
+    for mod, names in sorted(MODULE_OPS.items()):
+        enabled = sum(1 for n in names if n not in _DISABLED and n in REGISTRY)
+        rows.append(
+            {
+                "module": mod,
+                "ops": sorted(names),
+                "count": len(names),
+                "enabled_count": enabled,
+                "disabled_count": len(names) - enabled,
+            }
+        )
+    return rows
+
+
+def disable_module(module: str) -> int:
+    """Soft-disable every op from a module pack. Returns count disabled."""
+    n = 0
+    for name in list(MODULE_OPS.get(module, ())):
+        if disable(name):
+            n += 1
+    return n
+
+
+def enable_module(module: str) -> int:
+    """Re-enable every op from a module pack. Returns count enabled."""
+    n = 0
+    for name in list(MODULE_OPS.get(module, ())):
+        if enable(name):
+            n += 1
+    return n
+
+
+def reset_registry_runtime_state() -> None:
+    """Test helper: clear soft-disable flags only (does not wipe REGISTRY)."""
+    _DISABLED.clear()
 
 
 def _dedupe(items: list[str]) -> list[str]:
@@ -216,9 +355,10 @@ def run_recipe(
 
     for step in steps:
         name = step.get("op")
-        op = REGISTRY.get(name)
+        op = get_op(name) if name else None
         if op is None:
-            report.append({"op": name, "error": "unknown operation", "out": len(texts)})
+            why = "disabled" if name in REGISTRY and name in _DISABLED else "unknown operation"
+            report.append({"op": name, "error": why, "out": len(texts)})
             continue
 
         params = step.get("params", {}) or {}

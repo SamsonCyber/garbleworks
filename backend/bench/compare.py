@@ -179,7 +179,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Comma list tool or tool:mode (gw_baseline,gw_optimize,gw_pack_hunt,wallbreaker)",
     )
     p.add_argument("--battery", default="v1_canary")
-    p.add_argument("--target-mode", default="deterministic", choices=["deterministic", "ollama"])
+    p.add_argument(
+        "--target-mode",
+        default="deterministic",
+        choices=["deterministic", "ollama", "openai_compat", "minimax"],
+        help="minimax/openai_compat: real remote TARGET (not ablit generator)",
+    )
     p.add_argument("--only", default="", help="Comma objective ids to run")
     p.add_argument("--tag", default="")
     args = p.parse_args(argv)

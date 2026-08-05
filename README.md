@@ -1,9 +1,8 @@
 # Garbleworks
 
-![Garbleworks â€” recipe alchemy](assets/banner.jpg)
+![Garbleworks - recipe alchemy](assets/banner.jpg)
 
-**Flagship authorized LLM red-team harness.**  
-Compose attacks as recipes, **procedurally scan** the technique catalog, search the composition space, fire under scope gates, measure with re-fire and confidence bounds. HTTP API, MCP, and TUI.
+**Authorized LLM red-team harness.** Compose attacks as recipes, scan the technique catalog, search the composition space, fire under scope gates, measure with re-fire and confidence bounds. HTTP API, MCP, and TUI.
 
 [![python](https://img.shields.io/badge/python-3.11%2B-blue)](#end-to-end-first-safe-run)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
@@ -15,80 +14,26 @@ Compose attacks as recipes, **procedurally scan** the technique catalog, search 
 
 | Maturity | State |
 |----------|--------|
-| Implemented | HTTP API, recipe DSL, fire path, MCP, TUI, exporters |
+| Implemented | HTTP API, recipe DSL, fire path, MCP, TUI, HarmBench campaign, agentic IPI spine, exporters |
 | Independently validated | `python scripts/repro.py` (security tests + math audit, no live model) |
 | Maintained | Public under [SamsonCyber/garbleworks](https://github.com/SamsonCyber/garbleworks), Apache-2.0 |
 
-```bash
-git clone https://github.com/SamsonCyber/garbleworks.git
-cd garbleworks
-python scripts/repro.py
-# expects: REPRO_OK garbleworks security + math audit
-```
-
-**Primary tree / one harness:** [docs/PRIMARY.md](docs/PRIMARY.md)
-
-**Read next:** [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) (full loop) Â· [docs/BENCHMARKS.md](docs/BENCHMARKS.md) (offline numbers) Â· [docs/USAGE-AND-API.md](docs/USAGE-AND-API.md) · [Pliny plug-in](#pliny-corpus-plug-and-play)
-
 ---
 
-## Pliny corpus (plug and play)
+## What this solves
 
-Builtin Pliny-family **structure** ships with the repo: GODMODE / NEW PARADIGM anchors, ResponseFormat split, Family-27 misdirection, operator signature chrome. No dump required.
-
-Optional **external** dumps (L1B3RT4S, CL4R1T4S) load as **composable frames**, not opaque mega-prompt paste. They become extra recipe steps (`corpus.shortcut.*`, custom dump dividers, corpus GODMODE lines) on the same fire path as everything else.
-
-### Zero config
-
-```bash
-python scripts/pliny_plug.py doctor
-python scripts/pliny_plug.py apply builtin.godmode "authorized objective"
-```
-
-### Plug L1B3RT4S in 30 seconds
-
-```bash
-# from repo root — dump stays local, never committed
-git clone --depth 1 https://github.com/elder-plinius/L1B3RT4S.git corpora/L1B3RT4S
-python scripts/pliny_plug.py status
-python scripts/pliny_plug.py list --source corpus
-python scripts/pliny_plug.py apply corpus.shortcut.jailbreak "authorized objective"
-```
-
-Or point anywhere:
-
-```bash
-export GARBLEWORKS_PLINY_CORPUS=/path/to/L1B3RT4S   # POSIX
-# $env:GARBLEWORKS_PLINY_CORPUS = "D:\datasets\L1B3RT4S"  # Windows
-```
-
-Auto-detect also watches `corpora/CL4R1T4S`, `corpora/pliny`, and a sibling `../L1B3RT4S` clone.
-
-| Source | In Garbleworks |
-|--------|----------------|
-| Builtin kit | Always on (`pliny_frame`, phase F) |
-| L1B3RT4S | Drop into `corpora/L1B3RT4S` or set env |
-| CL4R1T4S | Same (`corpora/CL4R1T4S`) |
-| G0DM0D3 / OBLITERATUS | Not string adapters (UI / weight surgery) |
-| GLOSSOPETRAE | Language ideas map to in-tree lang ops |
-
-Details: [corpora/README.md](corpora/README.md) · [SECURITY.md](SECURITY.md) · ops `pliny_frame` / `pliny_list_frames`.
-
----
-
-## What problem it solves
-
-Fixed jailbreak lists rot. One lucky hit is not a finding. Production safety needs:
+Fixed jailbreak lists rot. One lucky hit is not a finding. Production safety work needs:
 
 1. **Composition** of small transforms (not one opaque string).
 2. **Search** over that space (genetic, bandit, QD, tree).
 3. **Fire policy** that cannot SSRF your LAN or cloud metadata.
 4. **Measurement** that is a rate with bounds, not a screenshot.
 5. **Standards map** so findings land in auditor language (OWASP LLM Top 10, MITRE ATLAS, CWE).
+6. **Standard batteries** (HarmBench) and **agentic IPI** scoring (harm tool x conceal x delivery) so canary plumbing is not confused with tool-agent efficacy.
 
 Garbleworks is that closed loop. The op/recipe idea is not novel (h4rm3l, WildTeaming). The product claim is **search + measurement discipline + enforced fire policy**.
 
-How the loop runs in practice:
+How the loop runs:
 
 1. Set an **objective** and a **target** (local Ollama, OpenAI-compatible endpoint, or in-process callable).
 2. Build attacks as **recipes**: ordered chains of parameterized ops (encoding, confusables, templates, jailbreak frames, stego carriers, and more).
@@ -105,6 +50,68 @@ synonym:limit=3 homoglyph:coverage=0.5 zero_width:every=2 tag_wrap
 ```
 
 Four primitives, one composed candidate. The harness searches compositions instead of sampling a static list.
+
+---
+
+## The tool (what you get)
+
+| Surface | Start | Role |
+|---------|-------|------|
+| CLI | `python -m garbleworks` | One harness entry: scan, modules, harmbench, auto, mcp |
+| HTTP + web UI | `powershell -File run.ps1` | Human operator at `http://127.0.0.1:9877` |
+| MCP | `python backend/mcp_server.py` | Agent operator + scope receipt |
+| TUI | `cd tui && bun start` | Keyboard console (backend only) |
+
+There is **one fire path** (`backend/fire.py`). No second unchecked outbound path.
+
+| Capability | How you run it |
+|------------|----------------|
+| Recipe compose / mutate | HTTP UI, MCP `apply_recipe`, ops catalog |
+| Procedural technique scan | MCP `run_scan`, `docs/SCAN-CAMPAIGN.md` |
+| Stop-on-win auto ladder | `python -m garbleworks auto -- --auto "..." --target local` |
+| **HarmBench battery** | `python -m garbleworks harmbench ensure` then `sample` / `campaign` ([section](#harmbench-standard-battery)) |
+| Agentic IPI (dual scorer) | `python -m spine.ipi_cli`, MCP `run_agentic_ipi` ([docs/IPI-AGENT.md](docs/IPI-AGENT.md)) |
+| Validate re-fire | MCP `validate_refire`, CLI `--validate` |
+| Field guide + crosswalk | MCP `field_guide_*` |
+| Offline math + SSRF audit | `python scripts/repro.py` |
+
+```bash
+git clone https://github.com/SamsonCyber/garbleworks.git
+cd garbleworks
+python scripts/repro.py
+# expects: REPRO_OK garbleworks security + math audit
+
+cd backend
+python -m garbleworks harmbench ensure    # download official HarmBench CSV (cached, not in git)
+python -m garbleworks harmbench status
+python -m garbleworks harmbench campaign -n 5 --dry-run
+```
+
+**Primary tree / one harness:** [docs/PRIMARY.md](docs/PRIMARY.md)
+
+**Read next:** [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) · [docs/BENCHMARKS.md](docs/BENCHMARKS.md) · [docs/USAGE-AND-API.md](docs/USAGE-AND-API.md) · [docs/GAPS.md](docs/GAPS.md) · [HarmBench](#harmbench-standard-battery) · [Pliny (optional)](#pliny-corpus-optional)
+
+---
+
+## HarmBench (standard battery)
+
+Wallbreaker-class path: pull the **real** [HarmBench](https://github.com/centerforaisafety/HarmBench) text behavior set into the attack loop (download on first use, not vendored in git).
+
+| Command | What it does |
+|---------|----------------|
+| `python -m garbleworks harmbench ensure` | Download/cache official CSV under `backend/library/` |
+| `python -m garbleworks harmbench status` | Cache path, count, categories |
+| `python -m garbleworks harmbench sample -n 8` | Stratified sample across categories |
+| `python -m garbleworks harmbench campaign -n 5 --dry-run` | Plan battery + technique ladder (no fire) |
+| `python -m garbleworks harmbench campaign -n 5 --target URL` | Run ladder against a scoped target |
+| `python -m harmbench …` | Same module, direct entry |
+| `python -m agent_loop --harmbench-campaign --harmbench-n 8` | Agent-loop flags |
+
+MCP: `ensure_harmbench`, `sample_harmbench`, `run_harmbench_campaign`, `list_behaviors(source="harmbench")`.
+
+Override cache path with `GARBLEWORKS_HARMBENCH_CSV`. Still supports operator JSON via `GARBLEWORKS_BEHAVIORS` / `--behaviors`.
+
+**Honesty:** default campaign grades COMPLIED/PARTIAL with a non-refusal heuristic so offline runs work without a cloud judge. That is a battery runner, not a powered multi-model ASR leaderboard. Use re-fire / live judge paths for confirmatory claims. See [docs/GAPS.md](docs/GAPS.md).
 
 ---
 
@@ -343,6 +350,52 @@ cd tui
 bun install
 bun start
 ```
+
+MCP tools also include `apply_recipe`, `optimize`, `validate_refire`, `auto_attack`, **`run_scan`**, HarmBench (`ensure_harmbench`, `sample_harmbench`, `run_harmbench_campaign`), agentic IPI (`list_ipi_templates`, `run_agentic_ipi`), and `field_guide_*`.
+
+---
+
+## Pliny corpus (optional)
+
+Builtin Pliny-family **structure** ships with the repo: GODMODE / NEW PARADIGM anchors, ResponseFormat split, Family-27 misdirection, operator signature chrome. No dump required.
+
+Optional **external** dumps (L1B3RT4S, CL4R1T4S) load as **composable frames**, not opaque mega-prompt paste. They become extra recipe steps (`corpus.shortcut.*`, custom dump dividers, corpus GODMODE lines) on the same fire path as everything else.
+
+### Zero config
+
+```bash
+python scripts/pliny_plug.py doctor
+python scripts/pliny_plug.py apply builtin.godmode "authorized objective"
+```
+
+### Plug L1B3RT4S in 30 seconds
+
+```bash
+# from repo root - dump stays local, never committed
+git clone --depth 1 https://github.com/elder-plinius/L1B3RT4S.git corpora/L1B3RT4S
+python scripts/pliny_plug.py status
+python scripts/pliny_plug.py list --source corpus
+python scripts/pliny_plug.py apply corpus.shortcut.jailbreak "authorized objective"
+```
+
+Or point anywhere:
+
+```bash
+export GARBLEWORKS_PLINY_CORPUS=/path/to/L1B3RT4S   # POSIX
+# $env:GARBLEWORKS_PLINY_CORPUS = "D:\datasets\L1B3RT4S"  # Windows
+```
+
+Auto-detect also watches `corpora/CL4R1T4S`, `corpora/pliny`, and a sibling `../L1B3RT4S` clone.
+
+| Source | In Garbleworks |
+|--------|----------------|
+| Builtin kit | Always on (`pliny_frame`, phase F) |
+| L1B3RT4S | Drop into `corpora/L1B3RT4S` or set env |
+| CL4R1T4S | Same (`corpora/CL4R1T4S`) |
+| G0DM0D3 / OBLITERATUS | Not string adapters (UI / weight surgery) |
+| GLOSSOPETRAE | Language ideas map to in-tree lang ops |
+
+Details: [corpora/README.md](corpora/README.md) · [SECURITY.md](SECURITY.md) · ops `pliny_frame` / `pliny_list_frames`.
 
 ---
 

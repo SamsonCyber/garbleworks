@@ -76,7 +76,9 @@ def op_posteriors(*, host: str | None = None) -> list[dict]:
     Sorted by posterior mean so the table reads as a leaderboard."""
     stats = {s["op_name"]: s for s in history.op_reward_stats(host=host)}
     arms = []
-    for name, op in REGISTRY.items():
+    from core import enabled_ops
+
+    for name, op in enabled_ops().items():
         st = stats.get(name)
         if st:
             successes, n = _reward(st)

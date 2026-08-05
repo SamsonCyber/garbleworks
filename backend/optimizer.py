@@ -22,11 +22,15 @@ Faithful to EVOLVE_MATH.md, including the review fixes:
   - budget counts TARGET queries only; racing concentrates them on contenders (§11)
   - a frozen hall-of-fame gives a monotone REPORTED best under noise (§7)
 
-Success semantics (honest product rule):
-  LCB ranks, races, and may early-stop search (stop_reason="lcb_threshold").
+Success semantics (honest product rule — dual flags, G4):
+  LCB ranks, races, and may early-stop search (stop_reason / search_stop_reason).
   The boolean `success` is held-out mean ≥ θ after n_final re-fires
-  (success_rule="heldout_mean"). Under default n_max/δ′, LCB ≥ θ is rarely
-  reachable; do not treat success as a confidence-bounded finding.
+  (success_rule="heldout_mean"). Separate boolean `claim_ready` is held-out
+  empirical-Bernstein LCB ≥ θ (confidence-bounded claim). Under default
+  n_max/δ′ and small n_final, claim_ready is often False while success is True;
+  do not cite success alone as a confidence-bounded finding.
+  claim_mode="strict" raises n_final (n_final_strict) so claim_ready can become
+  reachable; success remains mean-based for backward compatibility.
 
 Fitness stages are injected (`judge_fn`, `refusal_fn`) so the whole loop runs
 offline against echo_target.py with a mock judge (see test_optimizer.py); the
@@ -41,7 +45,7 @@ import os
 import random
 import sys
 from dataclasses import dataclass, field
-from typing import Callable
+from typing import Callable, Literal
 
 import ops  # noqa: F401  registers the operation catalog
 import register
@@ -61,9 +65,11 @@ def _force_utf8_stdio() -> None:
             pass
 
 
-# Reported success uses held-out mean ≥ θ. LCB is for ranking / racing / optional
-# search early-stop only (see module docstring).
+# Reported success uses held-out mean ≥ θ. LCB is for ranking / racing / claim_ready.
 SUCCESS_RULE = "heldout_mean"
+CLAIM_MODE_MEAN = "mean"
+CLAIM_MODE_STRICT = "strict"
+ClaimMode = Literal["mean", "strict"]
 PHENOTYPE_JACCARD = 0.9
 CREDIT_LAMBDA0 = 0.1
 
@@ -77,6 +83,43 @@ class Seed:
     id: str
     strategy: str
     text: str
+
+
+# EVOLVE_MATH §16 shipped column — single source of truth for defaults.
+# test_optimizer_math_lock.py fails if RunConfig drifts from this map.
+SHIPPED_DEFAULTS: dict = {
+    "budget": 150,
+    "pop": 8,
+    "gen_max": 12,
+    "seed_reps": 3,
+    "topk": 3,
+    "n0": 2,
+    "n_max": 6,
+    "n_final": 4,
+    "n_final_strict": 20,
+    "success_threshold": 0.70,
+    "delta": 0.10,
+    "sigma_w": 0.5,
+    "tournament": 3,
+    "elite": 1,
+    "crossover": True,
+    "stag_gens": 4,
+    "stag_eps": 0.03,
+    "rng_seed": 42,
+    "composer_default": "concat",
+    "neutralize_mode": "lexicon",
+    "use_expanded_basket": True,
+    "basket_max_size": 48,
+    "target_class": "soft",
+    "claim_mode": CLAIM_MODE_MEAN,
+    # Mutation rates hard-coded in mutate() — locked for HM review.
+    "p_inj": 0.15,
+    "p_drop": 0.10,
+    "p_composer_flip": 0.10,
+    "sigma_eta": 0.15,
+    "crossover_tx": 0.2,  # logistic temperature T_x on F̂
+    "variance_estimator": "unbiased_n_minus_1",  # EVOLVE_MATH §5.1
+}
 
 
 @dataclass
@@ -99,38 +142,48 @@ class Genome:
 
     @property
     def var(self) -> float:
+        """Unbiased sample variance Ŝ² = 1/(n-1) Σ(f_j − F̂)² (EVOLVE_MATH §5.1).
+
+        Undefined for n < 2: returns 0.0. radius() uses Hoeffding when n == 1,
+        so this value is never fed into the EB term until n >= 2.
+        """
         if self.n < 2:
-            return 0.25
-        return max(0.0, (self.s2 / self.n) - (self.mean ** 2))
+            return 0.0
+        # Equivalent form: (Σ f² − n·mean²) / (n − 1)
+        return max(0.0, (self.s2 - self.n * (self.mean ** 2)) / (self.n - 1))
 
 
 @dataclass
 class RunConfig:
     ask: str
     target: dict
-    budget: int = 150
-    pop: int = 8
-    gen_max: int = 12
-    seed_reps: int = 3
-    topk: int = 3
-    n0: int = 2
-    n_max: int = 6
-    n_final: int = 4
-    success_threshold: float = 0.70
-    delta: float = 0.10
-    sigma_w: float = 0.5
-    tournament: int = 3
-    elite: int = 1
-    crossover: bool = True
-    stag_gens: int = 4
-    stag_eps: float = 0.03
-    rng_seed: int = 42
-    composer_default: str = "concat"
-    neutralize_mode: str = "lexicon"
-    use_expanded_basket: bool = True
-    basket_max_size: int = 48
-    target_class: str = "soft"
-
+    budget: int = SHIPPED_DEFAULTS["budget"]
+    pop: int = SHIPPED_DEFAULTS["pop"]
+    gen_max: int = SHIPPED_DEFAULTS["gen_max"]
+    seed_reps: int = SHIPPED_DEFAULTS["seed_reps"]
+    topk: int = SHIPPED_DEFAULTS["topk"]
+    n0: int = SHIPPED_DEFAULTS["n0"]
+    n_max: int = SHIPPED_DEFAULTS["n_max"]
+    n_final: int = SHIPPED_DEFAULTS["n_final"]
+    # When claim_mode=strict, held-out re-fires use max(n_final, n_final_strict).
+    # Math audit: n≈80 needed for LCB≥0.7 under defaults with perfect mean.
+    n_final_strict: int = SHIPPED_DEFAULTS["n_final_strict"]
+    success_threshold: float = SHIPPED_DEFAULTS["success_threshold"]
+    delta: float = SHIPPED_DEFAULTS["delta"]
+    sigma_w: float = SHIPPED_DEFAULTS["sigma_w"]
+    tournament: int = SHIPPED_DEFAULTS["tournament"]
+    elite: int = SHIPPED_DEFAULTS["elite"]
+    crossover: bool = SHIPPED_DEFAULTS["crossover"]
+    stag_gens: int = SHIPPED_DEFAULTS["stag_gens"]
+    stag_eps: float = SHIPPED_DEFAULTS["stag_eps"]
+    rng_seed: int = SHIPPED_DEFAULTS["rng_seed"]
+    composer_default: str = SHIPPED_DEFAULTS["composer_default"]
+    neutralize_mode: str = SHIPPED_DEFAULTS["neutralize_mode"]
+    use_expanded_basket: bool = SHIPPED_DEFAULTS["use_expanded_basket"]
+    basket_max_size: int = SHIPPED_DEFAULTS["basket_max_size"]
+    target_class: str = SHIPPED_DEFAULTS["target_class"]
+    # mean: report success from held-out mean (default). strict: also raise n_final.
+    claim_mode: str = SHIPPED_DEFAULTS["claim_mode"]
 
 # ---------------------------------------------------------------------------
 # Core math (EB, LCB, UCB, simplex)
@@ -148,6 +201,11 @@ def topk_indices(w: list[float], k: int) -> list[int]:
 
 
 def radius(g: Genome, delta_eff: float) -> float:
+    """Empirical-Bernstein radius (EVOLVE_MATH §5.2); Hoeffding at n=1.
+
+    ε = sqrt(2 Ŝ² ln(3/δ) / n) + 3 ln(3/δ) / n
+    Ŝ² = Genome.var (unbiased, n−1). At n=1 use Hoeffding sqrt(ln(2/δ)/(2n)).
+    """
     n = g.n
     if n <= 0:
         return 1.0
@@ -163,6 +221,56 @@ def lcb(g: Genome, delta_eff: float) -> float:
 
 def ucb(g: Genome, delta_eff: float) -> float:
     return g.mean + radius(g, delta_eff)
+
+
+def shipped_defaults() -> dict:
+    """Copy of SHIPPED_DEFAULTS for lock tests and tooling."""
+    return dict(SHIPPED_DEFAULTS)
+
+
+def resolve_n_final(cfg: "RunConfig") -> int:
+    """Held-out re-fire count. strict claim mode raises floor to n_final_strict."""
+    n = max(0, int(cfg.n_final))
+    mode = (cfg.claim_mode or CLAIM_MODE_MEAN).strip().lower()
+    if mode == CLAIM_MODE_STRICT:
+        return max(n, int(cfg.n_final_strict or 0))
+    return n
+
+
+def compute_claim_fields(
+    *,
+    held: Genome,
+    delta_eff: float,
+    success_threshold: float,
+    claim_mode: str = CLAIM_MODE_MEAN,
+    n_final_used: int = 0,
+) -> dict:
+    """Dual success/claim flags from held-out Genome samples (G4).
+
+    success      — held-out mean ≥ θ (product flag; not confidence-bounded)
+    claim_ready  — held-out EB LCB ≥ θ (confidence-bounded claim gate)
+    """
+    mode = (claim_mode or CLAIM_MODE_MEAN).strip().lower()
+    if mode not in (CLAIM_MODE_MEAN, CLAIM_MODE_STRICT):
+        mode = CLAIM_MODE_MEAN
+    held_mean = held.mean if held.n else 0.0
+    held_lcb = lcb(held, delta_eff) if held.n else 0.0
+    success = held_mean >= success_threshold
+    claim_ready = held.n > 0 and held_lcb >= success_threshold
+    return {
+        "success": success,
+        "success_rule": SUCCESS_RULE,
+        "claim_mode": mode,
+        "claim_ready": claim_ready,
+        "heldout_mean": round(held_mean, 4),
+        "heldout_lcb": round(held_lcb, 4),
+        "heldout_n": int(held.n),
+        "n_final_used": int(n_final_used),
+        "claim_note": (
+            "success uses held-out mean ≥ θ; claim_ready uses held-out LCB ≥ θ. "
+            "Do not cite success alone as a confidence-bounded finding."
+        ),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -308,39 +416,6 @@ class SeedCreditBook:
                 continue
             acc.setdefault(s.strategy, []).append(self.v_hat(i))
         return {op: round(sum(vs) / len(vs), 4) for op, vs in acc.items() if vs}
-
-
-# ---------------------------------------------------------------------------
-# Simplex + bounds (EVOLVE_MATH §2.3, §5.2, §8.1)
-# ---------------------------------------------------------------------------
-
-def softmax(y: list[float]) -> list[float]:
-    m = max(y)
-    exps = [math.exp(v - m) for v in y]
-    s = sum(exps)
-    return [e / s for e in exps]
-
-
-def topk_indices(w: list[float], k: int) -> list[int]:
-    return sorted(range(len(w)), key=lambda i: w[i], reverse=True)[:k]
-
-
-def radius(g: Genome, delta_eff: float) -> float:
-    n = g.n
-    if n <= 0:
-        return 1.0
-    if n == 1:
-        return math.sqrt(math.log(2.0 / delta_eff) / (2.0 * n))
-    ln = math.log(3.0 / delta_eff)
-    return math.sqrt(2.0 * g.var * ln / n) + 3.0 * ln / n
-
-
-def lcb(g: Genome, delta_eff: float) -> float:
-    return g.mean - radius(g, delta_eff)
-
-
-def ucb(g: Genome, delta_eff: float) -> float:
-    return g.mean + radius(g, delta_eff)
 
 
 # ---------------------------------------------------------------------------
@@ -490,41 +565,51 @@ def mutate(
     rng: random.Random,
     seed_ucb: list[float] | None = None,
 ) -> Genome:
-    """Mutate log-weights; inject raises a high-UCB seed when credit is available."""
+    """Mutate log-weights; inject raises a high-UCB seed when credit is available.
+
+    Rates and scales are SHIPPED_DEFAULTS (p_inj, p_drop, p_composer_flip, sigma_eta).
+    Genome genes are only (y, composer, eta) — no continuous τ / free template id.
+    """
     scale = cfg.sigma_w / math.sqrt(max(1, M - 1))
     y = [yi + scale * rng.gauss(0.0, 1.0) for yi in parent.y]
     ybar = sum(y) / len(y)
 
-    if rng.random() < 0.15:                       # inject (§8.3 / §10)
+    p_inj = float(SHIPPED_DEFAULTS["p_inj"])
+    p_drop = float(SHIPPED_DEFAULTS["p_drop"])
+    p_c = float(SHIPPED_DEFAULTS["p_composer_flip"])
+    sig_eta = float(SHIPPED_DEFAULTS["sigma_eta"])
+
+    if rng.random() < p_inj:                       # inject (§8.3 / §10)
         if seed_ucb is not None and len(seed_ucb) == len(y):
             j = max(range(len(y)), key=lambda i: (seed_ucb[i], rng.random()))
         else:
             j = min(range(len(y)), key=lambda i: y[i])
         y[j] = ybar + 1.0
 
-    if rng.random() < 0.10:                       # drop: floor the lowest (never 0, §8.3)
+    if rng.random() < p_drop:                      # drop: floor the lowest (never 0, §8.3)
         low = min(range(len(y)), key=lambda i: y[i])
         y[low] = ybar - 10.0
 
     composer = parent.composer
-    if rng.random() < 0.10:
+    if rng.random() < p_c:
         composer = rng.choice(_composer_choices(cfg))
 
     eta = parent.eta
     if rng.random() < 0.5:
-        eta = min(1.0, max(0.0, eta + rng.gauss(0.0, 0.15)))
+        eta = min(1.0, max(0.0, eta + rng.gauss(0.0, sig_eta)))
 
     return Genome(y=y, composer=composer, eta=eta)
 
 
 def crossover(a: Genome, b: Genome, cfg: RunConfig, rng: random.Random) -> Genome:
+    """Aitchison-style log-weight blend + logistic inheritance on means (§9)."""
     lam = rng.betavariate(2.0, 2.0)
     y = [lam * ya + (1 - lam) * yb for ya, yb in zip(a.y, b.y)]
-    p = 1.0 / (1.0 + math.exp(-(a.mean - b.mean) / 0.2))   # logistic on F̂, never LCB (§9)
+    t_x = float(SHIPPED_DEFAULTS["crossover_tx"])
+    p = 1.0 / (1.0 + math.exp(-(a.mean - b.mean) / t_x))   # logistic on F̂, never LCB
     composer = a.composer if rng.random() < p else b.composer
     eta = lam * a.eta + (1 - lam) * b.eta
     return Genome(y=y, composer=composer, eta=eta)
-
 
 def _tournament(pop: list[Genome], k: int, delta_eff: float, rng: random.Random) -> Genome:
     picks = [rng.choice(pop) for _ in range(max(1, k))]
@@ -678,26 +763,38 @@ def run_evolve(cfg: RunConfig, *,
             children.append(child)
         pop = elites + children
 
-    # Held-out re-estimate
+    # Held-out re-estimate (dual flags: success = mean; claim_ready = LCB)
     final = hof["genome"] if hof else max(pop, key=lambda g: g.mean)
     held = Genome(y=final.y, composer=final.composer, eta=final.eta)
-    held_f = 0.0
-    for _ in range(cfg.n_final):
-        rec = evaluate_once(
+    n_final_used = resolve_n_final(cfg)
+    for _ in range(n_final_used):
+        evaluate_once(
             held, basket, cfg, judge_fn, refusal_fn, gen_chat,
             calibrator=calibrator,
         )
-        held_f += rec["fitness"]
-    held_f /= max(1, cfg.n_final)
+        # evaluate_once already calls held.add_sample(fitness)
+    held_f = held.mean if held.n else 0.0
 
-    success = held_f >= cfg.success_threshold
+    claim = compute_claim_fields(
+        held=held,
+        delta_eff=delta_eff,
+        success_threshold=cfg.success_threshold,
+        claim_mode=cfg.claim_mode,
+        n_final_used=n_final_used,
+    )
 
     best_prompt = compose(final, basket, cfg, gen_chat)
     final_L = register.text_loadedness(best_prompt).L
 
     res = {
-        "success": success,
-        "success_rule": SUCCESS_RULE,
+        "success": claim["success"],
+        "success_rule": claim["success_rule"],
+        "claim_mode": claim["claim_mode"],
+        "claim_ready": claim["claim_ready"],
+        "heldout_lcb": claim["heldout_lcb"],
+        "heldout_n": claim["heldout_n"],
+        "n_final_used": claim["n_final_used"],
+        "claim_note": claim["claim_note"],
         "best_prompt": best_prompt,
         "best_fitness_heldout": round(held_f, 4),
         "best_lcb": round(hof["lcb"] if hof else 0.0, 4),
@@ -705,6 +802,7 @@ def run_evolve(cfg: RunConfig, *,
         "target_queries": spent,
         "basket_size": M,
         "stop_reason": stop_reason,
+        "search_stop_reason": stop_reason,
         "register_L": final_L,
         "eta": round(final.eta, 3),
         "seed_credit": credit.snapshot(basket),

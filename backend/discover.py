@@ -37,8 +37,10 @@ _HARM_SUPPRESSORS = ["base64", "code_chameleon", "roundtrip", "disguise_reconstr
 def _catalogue() -> str:
     """Op names grouped by family, for the model to pick from. Excludes control
     utilities (they aren't attack tactics)."""
+    from core import enabled_ops
+
     by_family: dict[str, list[str]] = {}
-    for name, op in REGISTRY.items():
+    for name, op in enabled_ops().items():
         fam = op.tactic_family
         if fam == "control":
             continue

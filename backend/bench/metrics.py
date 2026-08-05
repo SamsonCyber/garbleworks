@@ -579,6 +579,148 @@ def exit_code_for_claim(
     return 0
 
 
+# ---------------------------------------------------------------------------
+# Benjamini-Hochberg FDR (EVOLVE_MATH §14.3) — optional multi-strategy gate
+# ---------------------------------------------------------------------------
+
+DEFAULT_FDR_Q = 0.10
+
+
+def binomial_p_greater(successes: int, n: int, p0: float = 0.5) -> float:
+    """One-sided exact binomial p-value for H0: p <= p0 vs H1: p > p0.
+
+    P(X >= successes | X ~ Binom(n, p0)). Used as a simple strategy claim test
+    before BH correction across m strategies.
+    """
+    if n <= 0:
+        return 1.0
+    s = max(0, min(int(successes), int(n)))
+    p0 = min(1.0, max(0.0, float(p0)))
+    if p0 <= 0.0:
+        # Under p=0, any success has p=0 for s>0; s=0 has p=1
+        return 0.0 if s > 0 else 1.0
+    if p0 >= 1.0:
+        return 1.0 if s <= n else 0.0
+    from math import comb
+
+    total = 0.0
+    for k in range(s, n + 1):
+        total += comb(n, k) * (p0 ** k) * ((1.0 - p0) ** (n - k))
+    return min(1.0, max(0.0, total))
+
+
+def benjamini_hochberg(
+    p_values: list[float],
+    *,
+    q: float = DEFAULT_FDR_Q,
+    labels: list[str] | None = None,
+) -> dict[str, Any]:
+    """Benjamini-Hochberg FDR control at level q (EVOLVE_MATH §14.3).
+
+    Sort p_(1) ≤ … ≤ p_(m); find largest k with p_(k) ≤ (k/m)·q; reject 1..k.
+    Default q=0.10. Does **not** auto-run; callers opt in (G5 optional gate).
+    """
+    m = len(p_values)
+    if m == 0:
+        return {
+            "q": q,
+            "m": 0,
+            "rejected": [],
+            "rejected_indices": [],
+            "threshold_k": 0,
+            "rows": [],
+            "note": "empty p-value list",
+        }
+    q = float(q)
+    if q <= 0 or q > 1:
+        raise ValueError(f"fdr q must be in (0, 1], got {q}")
+
+    indexed = []
+    for i, p in enumerate(p_values):
+        try:
+            pv = float(p)
+        except (TypeError, ValueError):
+            pv = 1.0
+        pv = min(1.0, max(0.0, pv))
+        lab = labels[i] if labels and i < len(labels) else str(i)
+        indexed.append((i, pv, lab))
+
+    ordered = sorted(indexed, key=lambda t: (t[1], t[0]))
+    # largest k with p_(k) <= (k/m)*q  (1-based k)
+    k_star = 0
+    for rank, (i, pv, lab) in enumerate(ordered, start=1):
+        if pv <= (rank / m) * q:
+            k_star = rank
+
+    rejected_indices = [ordered[j][0] for j in range(k_star)]
+    rejected_labels = [ordered[j][2] for j in range(k_star)]
+    rows = []
+    for rank, (i, pv, lab) in enumerate(ordered, start=1):
+        thr = (rank / m) * q
+        rows.append({
+            "index": i,
+            "label": lab,
+            "p": round(pv, 6),
+            "rank": rank,
+            "bh_threshold": round(thr, 6),
+            "reject": rank <= k_star,
+        })
+    return {
+        "q": q,
+        "m": m,
+        "rejected": rejected_labels,
+        "rejected_indices": rejected_indices,
+        "threshold_k": k_star,
+        "rows": rows,
+        "note": (
+            f"BH FDR at q={q}: reject ranks 1..{k_star} of m={m}. "
+            "Optional gate only; default production does not apply BH."
+        ),
+    }
+
+
+def bh_fdr_on_strategy_claims(
+    claims: list[dict[str, Any]],
+    *,
+    q: float = DEFAULT_FDR_Q,
+    p0: float = 0.5,
+    successes_key: str = "successes",
+    n_key: str = "n_completed",
+    label_key: str = "strategy",
+) -> dict[str, Any]:
+    """Run BH on per-strategy binomial p-values (H1: ASR > p0).
+
+    Each claim dict needs successes + n_completed (or overrides via keys).
+    Returns BH result + per-row p and fdr_reject annotation.
+    """
+    pvals: list[float] = []
+    labels: list[str] = []
+    enriched: list[dict[str, Any]] = []
+    for c in claims:
+        s = int(c.get(successes_key, 0) or 0)
+        n = int(c.get(n_key, 0) or 0)
+        lab = str(c.get(label_key) or c.get("label") or "unknown")
+        p = binomial_p_greater(s, n, p0=p0)
+        pvals.append(p)
+        labels.append(lab)
+        row = dict(c)
+        row["p_value"] = round(p, 6)
+        row["p0"] = p0
+        enriched.append(row)
+    bh = benjamini_hochberg(pvals, q=q, labels=labels)
+    rej = set(bh["rejected_indices"])
+    for i, row in enumerate(enriched):
+        row["fdr_reject"] = i in rej
+        row["fdr_q"] = q
+    return {
+        "bh": bh,
+        "claims": enriched,
+        "any_fdr_reject": bool(rej),
+        "q": q,
+        "p0": p0,
+    }
+
+
 def _summary_table(summaries: list[ToolSummary]) -> list[str]:
     lines = [
         "| tool | mode | n | n_ok | n_err | leaks | **LCB** | ASR | UCB | err_rate | mean_q | q_to_win |",
