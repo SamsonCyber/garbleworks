@@ -26,21 +26,21 @@ Fixed jailbreak lists rot. One lucky hit is not a finding. Production safety wor
 
 1. **Composition** of small transforms (not one opaque string).
 2. **Search** over that space (genetic, bandit, QD, tree).
-3. **Fire policy** that cannot SSRF your LAN or cloud metadata.
-4. **Measurement** that is a rate with bounds, not a screenshot.
+3. **Outbound fire gates** so a bad or injected target URL cannot hit your private LAN or cloud instance-metadata endpoints (SSRF protection on the fire path).
+4. **Measured success rates** with confidence bounds (re-fire N times, Wilson intervals). One lucky chat reply is not a finding.
 5. **Standards map** so findings land in auditor language (OWASP LLM Top 10, MITRE ATLAS, CWE).
 6. **Standard batteries** (HarmBench) and **agentic IPI** scoring (harm tool x conceal x delivery) so canary plumbing is not confused with tool-agent efficacy.
 
-Garbleworks is that closed loop. The op/recipe idea is not novel (h4rm3l, WildTeaming). The product claim is **search + measurement discipline + enforced fire policy**.
+Garbleworks is that closed loop. The op/recipe idea is not novel (h4rm3l, WildTeaming). The product claim is **search + honest measurement + enforced outbound policy**.
 
 How the loop runs:
 
 1. Set an **objective** and a **target** (local Ollama, OpenAI-compatible endpoint, or in-process callable).
 2. Build attacks as **recipes**: ordered chains of parameterized ops (encoding, confusables, templates, jailbreak frames, stego carriers, and more).
 3. **Scan** (coverage-first) or **search** (stop-on-win / optimize): walk the playbook map, or evolve recipes.
-4. **Fire** only through one policy module: SSRF gates + MCP engagement receipt.
+4. **Fire** only through one module (`fire.py`): block private/metadata ranges, then enforce the MCP engagement host allowlist when a receipt is present.
 5. **Score** with multi-signal detectors and optional graded LLM judge.
-6. **Re-fire** winners and report Wilson-style rates, not screenshots.
+6. **Re-fire** winners N times and report success rate with Wilson-style confidence bounds.
 7. **Map** findings to OWASP LLM Top 10 / MITRE ATLAS / NIST / CWE via the field guide; **export** to promptfoo / garak / PyRIT shapes.
 
 Core unit:

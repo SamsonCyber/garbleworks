@@ -12,8 +12,8 @@ You need:
 
 1. A way to **compose** attacks from small transforms (not one opaque blob).
 2. A way to **search** that space instead of hand-picking strings.
-3. A **fire path** that cannot quietly SSRF into your LAN or cloud metadata.
-4. **Detectors** and **re-fire** so success is a rate with bounds, not a screenshot.
+3. An **outbound fire path** that rejects private LAN and cloud metadata hosts (SSRF gate), and optionally enforces an engagement host allowlist.
+4. **Detectors** plus **re-fire** so success is a measured rate with confidence bounds, not a single lucky chat reply.
 5. A map from findings to **OWASP / ATLAS / NIST / CWE** and optional export to other tools.
 
 Garbleworks is that closed loop.
