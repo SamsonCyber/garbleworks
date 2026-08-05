@@ -14,6 +14,10 @@ tagged release.
   local L1B3RT4S-style corpus via `GARBLEWORKS_PLINY_CORPUS` (no network fetch,
   no vendored dumps). Phase F scan adds adapter cells. Tests:
   `test_pliny_adapter.py`.
+- **Pliny plug-and-play**: `scripts/pliny_plug.py` (`status` / `list` / `apply` /
+  `doctor`), auto-detect `corpora/L1B3RT4S` (and siblings), `corpora/README.md`,
+  README home-page section. SHORTCUTS / custom dividers / GODMODE lines load as
+  composable frames after real-repo scrutiny.
 
 ### Changed
 - **Repo cleanup:** removed dead one-off scripts (`refine.py`,

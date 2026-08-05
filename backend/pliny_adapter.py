@@ -44,6 +44,45 @@ _SKIP_NAME_PARTS = (
 )
 
 
+def repo_root() -> Path:
+    """Garbleworks repository root (parent of ``backend/``)."""
+    return Path(__file__).resolve().parents[1]
+
+
+def default_corpus_candidates() -> list[Path]:
+    """Plug-and-play locations checked when env is unset.
+
+    Drop a local clone into one of these paths (or set ``GARBLEWORKS_PLINY_CORPUS``).
+    """
+    root = repo_root()
+    return [
+        root / "corpora" / "L1B3RT4S",
+        root / "corpora" / "CL4R1T4S",
+        root / "corpora" / "pliny",
+        root / "pliny_corpus",
+        root.parent / "L1B3RT4S",
+        root.parent / "CL4R1T4S",
+    ]
+
+
+def looks_like_corpus(path: Path) -> bool:
+    """True if directory has liberation-dump shape (mkd / shortcuts / prompt text)."""
+    if not path.is_dir():
+        return False
+    try:
+        for p in path.rglob("*"):
+            if not p.is_file():
+                continue
+            name = p.name.lower()
+            if "shortcut" in name and p.suffix.lower() == ".json":
+                return True
+            if p.suffix.lower() in {".mkd", ".txt", ".md"} and p.stat().st_size > 12:
+                return True
+    except OSError:
+        return False
+    return False
+
+
 @dataclass(frozen=True)
 class PlinyFrame:
     """One selectable structural frame → ordered recipe steps."""
@@ -165,20 +204,64 @@ def _builtin_frames() -> list[PlinyFrame]:
 # ---------------------------------------------------------------------------
 
 def resolve_corpus_path(explicit: str | Path | None = None) -> Path | None:
-    """Return a readable directory path, or None (builtin-only fallback)."""
-    raw = explicit
-    if raw is None or raw == "":
-        raw = os.environ.get(ENV_CORPUS, "").strip()
-    if not raw:
-        return None
-    p = Path(raw).expanduser()
-    try:
-        p = p.resolve()
-    except OSError:
-        return None
-    if not p.is_dir():
-        return None
-    return p
+    """Return a readable corpus directory, or None (builtin-only fallback).
+
+    Resolution order:
+    1. Explicit ``corpus`` / ``corpus_path`` argument
+    2. ``GARBLEWORKS_PLINY_CORPUS`` env
+    3. First plug-and-play candidate under ``corpora/`` or sibling clones
+       that ``looks_like_corpus`` accepts
+    """
+    candidates: list[Path] = []
+    if explicit is not None and str(explicit).strip():
+        candidates.append(Path(str(explicit)).expanduser())
+    env = os.environ.get(ENV_CORPUS, "").strip()
+    if env:
+        candidates.append(Path(env).expanduser())
+    # Only auto-discover when no explicit/env path was given.
+    if not candidates:
+        candidates.extend(default_corpus_candidates())
+
+    for raw in candidates:
+        try:
+            p = raw.resolve()
+        except OSError:
+            continue
+        if p.is_dir() and looks_like_corpus(p):
+            return p
+        # Explicit/env path that is a dir but empty of dumps: still accept so
+        # operators get a clear "0 frames" rather than silent builtin-only.
+        if (
+            explicit is not None
+            and str(explicit).strip()
+            and p.is_dir()
+        ) or (env and raw == Path(env).expanduser() and p.is_dir()):
+            return p
+    return None
+
+
+def plug_status() -> dict[str, Any]:
+    """Operator HUD: how Pliny is wired right now."""
+    path = resolve_corpus_path()
+    builtin_n = len(list_frames(include_corpus=False))
+    frames = list_frames() if path else list_frames(include_corpus=False)
+    corpus_n = sum(1 for f in frames if f.source == "corpus")
+    return {
+        "env_key": ENV_CORPUS,
+        "env_value": os.environ.get(ENV_CORPUS, ""),
+        "corpus_path": str(path or ""),
+        "corpus_active": bool(path),
+        "builtin_frames": builtin_n,
+        "corpus_frames": corpus_n,
+        "total_frames": len(frames),
+        "candidates": [str(p) for p in default_corpus_candidates()],
+        "plug_hint": (
+            f"git clone --depth 1 https://github.com/elder-plinius/L1B3RT4S.git "
+            f"{repo_root() / 'corpora' / 'L1B3RT4S'}"
+            if not path
+            else f"active corpus: {path}"
+        ),
+    }
 
 
 # ---------------------------------------------------------------------------

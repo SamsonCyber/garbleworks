@@ -59,6 +59,11 @@ Thumbs.db
 .mcp.json
 !.mcp.json.example
 
+# Operator-local Pliny dumps (never commit liberation corpora)
+corpora/*
+!corpora/README.md
+pliny_corpus/
+
 # Packaging
 *.skill
 dist/

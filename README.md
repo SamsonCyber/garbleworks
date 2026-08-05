@@ -1,6 +1,6 @@
 # Garbleworks
 
-![Garbleworks — recipe alchemy](assets/banner.jpg)
+![Garbleworks â€” recipe alchemy](assets/banner.jpg)
 
 **Flagship authorized LLM red-team harness.**  
 Compose attacks as recipes, **procedurally scan** the technique catalog, search the composition space, fire under scope gates, measure with re-fire and confidence bounds. HTTP API, MCP, and TUI.
@@ -26,7 +26,53 @@ python scripts/repro.py
 # expects: REPRO_OK garbleworks security + math audit
 ```
 
-**Read next:** [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) (full loop) · [docs/BENCHMARKS.md](docs/BENCHMARKS.md) (offline numbers) · [docs/USAGE-AND-API.md](docs/USAGE-AND-API.md)
+**Primary tree / one harness:** [docs/PRIMARY.md](docs/PRIMARY.md)
+
+**Read next:** [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) (full loop) Â· [docs/BENCHMARKS.md](docs/BENCHMARKS.md) (offline numbers) Â· [docs/USAGE-AND-API.md](docs/USAGE-AND-API.md) · [Pliny plug-in](#pliny-corpus-plug-and-play)
+
+---
+
+## Pliny corpus (plug and play)
+
+Builtin Pliny-family **structure** ships with the repo: GODMODE / NEW PARADIGM anchors, ResponseFormat split, Family-27 misdirection, operator signature chrome. No dump required.
+
+Optional **external** dumps (L1B3RT4S, CL4R1T4S) load as **composable frames**, not opaque mega-prompt paste. They become extra recipe steps (`corpus.shortcut.*`, custom dump dividers, corpus GODMODE lines) on the same fire path as everything else.
+
+### Zero config
+
+```bash
+python scripts/pliny_plug.py doctor
+python scripts/pliny_plug.py apply builtin.godmode "authorized objective"
+```
+
+### Plug L1B3RT4S in 30 seconds
+
+```bash
+# from repo root — dump stays local, never committed
+git clone --depth 1 https://github.com/elder-plinius/L1B3RT4S.git corpora/L1B3RT4S
+python scripts/pliny_plug.py status
+python scripts/pliny_plug.py list --source corpus
+python scripts/pliny_plug.py apply corpus.shortcut.jailbreak "authorized objective"
+```
+
+Or point anywhere:
+
+```bash
+export GARBLEWORKS_PLINY_CORPUS=/path/to/L1B3RT4S   # POSIX
+# $env:GARBLEWORKS_PLINY_CORPUS = "D:\datasets\L1B3RT4S"  # Windows
+```
+
+Auto-detect also watches `corpora/CL4R1T4S`, `corpora/pliny`, and a sibling `../L1B3RT4S` clone.
+
+| Source | In Garbleworks |
+|--------|----------------|
+| Builtin kit | Always on (`pliny_frame`, phase F) |
+| L1B3RT4S | Drop into `corpora/L1B3RT4S` or set env |
+| CL4R1T4S | Same (`corpora/CL4R1T4S`) |
+| G0DM0D3 / OBLITERATUS | Not string adapters (UI / weight surgery) |
+| GLOSSOPETRAE | Language ideas map to in-tree lang ops |
+
+Details: [corpora/README.md](corpora/README.md) · [SECURITY.md](SECURITY.md) · ops `pliny_frame` / `pliny_list_frames`.
 
 ---
 
@@ -117,10 +163,10 @@ objective + target.
 |------|----------------|
 | `phase_a` | Catalog sweep (one op at a time) |
 | `phase_b` | Logical complementary mixes (not random stacks) |
-| `phase_c` … `phase_f` | Deeper stacks, nesting, long-turn roleplay, Pliny kit |
-| `language` | Language mutators (code-switch, low-resource pivot, nested hop, …) |
-| `deep` | C–F + language only |
-| `full` | A → B → C → D → E → F → language under one budget |
+| `phase_c` â€¦ `phase_f` | Deeper stacks, nesting, long-turn roleplay, Pliny kit |
+| `language` | Language mutators (code-switch, low-resource pivot, nested hop, â€¦) |
+| `deep` | Câ€“F + language only |
+| `full` | A â†’ B â†’ C â†’ D â†’ E â†’ F â†’ language under one budget |
 
 Fire path is the same scoped path as everything else (SSRF + MCP receipt).  
 Live targets need authorization. Echo / offline tests use a local secret canary.
@@ -162,7 +208,7 @@ Full phase table, language/GLOSSOPETRAE map, layering rules, and artifact schema
 
 | Surface | Start | Role |
 |---------|-------|------|
-| HTTP + web UI | `powershell -File run.ps1` → `http://127.0.0.1:9877` | Human operator |
+| HTTP + web UI | `powershell -File run.ps1` â†’ `http://127.0.0.1:9877` | Human operator |
 | MCP | `python backend/mcp_server.py` | Agent operator + scope receipt |
 | TUI | `cd tui && bun start` | Keyboard console (backend only) |
 
@@ -176,7 +222,7 @@ All outbound HTTP shares `backend/fire.py`:
 2. Cloud metadata and other reserved ranges blocked.
 3. Loopback / RFC-1918 allowed by default for local labs; `GARBLEWORKS_BLOCK_PRIVATE=1` tightens.
 4. No redirects after validation.
-5. MCP fire requires host ∈ `authorized_scope` (default `127.0.0.1` / `localhost`).
+5. MCP fire requires host âˆˆ `authorized_scope` (default `127.0.0.1` / `localhost`).
 6. Body and fan-out caps.
 
 HTTP API is unauthenticated: bind **127.0.0.1 only**. See [SECURITY.md](SECURITY.md).
