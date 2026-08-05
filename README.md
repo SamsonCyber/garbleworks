@@ -1,6 +1,6 @@
 # Garbleworks
 
-![Garbleworks - recipe alchemy](assets/banner-back.jpg)
+![Garbleworks - recipe alchemy](assets/banner-robot.jpg)
 
 **Authorized LLM red-team harness.** Compose attacks as recipes, scan the technique catalog, search with a **history-guided mutator** (not pure random), run standard batteries (HarmBench + JBB/StrongREJECT-shaped loaders) and agentic IPI trials, fire under scope gates, measure with re-fire and confidence bounds. HTTP API, MCP, CLI, and TUI.
 
