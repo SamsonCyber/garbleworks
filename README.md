@@ -1,6 +1,6 @@
 # Garbleworks
 
-![Garbleworks - recipe alchemy](assets/banner-robot.jpg)
+![Garbleworks - recipe alchemy](assets/banner-dim.jpg)
 
 **Authorized LLM red-team harness.** Compose attacks as recipes, scan the technique catalog, search with a **history-guided mutator** (not pure random), run standard batteries (HarmBench + JBB/StrongREJECT-shaped loaders) and agentic IPI trials, fire under scope gates, measure with re-fire and confidence bounds. HTTP API, MCP, CLI, and TUI.
 
@@ -18,27 +18,31 @@ Public under [SamsonCyber/garbleworks](https://github.com/SamsonCyber/garblework
 
 ## What this solves
 
-Fixed jailbreak lists rot. One lucky hit is not a finding. LLM chat sessions dig **one** path and never leave it. Production safety work needs:
+Static jailbreak lists rot on the shelf. One lucky chat hit is not a finding. A lone LLM session digs one trench and dies in it.
 
-1. **Composition** of small transforms (not one opaque string).
-2. **Search** over that space (genetic, bandit, QD, tree) plus **history-guided approach mutation** (switch style after refuse/stagnation, with a stated reason).
-3. **Outbound fire gates** so a bad or injected target URL cannot hit private LAN or cloud instance-metadata endpoints (SSRF protection on the fire path).
-4. **Measured success rates** with confidence bounds (re-fire N times, Wilson intervals). One lucky chat reply is not a finding.
-5. **Standards map** so findings land in auditor language (OWASP LLM Top 10, MITRE ATLAS, CWE).
-6. **Standard batteries** (official HarmBench download-on-first-use; JBB/StrongREJECT-shaped loaders) so results are not hand-picked prompts.
-7. **Agentic IPI** scoring (harm tool x conceal x delivery) so canary plumbing and unread injects are not mislabeled as technique fail.
+Garbleworks is the closed loop: compose, hunt, gate, measure, map. Recipes are small transforms you stack (not one opaque string). The harness searches that space, fires under hard outbound policy, and only promotes what re-fire + Wilson bounds can defend.
 
-Garbleworks is that closed loop. The op/recipe idea is not novel (h4rm3l, WildTeaming). The product claim is **search + honest measurement + enforced outbound policy + batteries + agentic surfaces on one spine**.
+| Failure mode | What the loop does |
+|--------------|--------------------|
+| Opaque one-shot strings | **Compose** small ops into recipes |
+| Random thrash / one-style dig | **Search** (genetic, bandit, QD, tree) + **history-guided mutation** (switch style after refuse or stagnation, with a stated reason) |
+| Target URL / SSRF on the fire path | **Gate** outbound: block private LAN and cloud instance-metadata; MCP host allowlist when a receipt is present |
+| "It worked once" theater | **Measure**: re-fire N times, Wilson intervals; one lucky reply is not a finding |
+| Hand-picked prompts only | **Batteries**: official HarmBench (download on first use); JBB / StrongREJECT-shaped loaders |
+| Auditor-unreadable notes | **Map** to OWASP LLM Top 10, MITRE ATLAS, CWE (and NIST on export) |
+| Canary plumbing misread as technique fail | **Agentic IPI** score: harm tool x conceal x delivery |
 
-How the loop runs:
+The op/recipe idea is not novel (h4rm3l, WildTeaming). The product claim is **search + honest measurement + enforced outbound policy + batteries + agentic surfaces on one spine**.
 
-1. Set an **objective** and a **target** (local Ollama, OpenAI-compatible endpoint, or in-process callable).
-2. Build attacks as **recipes**, **templates**, a **battery sample**, or the next **reasoned mutation**.
-3. **Scan** (coverage map), **search** (stop-on-win / EVOLVE / mutator loop), **campaign** (HarmBench ladder), or **agentic IPI** (tools-loop + dual scorer).
-4. **Fire** only through `fire.py`: block private/metadata ranges; MCP engagement host allowlist when a receipt is present.
-5. **Score** with detectors, optional graded LLM judge, heuristic or `judge_fn` on HB campaign, or agentic multi-channel outcomes.
-6. **Re-fire** winners N times; report rates with Wilson-style bounds; refuse promote on delivery_fail-heavy or plumbing-only estimands.
-7. **Map** findings to OWASP / ATLAS / NIST / CWE; **export** to promptfoo / garak / PyRIT shapes.
+### How the loop runs
+
+1. **Aim.** Set an objective and a target (local Ollama, OpenAI-compatible endpoint, or in-process callable).
+2. **Forge.** Build the attack as a recipe, template, battery sample, or the next reasoned mutation.
+3. **Hunt.** Scan (coverage map), search (stop-on-win / EVOLVE / mutator), campaign (HarmBench ladder), or agentic IPI (tools-loop + dual scorer).
+4. **Fire.** Only through `fire.py`. Private and metadata ranges stay blocked. MCP engagements use a host allowlist when a receipt is present.
+5. **Judge.** Detectors, optional graded LLM judge, HB `judge_fn` / heuristic, or agentic multi-channel outcomes.
+6. **Prove.** Re-fire winners N times. Report rates with Wilson-style bounds. Refuse promote on delivery_fail-heavy or plumbing-only estimands.
+7. **Ship the note.** Map to OWASP / ATLAS / NIST / CWE. Export to promptfoo / garak / PyRIT shapes.
 
 Core unit (chat / recipe path):
 
