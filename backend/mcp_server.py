@@ -1067,13 +1067,11 @@ async def list_behaviors(
     """List behaviors for attack batteries.
 
     source:
-      auto       — JSON path/env if set, else real HarmBench cache
-      harmbench  — official HarmBench CSV (download-on-first-use)
-      json       — path or GARBLEWORKS_BEHAVIORS only
-      sample     — small in-repo loader test set
+      auto | harmbench | jailbreakbench | strongreject | json | sample
 
     path: optional JSON file when source is json/auto.
     category: optional SemanticCategory filter.
+    Agent operator surface is MCP-first (not a full interactive agent REPL).
     """
     import behaviors as beh
 
@@ -1099,6 +1097,71 @@ async def list_behaviors(
         }
 
     return await asyncio.to_thread(_impl)
+
+
+@mcp.tool()
+def reasoned_mutate(
+    history: list[dict] | None = None,
+    policy: str = "reasoned",
+    seed: int = 0,
+    stagnation_k: int = 3,
+    objective: str = "",
+    budget: int = 0,
+) -> dict:
+    """History-guided payload/approach mutation (not pure random).
+
+    policy: "reasoned" (default) conditions the next recipe family on refuse/partial
+    history and forces an approach switch after stagnation_k fails on one family.
+    policy: "random" is the uniform baseline for A/B only.
+
+    Pass history=[{recipe, family, outcome, ...}, ...] from prior fires.
+    If budget>0 and objective set, runs a short offline loop and returns metrics
+    (uses family-selective mock unless you only need propose).
+
+    LLM chat sessions dig one path; this mutator is the relentless multi-approach
+    layer. Does not claim live frontier ASR by itself.
+    """
+    import reasoned_mutator as rm
+
+    hist = list(history or [])
+    if budget and int(budget) > 0 and (objective or "").strip():
+        res = rm.run_search_loop(
+            objective.strip(),
+            budget=max(1, min(int(budget), 40)),
+            policy=policy or "reasoned",
+            seed=int(seed),
+            stagnation_k=max(2, int(stagnation_k)),
+        )
+        return res.as_dict()
+    prop = rm.propose_next(
+        hist,
+        policy=policy or "reasoned",
+        seed=int(seed),
+        stagnation_k=max(2, int(stagnation_k)),
+    )
+    return prop.as_dict()
+
+
+@mcp.tool()
+def mutator_compare(
+    objective: str = "authorized lab: emit OBJECTIVE_ACHIEVED token",
+    budget: int = 16,
+    seed: int = 0,
+    stagnation_k: int = 3,
+) -> dict:
+    """Offline A/B: reasoned mutator vs uniform-random baseline (fixed seed/budget).
+
+    Returns metrics + sample reasons. reasoned_beats_random should be true on the
+    built-in mock target. Not a live frontier leaderboard claim.
+    """
+    import reasoned_mutator as rm
+
+    return rm.compare_policies(
+        objective or "authorized lab: emit OBJECTIVE_ACHIEVED token",
+        budget=max(4, min(int(budget), 40)),
+        seed=int(seed),
+        stagnation_k=max(2, int(stagnation_k)),
+    )
 
 
 @mcp.tool()

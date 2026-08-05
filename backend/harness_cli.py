@@ -35,6 +35,7 @@ def main(argv: list[str] | None = None) -> int:
             "advanced (same core, not separate products):\n"
             "  garbleworks auto …               multi-strategy agent_loop\n"
             "  garbleworks harmbench …          real HarmBench battery (ensure/sample/campaign)\n"
+            "  garbleworks mutator …            history-guided mutator (compare|loop|propose)\n"
             "  garbleworks serve                uvicorn HTTP API (app:app)\n"
             "  garbleworks mcp                  print MCP stdio launch hint\n"
             "\n"
@@ -61,6 +62,16 @@ def main(argv: list[str] | None = None) -> int:
         "hb_args",
         nargs=argparse.REMAINDER,
         help="args for harmbench CLI (status|ensure|list|sample|campaign …)",
+    )
+
+    mu = sub.add_parser(
+        "mutator",
+        help="History-guided mutator (not pure random): compare|loop|propose",
+    )
+    mu.add_argument(
+        "mu_args",
+        nargs=argparse.REMAINDER,
+        help="args for reasoned_mutator CLI",
     )
 
     sub.add_parser("serve", help="Advanced: run FastAPI app (uvicorn)")
@@ -111,6 +122,16 @@ def main(argv: list[str] | None = None) -> int:
         if not rest:
             rest = ["status"]
         return int(hb_main(rest) or 0)
+
+    if args.cmd == "mutator":
+        from reasoned_mutator import main as mu_main
+
+        rest = list(args.mu_args or [])
+        if rest and rest[0] == "--":
+            rest = rest[1:]
+        if not rest:
+            rest = ["compare", "--budget", "16", "--seed", "0"]
+        return int(mu_main(rest) or 0)
 
     if args.cmd == "serve":
         import uvicorn

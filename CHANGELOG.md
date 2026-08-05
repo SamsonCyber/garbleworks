@@ -8,6 +8,18 @@ tagged release.
 ## [Unreleased]
 
 ### Added
+- **History-guided mutator** (`backend/reasoned_mutator.py`): next style/approach
+  conditioned on refuse/partial/success history; forced family switch after
+  stagnation streak; uniform-random baseline for A/B. CLI:
+  `python -m garbleworks mutator compare|loop|propose`. MCP: `reasoned_mutate`,
+  `mutator_compare`. Offline A/B proves reasoned beats random. Tests:
+  `test_reasoned_mutator.py`.
+- **HarmBench judge path**: `grade_mode=judge|heuristic` + pluggable
+  `judge_fn` (AttackEval-style 0-1) on campaign ladder.
+- **Multi-dataset loaders** (`backend/datasets.py`): JailbreakBench-shaped and
+  StrongREJECT-shaped fixtures + `resolve_behaviors(source=...)`.
+- **Scoreboard claim artifact**: `build_scoreboard_claim` / `--scoreboard` on
+  `bench.live_efficacy` (`live_asr.v1`, dry-run n>=30; not a frontier leaderboard).
 - **HarmBench standard battery** (`backend/harmbench.py`, `harmbench_campaign.py`):
   download-on-first-use official text behaviors CSV (cached under
   `backend/library/`, not vendored in git). CLI: `python -m garbleworks harmbench
@@ -21,7 +33,7 @@ tagged release.
 
 ### Fixed
 - **Evolve math hiring-truth:** `Genome.var` is unbiased sample variance
-  (`1/(n-1)`, EVOLVE_MATH §5.1); `SHIPPED_DEFAULTS` is the single source for
+  (`1/(n-1)`, EVOLVE_MATH sec 5.1); `SHIPPED_DEFAULTS` is the single source for
   `RunConfig`; lock tests in `test_optimizer_math_lock.py`. Doc marks
   aspirational 1/5 `σ_w`, τ/t genes, and dual `success`/`claim_ready` flags.
 
@@ -54,7 +66,7 @@ tagged release.
 ### Added
 - **Procedural technique scan** (`backend/scan_campaign.py`, `scan_deep.py`):
   coverage-first playbook map (`run_scan` / MCP `run_scan`), opposite of
-  stop-on-win. Phases A–F + language under one fire budget; writes
+  stop-on-win. Phases A-F + language under one fire budget; writes
   `target_attack_map` JSON with Wilson live/dead cells and checkpoint resume.
   Docs: `docs/SCAN-CAMPAIGN.md`. Tests: `test_scan_campaign.py`. README section
   on the home page.
@@ -74,7 +86,7 @@ tagged release.
   `rt-red-queen`, `rt-industry-reframe`, `rt-stac-chain`, `rt-gap-ship-fanout`.
   Report: `docs/archive/GAP-TECHNIQUES-2026-08.md`.
 - **Language bypass expansion** (`ops/lang_ops.py`): 40+ localized lead-ins
-  (Zulu, Scots Gaelic, Hmong, Irish, Haitian Creole, Yoruba, Amharic, …);
+  (Zulu, Scots Gaelic, Hmong, Irish, Haitian Creole, Yoruba, Amharic, ...);
   new ops `code_switch`, `low_resource_pivot`, `answer_in_lang`, `nested_lang`,
   `script_mix`, `romanization_frame`. Recipes `rt-low-resource-sweep`,
   `rt-code-switch`, `rt-lang-bypass-stack`. Seeded + creative reasoner stacks.
@@ -107,7 +119,7 @@ tagged release.
  Wired into `technique_ops.json` multilingual / low-resource pivot group.
 - **local_fn target** (`local_target.py` + `fire.fire_once` short-circuit + MCP
  `fire_local`): in-process Python callable fire with gate adjudication
- (`attr_true:ok`, `tuple_ok_true`, …). No HTTP, no SSRF scope. For Finbot-class
+ (`attr_true:ok`, `tuple_ok_true`, ...). No HTTP, no SSRF scope. For Finbot-class
  `sanitize_input` / `validate_url` / `validate_tool_args` unit campaigns.
 - **Heuristic-evasion seed arm** (`ops/heuristic_ops.py`): `heuristic_soft`,
  `heuristic_evasion`, `homoglyph_soft`, `decode_obey_soft`, `heuristic_strip`.

@@ -1,54 +1,53 @@
 # Garbleworks gaps (honest, vs Wallbreaker-class products)
 
-Last updated: P0 dual-claim + agentic IPI + P1 BH-FDR / live ASR schema / MCP spine map / campaign YAML.
+Last updated: residual cut 1–4 (HB judge path, scoreboard artifact, MCP-first honesty, multi-dataset loaders). Multimodal/image skipped.
+
+## Operator surface stance
+
+- **MCP-first** for agent operators (`backend/mcp_server.py`): compose, scan, HarmBench, agentic IPI, field guide, **reasoned mutator**.
+- **CLI** (`python -m garbleworks`, `spine.ipi_cli`, `harmbench`, `mutator`) for scripts and CI.
+- **TUI v0.1** exists; it is **not** a Claude-Code-style interactive agent REPL. Do not claim Wallbreaker REPL parity.
+- **Multimodal / image-edit** remains out of scope (text-first lab).
+- **Default mutation is history-guided** (`reasoned_mutator`, policy=`reasoned`): next style/approach is conditioned on refuse/partial/success history and forces a family switch after a failure streak. Uniform-random remains an A/B baseline only (`policy=random`). LLM chat "one path forever" is **not** the mutator model.
 
 ## Shipped (was gap, now filled)
 
 | Gap | Status |
 |-----|--------|
-| One-shot success = "bypass" | **Closed:** `validate_refire` requires N re-fires + Wilson LCB bar |
-| No HarmBench-shaped battery ingest | **Closed:** `behaviors.load_behaviors` + sample JSON (full HB is operator-supplied) |
-| Tiny-n promotions | **Closed:** `promotion_decision`, live efficacy n>=30 design |
+| One-shot success = "bypass" | **Closed:** `validate_refire` + Wilson LCB bar |
+| HarmBench-shaped + **official** HB battery | **Closed:** download-on-first-use CSV + campaign ladder |
+| HB campaign **LLM/judge grade path** | **Closed:** `grade_mode=judge` + pluggable `judge_fn` (AttackEval-style 0–1); heuristic remains default |
+| Tiny-n promotions / dual claim flags | **Closed:** `success` vs `claim_ready`; `promotion_decision` |
 | tool_error counted as ASR=0 | **Closed:** complete-case outcomes |
-| Docs claim BH-FDR as live | **Corrected:** optional gate only (G5); default off |
-| Agentic IPI + dual harm/conceal scorer | **Closed:** `spine/scorer_agentic.py`, `HarmToolSpec`, `mode=agentic_ipi`, strategy `ipi_template` |
-| Delivery/ingest as first-class outcome | **Closed:** delivery probe → `delivery_fail` (never folded into `no_harm`); claim gate refuses promote on all/majority delivery_fail |
-| Document/CSV IPI template library on spine | **Closed:** five templates in `spine/ipi_templates/` (tool_result, csv, report_fill, email_body, file_content) |
-| Live multi-step tool agent driver | **Closed (tools-loop):** `OpenAIToolsLoopAgent` (`openai_tools`); offline via `chat_fn`. Not a full agent REPL. |
-| MCP / CLI agentic IPI surface | **Closed:** `list_ipi_templates`, `run_agentic_ipi`, `run_campaign_tool`, `score_document_detectability` |
-| LCB vs mean claim hygiene (G4) | **Closed (dual flags):** `success` = held-out mean; `claim_ready` = held-out LCB; `claim_mode=strict` raises n_final |
-| BH-FDR optional multi-strategy gate (G5) | **Closed (optional):** `benjamini_hochberg` / `rank_strategies(fdr_q=...)`; default off |
-| Live ASR dry-run + schema (G6) | **Closed (plumbing):** `python -m bench.live_efficacy --dry-run`; runbook `docs/LIVE-ASR-RUNBOOK.md`. Live multi-model numbers remain operator. |
-| MCP → spine map (G7) | **Closed:** `spine/mcp_map.py` + MCP `mcp_spine_map` / `rank_strategy_claims` |
-| Thin CI campaign YAML/JSON | **Closed:** `campaign_yaml.py` + `campaigns/ci_*.json` |
+| Delivery_fail first-class | **Closed:** claim gate refuses promote on all/majority delivery_fail |
+| Agentic IPI dual scorer + templates + tools-loop | **Closed:** spine + MCP/CLI |
+| Live ASR schema + dry-run scoreboard artifact | **Closed:** `live_asr.v1` via `bench.live_efficacy` / `build_scoreboard_claim` (n≥30 plumbing; not a frontier leaderboard) |
+| JailbreakBench-shaped + StrongREJECT-shaped loaders | **Closed:** `datasets.py` + fixtures; `resolve_behaviors(source=…)` |
+| BH-FDR optional multi-strategy gate | **Closed (optional):** default off |
+| MCP → spine map | **Closed:** `spine/mcp_map.py` |
+| Thin CI campaign YAML | **Closed:** `campaigns/ci_*.json` |
+| History-guided mutator (beats random offline) | **Closed:** `reasoned_mutator.py` — reasons on proposals, stagnation approach-switch, `compare` A/B vs uniform baseline; MCP `reasoned_mutate` / `mutator_compare`; CLI `python -m garbleworks mutator compare` |
 
-## Still open (explicit non-parity / non-goals)
+## Still open
 
 | Gap | Priority | Notes |
 |-----|----------|--------|
-| Full interactive agent REPL like Wallbreaker | Medium | TUI v0.1 + MCP tools; not Claude-Code-style chat REPL |
-| Multimodal image-edit attack channel | Low | Out of scope for text-first lab |
-| Full HarmBench 400 in-repo | **Download-on-first-use** | Official CSV cached via `python -m harmbench ensure` / MCP `ensure_harmbench`; not vendored in git. Campaign: `python -m harmbench campaign` or `--harmbench-campaign` |
-| Powered frontier multi-model ASR leaderboard (live numbers) | Operator | Schema + dry-run shipped; live needs auth, keys, budget. Do not publish dry-run as leaderboard. |
-| Persona author (ENI) / sysprompt corpus mimicry | Low | WB specialty; GW uses personas.json + ops |
-| HarmBench LLM-judge ASR (not heuristic) | Operator | Campaign grades non-refusal by default; pair with live judge / live_efficacy for confirmatory claims |
-| Always-valid / multi-dim evidence (BEYOND_LCB_MEAN) | Research | Dual flags ship; full archive is research track |
-
-## Matched vs bypassed (Wallbreaker-class)
-
-| Capability | Status |
-|------------|--------|
-| Multi-step tools-loop agent on IPI path | **Matched** (adapter + dual scorer) |
-| Operator list/run agentic IPI | **Matched** (MCP + CLI → spine) |
-| Dual harm/conceal + delivery honesty | **Leads** (claim gate; WB UX does not own this ontology) |
-| Full agent REPL UX | **Not claimed** |
-| Persona ENI / multimodal / HB-400 in-tree | **Not claimed** |
+| Full interactive agent **REPL** like Wallbreaker | Medium | Explicit non-goal this cut; MCP-first + TUI v0.1 only |
+| Multimodal image-edit channel | Low | Skipped / text-first |
+| Powered multi-model **live** ASR numbers | Operator | Schema + dry-run artifact ship; live needs keys/budget/auth |
+| Calibrated live LLM judge on HB campaign | Operator | Plug is shipped; production judge wiring is operator env |
+| Persona author (ENI) / sysprompt corpus | Low | WB specialty |
+| Full corpora **vendored in git** (HB/JBB/SR) | Won't ship | Cache / fixture / env path pattern |
+| Always-valid multi-dim evidence archive | Research | Dual flags ship |
+| BH-FDR as **default** production gate | Known | Optional only |
+| `pip install garbleworks` / purple-team matrix | Packaging | Residual roadmap |
 
 ## Claim discipline
 
 - Plumbing canary ASR ≈ 1.0 ≠ jailbreak efficacy.
 - Prefill n=1 = existence, not confirmatory success.
 - Unread inject → `delivery_fail`, not technique-fail / `no_harm`.
-- `success` (mean) ≠ `claim_ready` (LCB). Do not cite mean alone as confidence-bounded.
-- Multi-strategy winners: enable BH-FDR (`fdr_q=0.10`) before publishing a leaderboard of techniques.
-- Do not claim full Wallbreaker REPL parity from tools-loop + MCP alone.
+- `success` (mean) ≠ `claim_ready` (LCB).
+- dry_run / mock all-leak scoreboard is **not** a multi-provider frontier leaderboard.
+- Heuristic HB grade is not confirmatory ASR; use `grade_mode=judge` + real judge for claim-grade work.
+- Do not claim full Wallbreaker REPL parity from MCP + tools-loop alone.
