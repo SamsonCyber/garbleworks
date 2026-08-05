@@ -30,11 +30,19 @@ python scripts/repro.py
 
 ---
 
-## Why this exists
+## What problem it solves
 
-Fixed jailbreak lists go stale. One lucky hit is not a result.
+Fixed jailbreak lists rot. One lucky hit is not a finding. Production safety needs:
 
-Garbleworks is a **search-and-measurement engine** over a composable attack DSL:
+1. **Composition** of small transforms (not one opaque string).
+2. **Search** over that space (genetic, bandit, QD, tree).
+3. **Fire policy** that cannot SSRF your LAN or cloud metadata.
+4. **Measurement** that is a rate with bounds, not a screenshot.
+5. **Standards map** so findings land in auditor language (OWASP LLM Top 10, MITRE ATLAS, CWE).
+
+Garbleworks is that closed loop. The op/recipe idea is not novel (h4rm3l, WildTeaming). The product claim is **search + measurement discipline + enforced fire policy**.
+
+How the loop runs in practice:
 
 1. Set an **objective** and a **target** (local Ollama, OpenAI-compatible endpoint, or in-process callable).
 2. Build attacks as **recipes**: ordered chains of parameterized ops (encoding, confusables, templates, jailbreak frames, stego carriers, and more).
