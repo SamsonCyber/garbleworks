@@ -32,6 +32,16 @@ ENV_CORPUS = "GARBLEWORKS_PLINY_CORPUS"
 
 _TEXT_SUFFIXES = {".md", ".mkd", ".txt", ".markdown"}
 _JSON_SUFFIXES = {".json"}
+# Skip multi-MB token dumps and app scaffolding when walking a clone.
+_MAX_CORPUS_FILE_BYTES = 400_000
+_SKIP_NAME_PARTS = (
+    "node_modules",
+    "package-lock",
+    "experiments/results",
+    "token80m8",
+    "tokenade",
+    ".min.js",
+)
 
 
 @dataclass(frozen=True)
@@ -181,6 +191,20 @@ _RE_LIBERATED = re.compile(r"\bLIBERAT", re.I)
 _RE_RESPONSE_FORMAT = re.compile(r"ResponseFormat|Response\s*Format", re.I)
 _RE_REFUSAL = re.compile(r"RefusalSuppression|ApologyControl", re.I)
 _RE_DIVIDER = re.compile(r"\.-+\.-+|⊰|LIBERATED|LOVE[- ]?PLINY|divider", re.I)
+# Capture ornate Pliny-style divider lines from dumps (new surface vs brand default).
+_RE_DIVIDER_LINE = re.compile(
+    r"(?:divider\s+)?("
+    r"\.-[\.-]{6,}[^\n]{0,120}\.-[\.-]{6,}"
+    r"|[⊰•\-✧]{4,}[^\n]{0,80}"
+    r"|\.-[\.-]*</?[^>\n]{3,40}>[\.-]*"
+    r")",
+    re.I,
+)
+_RE_GODMODE_LINE = re.compile(
+    r"^.*GODMODE\s*:\s*ENABLED[^\n]{0,160}$",
+    re.I | re.M,
+)
+_RE_BANG_CMD = re.compile(r"(![A-Z][A-Z0-9_]{1,24}|\{GODMODE:[A-Z]+\})")
 
 
 def _slug(name: str) -> str:
@@ -188,11 +212,47 @@ def _slug(name: str) -> str:
     return s[:64] or "frame"
 
 
-def _read_text(path: Path) -> str:
+def _read_text(path: Path, limit: int = _MAX_CORPUS_FILE_BYTES) -> str:
     try:
-        return path.read_text(encoding="utf-8", errors="replace")
+        raw = path.read_bytes()[:limit]
+        return raw.decode("utf-8", errors="replace")
     except OSError:
         return ""
+
+
+def _should_skip_path(path: Path) -> bool:
+    low = str(path).replace("\\", "/").lower()
+    if any(p in low for p in _SKIP_NAME_PARTS):
+        return True
+    try:
+        if path.stat().st_size > _MAX_CORPUS_FILE_BYTES:
+            return True
+    except OSError:
+        return True
+    return False
+
+
+def _extract_custom_divider(text: str) -> str | None:
+    m = _RE_DIVIDER_LINE.search(text)
+    if not m:
+        return None
+    div = m.group(1).strip()
+    if len(div) < 8 or len(div) > 200:
+        return None
+    # Avoid pure "divider" word hits
+    if div.lower() in ("divider", "liberated"):
+        return None
+    return div
+
+
+def _extract_godmode_line(text: str) -> str | None:
+    m = _RE_GODMODE_LINE.search(text)
+    if not m:
+        return None
+    line = m.group(0).strip()
+    if 10 <= len(line) <= 220:
+        return line
+    return None
 
 
 def _extract_frames_from_text(
@@ -208,41 +268,72 @@ def _extract_frames_from_text(
 
     frames: list[PlinyFrame] = []
     base = f"corpus.{file_id}"
-
-    # Unique short marker from filename for operator / test verification.
     marker = f"PLINY_CORPUS::{file_id}"
     marker_step = _step("prefix_suffix", prefix=f"[{marker}]\n", suffix="")
 
-    if _RE_GODMODE.search(text):
+    custom_div = _extract_custom_divider(text)
+    god_line = _extract_godmode_line(text)
+
+    # Corpus-unique chrome: file's own GODMODE line as free-text prefix (not builtin anchor string).
+    if god_line:
+        frames.append(
+            PlinyFrame(
+                id=f"{base}.godmode_line",
+                source="corpus",
+                label=f"{label} -> corpus GODMODE line",
+                steps=(
+                    marker_step,
+                    _step("prefix_suffix", prefix=god_line + "\n", suffix=""),
+                ),
+                markers=(marker, "GODMODE", god_line[:40]),
+                path=rel,
+            )
+        )
+    elif _RE_GODMODE.search(text):
         frames.append(
             PlinyFrame(
                 id=f"{base}.godmode",
                 source="corpus",
-                label=f"{label} → GODMODE anchor",
+                label=f"{label} -> GODMODE anchor",
                 steps=(marker_step, _step("anchor_token", token="godmode", position="prefix")),
                 markers=(marker, "GODMODE"),
                 path=rel,
             )
         )
+
     if _RE_NEW_PARADIGM.search(text):
         frames.append(
             PlinyFrame(
                 id=f"{base}.new_paradigm",
                 source="corpus",
-                label=f"{label} → NEW PARADIGM",
+                label=f"{label} -> NEW PARADIGM",
                 steps=(marker_step, _step("anchor_token", token="new_paradigm", position="wrap")),
                 markers=(marker, "NEW PARADIGM"),
                 path=rel,
             )
         )
-    if _RE_RESPONSE_FORMAT.search(text) or (
-        _RE_DIVIDER.search(text) and "format" in text.lower()
-    ):
+
+    # Custom divider from dump is net-new vs builtin watto brand divider.
+    if custom_div and (_RE_RESPONSE_FORMAT.search(text) or _RE_DIVIDER.search(text)):
+        frames.append(
+            PlinyFrame(
+                id=f"{base}.format_custom_div",
+                source="corpus",
+                label=f"{label} -> ResponseFormat + corpus divider",
+                steps=(
+                    marker_step,
+                    _step("response_format_split", divider=custom_div, code_block=True),
+                ),
+                markers=(marker, "ResponseFormat", custom_div[:32]),
+                path=rel,
+            )
+        )
+    elif _RE_RESPONSE_FORMAT.search(text):
         frames.append(
             PlinyFrame(
                 id=f"{base}.format_split",
                 source="corpus",
-                label=f"{label} → ResponseFormat split",
+                label=f"{label} -> ResponseFormat split",
                 steps=(
                     marker_step,
                     _step("response_format_split", divider="watto", code_block=True),
@@ -251,37 +342,72 @@ def _extract_frames_from_text(
                 path=rel,
             )
         )
+
     if _RE_REFUSAL.search(text):
         frames.append(
             PlinyFrame(
                 id=f"{base}.refusal",
                 source="corpus",
-                label=f"{label} → RefusalSuppression",
+                label=f"{label} -> RefusalSuppression",
                 steps=(marker_step, _step("refusal_suppression", style="yaml")),
                 markers=(marker, "RefusalSuppression"),
                 path=rel,
             )
         )
-    if _RE_LIBERATED.search(text) and not any(f.id.endswith(".godmode") for f in frames):
+
+    if _RE_LIBERATED.search(text) and not any("godmode" in f.id for f in frames):
         frames.append(
             PlinyFrame(
                 id=f"{base}.liberated",
                 source="corpus",
-                label=f"{label} → liberated anchor",
+                label=f"{label} -> liberated anchor",
                 steps=(marker_step, _step("anchor_token", token="liberated", position="prefix")),
                 markers=(marker, "Liberated"),
                 path=rel,
             )
         )
 
-    # If we saw Pliny chrome but no specific pattern, still surface a
-    # composed stack keyed to the file (structural, not full paste).
+    # Stack: corpus GODMODE line + custom divider format (composition not in builtin list).
+    if god_line and custom_div:
+        frames.append(
+            PlinyFrame(
+                id=f"{base}.stack_line_div",
+                source="corpus",
+                label=f"{label} -> GODMODE line + custom format divider",
+                steps=(
+                    marker_step,
+                    _step("prefix_suffix", prefix=god_line + "\n", suffix=""),
+                    _step("response_format_split", divider=custom_div, code_block=True),
+                ),
+                markers=(marker, "GODMODE", "ResponseFormat", custom_div[:24]),
+                path=rel,
+            )
+        )
+
+    # Bang-commands embedded in prose (!JAILBREAK, !OMNI, …) as trigger prefixes.
+    for m in list(_RE_BANG_CMD.finditer(text))[:8]:
+        cmd = m.group(1)
+        cid = _slug(cmd)
+        frames.append(
+            PlinyFrame(
+                id=f"{base}.cmd_{cid}",
+                source="corpus",
+                label=f"{label} -> trigger {cmd}",
+                steps=(
+                    marker_step,
+                    _step("prefix_suffix", prefix=f"{cmd}\n", suffix=""),
+                ),
+                markers=(marker, cmd),
+                path=rel,
+            )
+        )
+
     if not frames and (_RE_DIVIDER.search(text) or _RE_GODMODE.search(text)):
         frames.append(
             PlinyFrame(
                 id=f"{base}.chrome",
                 source="corpus",
-                label=f"{label} → divider chrome",
+                label=f"{label} -> divider chrome",
                 steps=(
                     marker_step,
                     _step("anchor_token", token="divider", position="prefix"),
@@ -291,19 +417,84 @@ def _extract_frames_from_text(
             )
         )
 
-    # JSON list of {id, steps} or {id, op, params} for structured dumps.
     return frames
+
+
+def _frames_from_shortcuts_json(
+    data: dict[str, Any],
+    *,
+    file_id: str,
+    rel: str,
+) -> list[PlinyFrame]:
+    """L1B3RT4S !SHORTCUTS.json: commands[] with name/definition/category."""
+    commands = data.get("commands")
+    if not isinstance(commands, list):
+        return []
+    out: list[PlinyFrame] = []
+    for i, item in enumerate(commands):
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or "").strip()
+        if not name:
+            continue
+        definition = str(item.get("definition") or "").strip()
+        category = str(item.get("category") or "shortcut")
+        # Cap definition used as framing chrome (not full mega-prompt paste).
+        def_snip = definition[:280].rstrip()
+        if def_snip and not def_snip.endswith("."):
+            def_snip += "."
+        prefix = f"{name}\n"
+        if def_snip:
+            prefix += f"({def_snip})\n"
+        fid = f"corpus.shortcut.{_slug(name)}"
+        out.append(
+            PlinyFrame(
+                id=fid,
+                source="corpus",
+                label=f"SHORTCUT {name} [{category}]",
+                steps=(
+                    _step("prefix_suffix", prefix=f"[PLINY_SHORTCUT::{_slug(name)}]\n", suffix=""),
+                    _step("prefix_suffix", prefix=prefix, suffix=""),
+                ),
+                markers=(f"PLINY_SHORTCUT::{_slug(name)}", name),
+                path=rel,
+            )
+        )
+        # Pair high-value liberation shortcuts with format-split for deeper surface.
+        if i < 12 and any(k in name.upper() for k in ("GODMODE", "JAILBREAK", "OMNI", "OPPO", "INSERT")):
+            out.append(
+                PlinyFrame(
+                    id=f"{fid}.plus_format",
+                    source="corpus",
+                    label=f"SHORTCUT {name} + ResponseFormat",
+                    steps=(
+                        _step("prefix_suffix", prefix=prefix, suffix=""),
+                        _step("response_format_split", divider="watto", code_block=True),
+                    ),
+                    markers=(name, "ResponseFormat"),
+                    path=rel,
+                )
+            )
+    return out
 
 
 def _frames_from_json(path: Path, root: Path) -> list[PlinyFrame]:
     try:
-        data = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+        # Windows extracts / editors often leave UTF-8 BOM.
+        data = json.loads(path.read_text(encoding="utf-8-sig", errors="replace"))
     except (OSError, json.JSONDecodeError):
         return []
 
-    rel = str(path.relative_to(root)) if path.is_relative_to(root) else str(path)
+    try:
+        rel = str(path.relative_to(root))
+    except ValueError:
+        rel = str(path)
     file_id = _slug(path.stem)
     out: list[PlinyFrame] = []
+
+    # L1B3RT4S shortcut catalog
+    if isinstance(data, dict) and isinstance(data.get("commands"), list):
+        return _frames_from_shortcuts_json(data, file_id=file_id, rel=rel)
 
     # {"frames": [{"id", "label", "steps": [{"op","params"}]}]}
     items: list[Any]
@@ -312,7 +503,6 @@ def _frames_from_json(path: Path, root: Path) -> list[PlinyFrame]:
     elif isinstance(data, list):
         items = data
     else:
-        # Treat as free text blob encoded in JSON string fields
         blob = json.dumps(data)
         return _extract_frames_from_text(
             blob, file_id=file_id, label=path.name, rel=rel
@@ -325,7 +515,6 @@ def _frames_from_json(path: Path, root: Path) -> list[PlinyFrame]:
         label = str(item.get("label") or fid)
         steps_raw = item.get("steps")
         if not isinstance(steps_raw, list) or not steps_raw:
-            # Single op form
             op = item.get("op")
             if not op:
                 continue
@@ -367,12 +556,17 @@ def load_corpus_frames(root: Path) -> list[PlinyFrame]:
         return []
 
     for path in paths:
-        if not path.is_file():
+        if not path.is_file() or _should_skip_path(path):
             continue
         suf = path.suffix.lower()
+        # Prefer liberation dumps over app scaffolding
+        name_low = path.name.lower()
         if suf in _JSON_SUFFIXES:
             batch = _frames_from_json(path, root)
         elif suf in _TEXT_SUFFIXES:
+            # Skip pure package docs that only mention GODMODE in marketing prose
+            if name_low in ("license", "contributing.md", "code_of_conduct.md"):
+                continue
             try:
                 rel = str(path.relative_to(root))
             except ValueError:
@@ -392,6 +586,42 @@ def load_corpus_frames(root: Path) -> list[PlinyFrame]:
             found.append(fr)
     return found
 
+
+def surface_delta(
+    corpus: str | Path | None = None,
+) -> dict[str, Any]:
+    """Compare builtin frame ids vs corpus-enabled set (for scrutiny / tests)."""
+    builtin = {f.id for f in list_frames(include_corpus=False)}
+    root = resolve_corpus_path(corpus)
+    if root is None:
+        return {
+            "builtin": sorted(builtin),
+            "corpus_only": [],
+            "corpus_path": "",
+            "new_compositions": 0,
+        }
+    corp_frames = load_corpus_frames(root)
+    corp_ids = {f.id for f in corp_frames}
+    only = sorted(corp_ids - builtin)
+    # compositions that use non-default dividers or shortcut prefixes
+    new_comp = 0
+    for fr in corp_frames:
+        blob = json.dumps(list(fr.steps))
+        if "PLINY_SHORTCUT" in blob or "godmode_line" in fr.id or "format_custom_div" in fr.id:
+            new_comp += 1
+        elif any(
+            (s.get("params") or {}).get("divider") not in (None, "", "watto")
+            for s in fr.steps
+            if s.get("op") == "response_format_split"
+        ):
+            new_comp += 1
+    return {
+        "builtin": sorted(builtin),
+        "corpus_only": only,
+        "corpus_path": str(root),
+        "new_compositions": new_comp,
+        "corpus_frame_count": len(corp_frames),
+    }
 
 # ---------------------------------------------------------------------------
 # Public API
@@ -472,13 +702,20 @@ def describe_scope() -> dict[str, Any]:
         "builtin": True,
         "corpus_path": str(resolve_corpus_path() or ""),
         "adaptable_repos": [
-            "elder-plinius/L1B3RT4S (markdown/json dumps → structural frames)",
-            "elder-plinius/CL4R1T4S (optional system-prompt text, same load rules)",
+            "elder-plinius/L1B3RT4S (mkd dumps + !SHORTCUTS.json -> structural frames)",
+            "elder-plinius/CL4R1T4S (system-prompt text; same structural load rules)",
         ],
         "not_adapters": [
-            "G0DM0D3 — chat UI, not a string-op source",
-            "OBLITERATUS — weight/abliteration surgery, not recipe ops",
-            "GLOSSOPETRAE — JS language engine; idea mapped to lang ops in scan_deep",
+            "G0DM0D3: Next.js chat UI (not a recipe string source)",
+            "OBLITERATUS: model weight / abliteration surgery (not recipe ops)",
+            "GLOSSOPETRAE: JS language engine; shipped mapping is scan_deep.GLOSSOPETRAE_MAP -> lang ops",
         ],
-        "policy": "No full liberation corpus committed; local path only; no runtime network fetch.",
+        "policy": (
+            "No full liberation corpus committed; local path only; no runtime network fetch. "
+            "Corpus frames decompose into ops (prefix_suffix, anchor_token, response_format_split)."
+        ),
+        "scrutiny_value": (
+            "Net new surface = SHORTCUT command prefixes, corpus-specific GODMODE lines, "
+            "custom ResponseFormat dividers, and stacks of those; not only renamed builtin.*"
+        ),
     }
