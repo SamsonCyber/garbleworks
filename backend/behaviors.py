@@ -172,10 +172,12 @@ def resolve_behaviors(
     """Unified resolver for CLI/MCP.
 
     source:
-      auto       — path or env JSON, else HarmBench cache
-      harmbench  — official CSV (ensure download)
-      json       — path or GARBLEWORKS_BEHAVIORS
-      sample     — in-repo v1_behaviors_sample.json
+      auto            — path or env JSON, else HarmBench cache
+      harmbench       — official CSV (ensure download)
+      jailbreakbench  — JBB-shaped JSON (fixture + GARBLEWORKS_JBB)
+      strongreject    — StrongREJECT-shaped JSON (fixture + GARBLEWORKS_STRONGREJECT)
+      json            — path or GARBLEWORKS_BEHAVIORS
+      sample          — in-repo v1_behaviors_sample.json
     """
     src = (source or "auto").strip().lower()
     if src in ("sample", "v1_sample"):
@@ -186,6 +188,32 @@ def resolve_behaviors(
             / "v1_behaviors_sample.json"
         )
         return load_behaviors(sample_path, limit=limit, categories=categories)
+
+    if src in ("jbb", "jailbreakbench", "jailbreak_bench"):
+        from datasets import load_jailbreakbench
+
+        items = load_jailbreakbench(limit=limit, categories=categories)
+        if n_sample is not None and items:
+            import random
+
+            rng = random.Random(int(seed))
+            pool = list(items)
+            rng.shuffle(pool)
+            return pool[: max(1, int(n_sample))]
+        return items
+
+    if src in ("strongreject", "sr", "strong_reject"):
+        from datasets import load_strongreject
+
+        items = load_strongreject(limit=limit, categories=categories)
+        if n_sample is not None and items:
+            import random
+
+            rng = random.Random(int(seed))
+            pool = list(items)
+            rng.shuffle(pool)
+            return pool[: max(1, int(n_sample))]
+        return items
 
     if src in ("harmbench", "hb"):
         return load_harmbench(
