@@ -563,12 +563,36 @@ def field_guide_by_tool(tool: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 @mcp.tool()
-def start_run(objective: str, kind: str = "manual", target: str | None = None) -> dict:
+def start_run(
+    objective: str,
+    kind: str = "manual",
+    target: str | None = None,
+    surface: str | None = None,
+    objective_class: str | None = None,
+    success: dict | None = None,
+    secret: str | None = None,
+    success_substrings: list[str] | None = None,
+) -> dict:
     """Open a run to group attempts (an evolve / arena / manual session). Pass the
-    returned run_id to log_attempt so a session's fires group together. Returns {run_id}."""
+    returned run_id to log_attempt so a session's fires group together.
+
+    Optional mission fields (surface, objective_class, success/secret) are
+    normalized with safe defaults when omitted and stored on the run row.
+    Returns {run_id, mission}."""
     _ensure_logs()
     try:
-        return {"run_id": _logs.start_run(objective, kind=kind, target_ref=target)}
+        rid = _logs.start_run(
+            objective,
+            kind=kind,
+            target_ref=target,
+            success=success,
+            surface=surface,
+            objective_class=objective_class,
+            secret=secret,
+            success_substrings=success_substrings,
+        )
+        mission = _logs.get_run_mission(rid)
+        return {"run_id": rid, "mission": mission}
     except Exception as e:
         return {"error": str(e)[:200]}
 
@@ -808,8 +832,14 @@ def sample_next_move(
 # ---------------------------------------------------------------------------
 
 @mcp.tool()
-async def evolve_seeds(objective: str, reps: int = 4,
-                       expanded: bool = True) -> list[dict]:
+async def evolve_seeds(
+    objective: str,
+    reps: int = 4,
+    expanded: bool = True,
+    surface: str | None = None,
+    objective_class: str | None = None,
+    use_ask_rewrites: bool = True,
+) -> list[dict]:
     """Phase-1 of the Evolve optimizer: expand one objective into a DIVERSE BASKET
     of framed candidate prompts.
 
@@ -817,21 +847,37 @@ async def evolve_seeds(objective: str, reps: int = 4,
     homoglyph_soft / decode_obey_soft) for keyword-regex input gates, then classic
     frames (deep_inception, past_tense, policy_puppetry, ...).
 
-    expanded=True (default) uses seed_basket.build_basket_expanded (wider pool).
+    expanded=True (default) uses seed_basket (wider pool), with optional Stage-A
+    ask rewrites (verbatim + soft/heuristic variants) so materialization draws
+    from more than the single raw string. surface maps to target_class routing
+    (soft excludes signature/char/encode/stego; tripwire bans signature ops).
+
     expanded=False uses the legacy optimizer.build_basket.
 
     No target needed — mutation/diversification step for manual or local_fn fire.
-    reps = fragments per strategy. Returns [{strategy, text}]."""
+    reps = fragments per strategy. Returns [{strategy, text, ...}]."""
     import random
     rng = random.Random(0)
     r = max(1, min(int(reps), 8))
 
     def _impl() -> list[dict]:
+        import mission as M
+        m = M.normalize_mission(
+            objective, surface=surface, objective_class=objective_class,
+        )
+        tc = m["target_class"]
         if expanded:
             import seed_basket as SB
-            basket = SB.build_basket_expanded(
-                objective, r, rng, target_class="soft", max_size=64, shuffle=True,
-            )
+            if use_ask_rewrites:
+                from ask_rewrite import ask_texts
+                asks = ask_texts(objective, n_soft=3)
+                basket = SB.build_basket_from_asks(
+                    asks, r, rng, target_class=tc, max_size=64, shuffle=True,
+                )
+            else:
+                basket = SB.build_basket_expanded(
+                    objective, r, rng, target_class=tc, max_size=64, shuffle=True,
+                )
         else:
             basket = optimizer.build_basket(objective, r, rng)
         return [{"strategy": s.strategy, "text": s.text} for s in basket]

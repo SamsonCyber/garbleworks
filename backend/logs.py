@@ -210,13 +210,77 @@ def _sync_techniques(c: sqlite3.Connection) -> int:
     return rows
 
 
-def start_run(objective: str, kind: str = "manual", target_ref: str | None = None,
-              meta: dict | None = None, path: Path | None = None) -> str:
+def start_run(
+    objective: str,
+    kind: str = "manual",
+    target_ref: str | None = None,
+    meta: dict | None = None,
+    path: Path | None = None,
+    *,
+    success: dict | None = None,
+    surface: str | None = None,
+    objective_class: str | None = None,
+    target_class: str | None = None,
+    secret: str | None = None,
+    success_substrings: list | None = None,
+) -> str:
+    """Open a run. Optional mission fields are normalized and stored in meta['mission'].
+
+    Callers that omit surface/success/objective_class still work: safe defaults
+    are written into meta so operators can read the full mission from the row.
+    Returns run_id (hex).
+    """
     run_id = uuid.uuid4().hex[:16]
+    meta_out: dict = dict(meta or {})
+    try:
+        import mission as _mission
+        m = _mission.normalize_mission(
+            objective,
+            success=success if isinstance(success, dict) else None,
+            surface=surface,
+            target_class=target_class,
+            objective_class=objective_class,
+            secret=secret,
+            success_substrings=list(success_substrings) if success_substrings else None,
+        )
+        # Preserve any pre-supplied mission keys only as extras under normalize
+        meta_out["mission"] = m
+    except Exception as e:
+        meta_out.setdefault("mission_error", str(e)[:200])
+        meta_out.setdefault(
+            "mission",
+            {
+                "objective": (objective or "").strip(),
+                "success": {"kind": "judge", "value": ""},
+                "surface": "soft",
+                "objective_class": "extract",
+                "target_class": "soft",
+            },
+        )
+    # Ensure schema exists for fresh DB paths (tests / first open).
+    init_db(path, sync=False)
     with _db(path) as c:
-        c.execute("INSERT INTO runs(run_id,objective,kind,target_ref,started_ts,meta) VALUES(?,?,?,?,?,?)",
-                  (run_id, objective, kind, target_ref, time.time(), json.dumps(meta or {})))
+        c.execute(
+            "INSERT INTO runs(run_id,objective,kind,target_ref,started_ts,meta) VALUES(?,?,?,?,?,?)",
+            (run_id, objective, kind, target_ref, time.time(), json.dumps(meta_out)),
+        )
     return run_id
+
+
+def get_run_mission(run_id: str, path: Path | None = None) -> dict | None:
+    """Load meta.mission for a run_id, or None if missing."""
+    with _db(path) as c:
+        row = c.execute(
+            "SELECT meta FROM runs WHERE run_id=?", (run_id,),
+        ).fetchone()
+    if not row:
+        return None
+    try:
+        meta = json.loads(row[0] or "{}")
+    except Exception:
+        return None
+    m = meta.get("mission")
+    return m if isinstance(m, dict) else None
 
 
 def _wants_long_preview(target_type: str | None, store_payload: bool) -> bool:

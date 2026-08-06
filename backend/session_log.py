@@ -180,8 +180,9 @@ def fingerprint_secret(secret: str) -> str:
     s = secret or ""
     if len(s) <= 8:
         return f"len={len(s)}"
-    # Prefer not to show long prefix of real canaries
-    return f"len={len(s)} tail=…{s[-4:]}"
+    # Prefer not to show long prefix of real canaries.
+    # ASCII "..." only: Unicode ellipsis mojibakes on Windows consoles.
+    return f"len={len(s)} tail=...{s[-4:]}"
 
 
 def default_session_dir() -> Path:
