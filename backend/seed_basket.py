@@ -357,6 +357,9 @@ class Seed:
 
 def _norm_class(target_class: str | None) -> str:
     tc = (target_class or "soft").strip().lower()
+    # Mission surface "heuristic" uses soft exclusions (no char/encode/stego).
+    if tc == "heuristic":
+        return "soft"
     if tc not in _BASKET_CATS:
         return "soft"
     return tc
@@ -607,6 +610,91 @@ def build_basket_expanded(
     if len(basket) > max_size:
         basket = _cap_basket(basket, max_size)
 
+    if shuffle:
+        rng.shuffle(basket)
+    return basket
+
+
+def build_basket_from_asks(
+    asks: Sequence[str],
+    reps: int,
+    rng: random.Random,
+    *,
+    host: str | None = None,
+    target: dict | None = None,
+    target_class: str = "soft",
+    max_size: int = DEFAULT_MAX_BASKET,
+    bandit_k: int = DEFAULT_BANDIT_K,
+    shuffle: bool = True,
+) -> list[Seed]:
+    """Build a seed basket drawing from multiple ask rewrites.
+
+    Primary ask (first non-empty) gets full expanded basket. Additional asks
+    contribute priority-strategy framings only so materialization is not locked
+    to a single raw objective string. Texts deduped; cap applied at end.
+    """
+    cleaned = [str(a).strip() for a in (asks or []) if str(a or "").strip()]
+    if not cleaned:
+        return build_basket_expanded(
+            "", reps, rng, host=host, target=target, target_class=target_class,
+            max_size=max_size, bandit_k=bandit_k, shuffle=shuffle,
+        )
+
+    primary, *rest = cleaned
+    basket = build_basket_expanded(
+        primary, reps, rng, host=host, target=target, target_class=target_class,
+        max_size=max_size, bandit_k=bandit_k, shuffle=False,
+    )
+    seen = {s.text for s in basket}
+    tc = _norm_class(target_class)
+    id_counts: dict[str, int] = {}
+    secondary_reps = max(1, min(2, int(reps)))
+
+    for ask_i, ask in enumerate(rest):
+        # Priority arms only on secondary asks (breadth without blowing the cap).
+        for op_name, _vars in PRIORITY_STRATEGIES:
+            if not _priority_ok(op_name, tc):
+                continue
+            if op_name not in REGISTRY:
+                continue
+            made = 0
+            variants = _vars or [{}]
+            for vi in range(max(secondary_reps, len(variants)) * 2):
+                if made >= secondary_reps:
+                    break
+                params = dict(variants[vi % len(variants)]) if variants else {}
+                try:
+                    out = run_recipe(
+                        ask, [{"op": op_name, "params": params}], max_variants=2,
+                    )[0]
+                except Exception:
+                    out = []
+                for frag in out or []:
+                    frag = (frag or "").strip()
+                    if not frag or frag in seen:
+                        continue
+                    seen.add(frag)
+                    n = id_counts.get(op_name, 0)
+                    id_counts[op_name] = n + 1
+                    basket.append(Seed(
+                        id=f"ask{ask_i + 1}:{op_name}#{n}",
+                        strategy=op_name,
+                        text=frag,
+                    ))
+                    made += 1
+                    if made >= secondary_reps:
+                        break
+        # Verbatim secondary ask
+        if ask not in seen:
+            seen.add(ask)
+            basket.append(Seed(
+                id=f"ask{ask_i + 1}:verbatim#0",
+                strategy="verbatim",
+                text=ask,
+            ))
+
+    if len(basket) > max_size:
+        basket = _cap_basket(basket, max_size)
     if shuffle:
         rng.shuffle(basket)
     return basket

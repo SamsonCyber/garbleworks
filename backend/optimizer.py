@@ -184,6 +184,11 @@ class RunConfig:
     target_class: str = SHIPPED_DEFAULTS["target_class"]
     # mean: report success from held-out mean (default). strict: also raise n_final.
     claim_mode: str = SHIPPED_DEFAULTS["claim_mode"]
+    # Mission-typed loop (optional; defaults preserve legacy behavior)
+    use_ask_rewrites: bool = True
+    objective_class: str = "extract"
+    # Prior attempt history for failure-typed surface lock / recovery
+    history: list = field(default_factory=list)
 
 # ---------------------------------------------------------------------------
 # Core math (EB, LCB, UCB, simplex)
@@ -339,7 +344,29 @@ def build_basket(ask: str, reps: int, rng: random.Random) -> list[Seed]:
 
 
 def build_run_basket(cfg: RunConfig, rng: random.Random) -> list[Seed]:
-    """Construct the seed basket for a run."""
+    """Construct the seed basket for a run.
+
+    Applies failure-typed surface policy from cfg.history (tripwire → tripwire
+    target_class) when present. With use_ask_rewrites, draws from Stage-A ask
+    rewrites (verbatim + soft variants), not only the raw ask string.
+    """
+    tc = getattr(cfg, "target_class", "soft") or "soft"
+    hist = list(getattr(cfg, "history", None) or [])
+    if hist:
+        try:
+            import failure_policy as FP
+            action = FP.next_evolve_action(
+                hist,
+                cfg.ask,
+                objective_class=getattr(cfg, "objective_class", "extract") or "extract",
+            )
+            if action.get("lock_signatures") or action.get("target_class") == "tripwire":
+                tc = "tripwire"
+            elif action.get("target_class"):
+                tc = str(action["target_class"])
+        except Exception:
+            pass
+
     if not cfg.use_expanded_basket:
         return build_basket(cfg.ask, cfg.seed_reps, rng)
     try:
@@ -347,15 +374,29 @@ def build_run_basket(cfg: RunConfig, rng: random.Random) -> list[Seed]:
         host = None
         if isinstance(cfg.target, dict):
             host = SB.resolve_host(cfg.target)
-        raw = SB.build_basket_expanded(
-            cfg.ask,
-            cfg.seed_reps,
-            rng,
-            host=host,
-            target=cfg.target if isinstance(cfg.target, dict) else None,
-            target_class=getattr(cfg, "target_class", "soft") or "soft",
-            max_size=max(4, int(cfg.basket_max_size)),
-        )
+        use_rw = bool(getattr(cfg, "use_ask_rewrites", True))
+        if use_rw:
+            from ask_rewrite import ask_texts
+            asks = ask_texts(cfg.ask, n_soft=3)
+            raw = SB.build_basket_from_asks(
+                asks,
+                cfg.seed_reps,
+                rng,
+                host=host,
+                target=cfg.target if isinstance(cfg.target, dict) else None,
+                target_class=tc,
+                max_size=max(4, int(cfg.basket_max_size)),
+            )
+        else:
+            raw = SB.build_basket_expanded(
+                cfg.ask,
+                cfg.seed_reps,
+                rng,
+                host=host,
+                target=cfg.target if isinstance(cfg.target, dict) else None,
+                target_class=tc,
+                max_size=max(4, int(cfg.basket_max_size)),
+            )
         return [Seed(id=s.id, strategy=s.strategy, text=s.text) for s in raw]
     except Exception:
         # Fallback to legacy
@@ -494,8 +535,12 @@ def evaluate_once(
     fired_shingles: list[set] | None = None,
     rng: random.Random | None = None,
     calibrator: LiveCalibrator | None = None,
+    prompt_override: str | None = None,
 ) -> dict:
-    if fired_shingles is not None and rng is not None:
+    near_dupe = False
+    if prompt_override is not None and str(prompt_override).strip():
+        prompt = str(prompt_override)
+    elif fired_shingles is not None and rng is not None:
         prompt, near_dupe = compose_with_diversity(
             g, basket, cfg, gen_chat, fired_shingles, rng
         )
@@ -533,6 +578,7 @@ def evaluate_once(
 
     rec = {
         "prompt": prompt,
+        "response": response or "",
         "status": res.status,
         "ms": res.ms,
         "refused": refused,
@@ -542,6 +588,7 @@ def evaluate_once(
         "register_L": L,
         "error": res.error,
         "near_dupe": near_dupe,
+        "prompt_override": bool(prompt_override),
     }
     if calibrator is not None:
         rec["p_refuse"] = calibrator.cal.p_refuse(L)
@@ -644,6 +691,20 @@ def run_evolve(cfg: RunConfig, *,
 
     credit = SeedCreditBook(M=M)
     fired_shingles: list[set] = []
+    run_history: list = list(getattr(cfg, "history", None) or [])
+    basket_strats = [s.strategy for s in basket]
+    ban_ops_run: list[str] = []
+    try:
+        import failure_policy as FP
+        _init_act = FP.next_evolve_action(
+            run_history,
+            cfg.ask,
+            objective_class=getattr(cfg, "objective_class", "extract") or "extract",
+        )
+        if _init_act.get("lock_signatures"):
+            ban_ops_run = list(_init_act.get("ban_ops") or [])
+    except Exception:
+        FP = None  # type: ignore[assignment]
 
     emit({
         "type": "run",
@@ -652,6 +713,8 @@ def run_evolve(cfg: RunConfig, *,
         "success_rule": SUCCESS_RULE,
         "target_class": getattr(cfg, "target_class", "soft"),
         "expanded_basket": bool(cfg.use_expanded_basket),
+        "lock_signatures": bool(ban_ops_run),
+        "history_len": len(run_history),
     })
 
     delta_eff = cfg.delta / max(1, cfg.pop * cfg.gen_max)
@@ -659,6 +722,8 @@ def run_evolve(cfg: RunConfig, *,
 
     def rand_genome() -> Genome:
         y = [rng.gauss(0.0, 1.0) for _ in range(M)]
+        if ban_ops_run and FP is not None:
+            y = FP.mask_banned_weights(y, basket_strats, ban_ops_run)
         comp = rng.choice(choices)
         if cfg.composer_default == "auto" and gen_chat is not None and rng.random() < 0.5:
             comp = "llm"
@@ -670,11 +735,24 @@ def run_evolve(cfg: RunConfig, *,
     best_hist: list[float] = []
 
     def sample(g: Genome, gen: int) -> None:
-        nonlocal spent
+        nonlocal spent, ban_ops_run
+        prompt_override = None
+        if FP is not None and run_history:
+            action = FP.next_evolve_action(
+                run_history,
+                cfg.ask,
+                objective_class=getattr(cfg, "objective_class", "extract") or "extract",
+            )
+            if action.get("lock_signatures"):
+                ban_ops_run = list(action.get("ban_ops") or ban_ops_run)
+                g.y = FP.mask_banned_weights(g.y, basket_strats, ban_ops_run)
+            if action.get("kind") in ("densify", "continue", "align") and action.get("payload"):
+                prompt_override = action["payload"]
         rec = evaluate_once(
             g, basket, cfg, judge_fn, refusal_fn, gen_chat,
             fired_shingles=fired_shingles, rng=rng,
             calibrator=calibrator,
+            prompt_override=prompt_override,
         )
         spent += 1
 
@@ -689,10 +767,31 @@ def run_evolve(cfg: RunConfig, *,
             rec["refused"]
         )
 
+        if FP is not None:
+            outcome = FP.classify_eval_outcome(
+                refused=bool(rec.get("refused")),
+                fitness=float(rec.get("fitness") or 0.0),
+                response=str(rec.get("response") or ""),
+                error=rec.get("error"),
+                success_threshold=float(cfg.success_threshold),
+            )
+            run_history.append({
+                "outcome": outcome,
+                "response": rec.get("response") or "",
+                "technique": "evolve",
+                "fitness": rec.get("fitness"),
+            })
+            # Persist back onto cfg for callers that re-use the config
+            try:
+                cfg.history = run_history
+            except Exception:
+                pass
+
         ev = {
             "type": "eval", "gen": gen, "fitness": rec["fitness"], "refused": rec["refused"],
             "register_L": rec["register_L"], "composer": g.composer, "eta": round(g.eta, 3),
             "spent": spent, "near_dupe": rec.get("near_dupe", False),
+            "prompt_override": bool(prompt_override),
         }
         if "p_refuse" in rec:
             ev["p_refuse"] = round(rec["p_refuse"], 4)
@@ -760,6 +859,8 @@ def run_evolve(cfg: RunConfig, *,
                 child = crossover(p1, _tournament(pop, cfg.tournament, delta_eff, rng), cfg, rng)
             else:
                 child = mutate(p1, cfg, M, rng, seed_ucb=seed_ucb)
+            if ban_ops_run and FP is not None:
+                child.y = FP.mask_banned_weights(child.y, basket_strats, ban_ops_run)
             children.append(child)
         pop = elites + children
 

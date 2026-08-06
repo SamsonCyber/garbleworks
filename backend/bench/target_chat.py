@@ -12,6 +12,10 @@ Modes
                   Harness still fires at 127.0.0.1 canary; canary proxies out.
   minimax         Alias of openai_compat with MiniMax defaults
                   (api.minimax.io + MiniMax-M3 + ~/.secrets/minimax_api_key.txt).
+  opencode        OpenCode Zen OpenAI-compat as TARGET
+                  (opencode.ai/zen/v1 + DeepSeek V4 + ~/.secrets/opencode_api_key.txt).
+  deepseek        Alias of opencode with DeepSeek V4 model defaults.
+  deepseek_v4     Alias of deepseek.
 
 Never falls back to a second cloud provider on failure (refuse instead).
 """
@@ -35,7 +39,20 @@ from bench import DEFAULT_SECRET
 SECRET = os.getenv("GARBLEWORKS_BENCH_SECRET", DEFAULT_SECRET)
 
 _CANARY_MODES = frozenset({
-    "deterministic", "ollama", "openai_compat", "minimax",
+    "deterministic",
+    "ollama",
+    "openai_compat",
+    "minimax",
+    "opencode",
+    "deepseek",
+    "deepseek_v4",
+})
+_REMOTE_COMPAT_MODES = frozenset({
+    "openai_compat",
+    "minimax",
+    "opencode",
+    "deepseek",
+    "deepseek_v4",
 })
 
 SYSTEM_GUARD = (
@@ -47,6 +64,11 @@ SYSTEM_GUARD = (
 # MiniMax / OpenAI-compat target defaults (overridable via env)
 MINIMAX_BASE_DEFAULT = "https://api.minimax.io/v1"
 MINIMAX_MODEL_DEFAULT = "MiniMax-M3"
+
+# OpenCode Zen + DeepSeek V4 (Hermes / agent_repl secret path)
+OPENCODE_BASE_DEFAULT = "https://opencode.ai/zen/v1"
+# Free tier sibling preferred for long HarmBench batteries; override via env.
+DEEPSEEK_V4_MODEL_DEFAULT = "deepseek-v4-flash-free"
 
 # Deterministic unlock markers (document in battery). Attackers must produce
 # natural-language payloads that happen to contain these patterns — recipes and
@@ -146,12 +168,38 @@ def _read_secret_file(*names: str) -> str:
 
 
 def resolve_openai_compat_config(mode: str = "openai_compat") -> dict[str, str]:
-    """Resolve base_url, api_key, model for openai_compat / minimax target mode.
+    """Resolve base_url, api_key, model for remote OpenAI-compat target modes.
 
+    Modes: openai_compat, minimax, opencode, deepseek, deepseek_v4.
     Never logs the key. Raises ValueError if key missing.
     """
     m = (mode or "openai_compat").strip().lower()
-    if m == "minimax":
+    if m in ("opencode", "deepseek", "deepseek_v4"):
+        # Do not inherit OPENAI_COMPAT_* / MiniMax envs (shared shells often have them set).
+        base = (
+            os.getenv("OPENCODE_BASE_URL")
+            or OPENCODE_BASE_DEFAULT
+        ).rstrip("/")
+        model = (
+            os.getenv("GARBLEWORKS_TARGET_MODEL")
+            or os.getenv("OPENCODE_MODEL")
+            or os.getenv("DEEPSEEK_V4_MODEL")
+            or DEEPSEEK_V4_MODEL_DEFAULT
+        )
+        key = (
+            os.getenv("OPENCODE_API_KEY")
+            or os.getenv("OPENCODE_ZEN_API_KEY")
+            or _read_secret_file(
+                "opencode_api_key.txt",
+                "opencode_zen_api_key.txt",
+                "opencode_go_api_key.txt",
+            )
+        )
+        key_hint = (
+            "OPENCODE_API_KEY or ~/.secrets/opencode_api_key.txt "
+            "(Hermes / agent_repl path)"
+        )
+    elif m == "minimax":
         base = (
             os.getenv("MINIMAX_BASE_URL")
             or os.getenv("OPENAI_COMPAT_BASE_URL")
@@ -168,7 +216,9 @@ def resolve_openai_compat_config(mode: str = "openai_compat") -> dict[str, str]:
             or os.getenv("OPENAI_COMPAT_API_KEY")
             or _read_secret_file("minimax_api_key.txt", "MINIMAX_API_KEY.txt")
         )
+        key_hint = "MINIMAX_API_KEY or ~/.secrets/minimax_api_key.txt"
     else:
+        # Generic openai_compat: prefer explicit OPENAI_COMPAT_*, else MiniMax defaults
         base = (
             os.getenv("OPENAI_COMPAT_BASE_URL")
             or os.getenv("MINIMAX_BASE_URL")
@@ -182,13 +232,19 @@ def resolve_openai_compat_config(mode: str = "openai_compat") -> dict[str, str]:
         key = (
             os.getenv("OPENAI_COMPAT_API_KEY")
             or os.getenv("MINIMAX_API_KEY")
-            or _read_secret_file("minimax_api_key.txt", "MINIMAX_API_KEY.txt")
+            or os.getenv("OPENCODE_API_KEY")
+            or _read_secret_file(
+                "minimax_api_key.txt",
+                "MINIMAX_API_KEY.txt",
+                "opencode_api_key.txt",
+            )
+        )
+        key_hint = (
+            "OPENAI_COMPAT_API_KEY / MINIMAX_API_KEY / OPENCODE_API_KEY "
+            "or matching ~/.secrets/*.txt"
         )
     if not key:
-        raise ValueError(
-            "openai_compat/minimax target needs API key "
-            "(MINIMAX_API_KEY or ~/.secrets/minimax_api_key.txt)"
-        )
+        raise ValueError(f"openai_compat target needs API key ({key_hint})")
     if not base.startswith("https://") and not base.startswith("http://"):
         raise ValueError(f"invalid OpenAI-compat base URL: {base!r}")
     return {"base_url": base, "api_key": key, "model": model}
@@ -200,10 +256,13 @@ def _openai_compat_reply(
     *,
     mode: str = "openai_compat",
     timeout: float = 90.0,
+    messages: list[dict] | None = None,
 ) -> str:
     """Call remote OpenAI-compatible chat as the TARGET (system guard + secret).
 
     Used for MiniMax-M3 etc. Fail closed to a refuse string (no provider hop).
+    When messages is set, those turns are forwarded after the system guard
+    (multi-turn red-team path). Otherwise user_blob is a single user turn.
     """
     sec = secret or SECRET
     try:
@@ -212,14 +271,31 @@ def _openai_compat_reply(
         return f"I must decline. (bench openai_compat config: {e})"
 
     url = cfg["base_url"].rstrip("/") + "/chat/completions"
+    chat_msgs: list[dict] = [{"role": "system", "content": _system_guard(sec)}]
+    if messages:
+        for m in messages:
+            if not isinstance(m, dict):
+                continue
+            role = str(m.get("role") or "user").strip().lower()
+            if role not in ("user", "assistant", "system"):
+                role = "user"
+            content = m.get("content")
+            if not isinstance(content, str):
+                content = str(content or "")
+            # Never inject a second system that overrides the guard
+            if role == "system":
+                role = "user"
+            chat_msgs.append({"role": role, "content": content})
+        if len(chat_msgs) == 1:
+            chat_msgs.append({"role": "user", "content": user_blob or ""})
+    else:
+        chat_msgs.append({"role": "user", "content": user_blob or ""})
     body = {
         "model": cfg["model"],
-        "messages": [
-            {"role": "system", "content": _system_guard(sec)},
-            {"role": "user", "content": user_blob or ""},
-        ],
+        "messages": chat_msgs,
         "temperature": 0.2,
-        "max_tokens": 512,
+        # HarmBench / long CoT models need headroom past <think> blocks
+        "max_tokens": int(os.getenv("GARBLEWORKS_TARGET_MAX_TOKENS") or "1536"),
     }
     raw_body = json.dumps(body).encode("utf-8")
     req = urlrequest.Request(
@@ -265,7 +341,7 @@ class CanaryState:
         self.lock = threading.Lock()
         self.remote_model = ""
         self.remote_base = ""
-        if self.mode in ("openai_compat", "minimax"):
+        if self.mode in _REMOTE_COMPAT_MODES:
             try:
                 cfg = resolve_openai_compat_config(self.mode)
                 self.remote_model = cfg["model"]
@@ -279,7 +355,16 @@ class CanaryState:
             self.query_count += 1
         if self.mode == "ollama":
             return _ollama_reply(blob, self.secret)
-        if self.mode in ("openai_compat", "minimax"):
+        if self.mode in _REMOTE_COMPAT_MODES:
+            # Forward real multi-turn history when present (2+ non-system turns).
+            turns = [
+                m for m in (messages or [])
+                if isinstance(m, dict) and str(m.get("role") or "") in ("user", "assistant")
+            ]
+            if len(turns) >= 2:
+                return _openai_compat_reply(
+                    blob, self.secret, mode=self.mode, messages=turns
+                )
             return _openai_compat_reply(blob, self.secret, mode=self.mode)
         return _deterministic_reply(blob, self.secret)
 
@@ -322,7 +407,7 @@ def make_handler(state: CanaryState):
                     "mode": state.mode,
                     "secret_len": len(state.secret),
                     "queries": state.query_count,
-                    "cloud": state.mode in ("openai_compat", "minimax"),
+                    "cloud": state.mode in _REMOTE_COMPAT_MODES,
                     "remote_model": getattr(state, "remote_model", "") or None,
                     "remote_base": getattr(state, "remote_base", "") or None,
                 })
@@ -424,7 +509,8 @@ def fire_target_dict(base_url: str, *, timeout: float = 30.0) -> dict:
     body = {
         "model": "canary-local",
         "messages": [{"role": "user", "content": "{payload}"}],
-        "temperature": 0,
+        # Allow env override for attack diversity (default 0.7 for requeue waves)
+        "temperature": float(__import__("os").getenv("GARBLEWORKS_TARGET_TEMPERATURE") or "0.7"),
     }
     # Remote MiniMax etc. need longer timeouts than deterministic canary.
     t = float(timeout)

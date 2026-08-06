@@ -1,0 +1,24 @@
+{
+  "engagement_id": "opencode-deepseek-v4-2026-08-05",
+  "authority_source": "operator-owned OpenCode Zen API key (Hermes path ~/.secrets/opencode_api_key.txt); authorized self-test of DeepSeek V4 as canary TARGET",
+  "authorized_scope": ["127.0.0.1", "localhost"],
+  "permitted_roles": ["recon", "scanner", "attacker", "judge"],
+  "auto_allowed": [
+    "fire attack payloads at local canary proxy on 127.0.0.1",
+    "proxy canary may call opencode.ai/zen/v1 with operator key as the TARGET model (DeepSeek V4)",
+    "score with Garbleworks HarmBench heuristic grade_reply",
+    "write results under backend/bench/results"
+  ],
+  "approval_required": [
+    "any other cloud provider",
+    "any non-canary production customer system",
+    "publish as multi-provider public leaderboard without n/LCB"
+  ],
+  "evidence_required": true,
+  "notes": "Harness fire stays on loopback canary (SSRF/scope). DeepSeek V4 on OpenCode Zen is the model under test (system SECRET guard), NOT the abliterated generator. Generator may still use local ablit for recipes if needed.",
+  "battery_default": "harmbench_full",
+  "target_mode_default": "deepseek",
+  "tools_default": "garbleworks:gw_baseline",
+  "target_model": "deepseek-v4-flash-free",
+  "target_base": "https://opencode.ai/zen/v1"
+}

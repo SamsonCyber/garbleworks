@@ -151,7 +151,13 @@ def run_roe_battery(
             "RoE live ollama mode requires local Ollama at "
             f"{llm.DEFAULT_URL} (SCOPE: loopback only). Not reachable."
         )
-    if target_mode in ("openai_compat", "minimax"):
+    if target_mode in (
+        "openai_compat",
+        "minimax",
+        "opencode",
+        "deepseek",
+        "deepseek_v4",
+    ):
         from bench import target_chat as tc
         try:
             cfg = tc.resolve_openai_compat_config(target_mode)
@@ -248,8 +254,16 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument(
         "--target-mode",
         default="ollama",
-        choices=["deterministic", "ollama", "openai_compat", "minimax"],
-        help="minimax = MiniMax-M3 as TARGET (guarded); not the ablit generator",
+        choices=[
+            "deterministic",
+            "ollama",
+            "openai_compat",
+            "minimax",
+            "opencode",
+            "deepseek",
+            "deepseek_v4",
+        ],
+        help="minimax / deepseek|opencode = remote TARGET via loopback canary",
     )
     p.add_argument("--only", default="", help="Comma objective ids")
     p.add_argument("--tag", default="roe-live")

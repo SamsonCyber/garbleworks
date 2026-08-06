@@ -182,8 +182,16 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument(
         "--target-mode",
         default="deterministic",
-        choices=["deterministic", "ollama", "openai_compat", "minimax"],
-        help="minimax/openai_compat: real remote TARGET (not ablit generator)",
+        choices=[
+            "deterministic",
+            "ollama",
+            "openai_compat",
+            "minimax",
+            "opencode",
+            "deepseek",
+            "deepseek_v4",
+        ],
+        help="minimax/deepseek/opencode/openai_compat: remote TARGET via canary",
     )
     p.add_argument("--only", default="", help="Comma objective ids to run")
     p.add_argument("--tag", default="")
