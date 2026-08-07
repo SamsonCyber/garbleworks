@@ -44,7 +44,7 @@ RegisterBin = "low" | "med" | "high" # L(x) quantiles or fixed cuts
 TargetClass = "rlhf-heavy" | "abliterated" | "base" | "unknown" # optional, learned or tagged
 ```
 
-The archive becomes a **hierarchical grid** (behavior × obfuscation × register) with optional target-class slicing.
+The archive becomes a **hierarchical grid** (behavior x obfuscation x register) with optional target-class slicing.
 
 ### 3.2 Elite (per cell)
 
@@ -112,7 +112,7 @@ Observation = {
 - On new target: start with `alpha = global_alpha + target_offset`, etc.
 - `p_refuse(L, features)` becomes a small logistic or additive model over the feature vector.
 
-This directly upgrades EVOLVE_MATH §3.8 from single-axis lexical to multi-feature attribution.
+This directly upgrades EVOLVE_MATH sec 3.8 from single-axis lexical to multi-feature attribution.
 
 ### 4.2 Attribution Engine
 
@@ -130,7 +130,7 @@ After sufficient observations per cell:
 - Maintain the archive.
 - Sample elite from live cells.
 - Mutate stack (add/swap/drop layers, respecting family diversity).
-- Fire → observe → place or accumulate.
+- Fire -> observe -> place or accumulate.
 - Kill cells only when UCB < floor after `dead_min_trials`.
 
 ### 5.2 Genetic / Optimizer Layer (current EVOLVE)
@@ -239,7 +239,7 @@ class AttackSurface:
 
 ## 10. Verification & Metrics
 
-- **Coverage**: % of cells with n ≥ min_n
+- **Coverage**: % of cells with n >= min_n
 - **Quality**: mean LCB of non-dead cells
 - **Attribution power**: correlation between predicted lifts and observed Δpass
 - **Calibration sharpness**: Brier score or proper scoring rule on held-out fires

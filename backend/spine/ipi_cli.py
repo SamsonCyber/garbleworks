@@ -53,6 +53,32 @@ def main(argv: list[str] | None = None) -> int:
     ps.add_argument("--agent", default="mock_obey")
     ps.add_argument("--role", default="report_fill")
 
+    pp = sub.add_parser(
+        "paste",
+        help="Manual Gray Swan paste desk (NO auto-loop; stages clipboard only)",
+    )
+    pp.add_argument(
+        "paste_args",
+        nargs=argparse.REMAINDER,
+        help="args for ipi_paste.py (next|record|pack|status|…)",
+    )
+
+    pc = sub.add_parser(
+        "closed-loop",
+        help="Full IPI closed loop (scenario bank + template×mutation ladder + checkpoint)",
+    )
+    pc.add_argument("--agent", default="mock_obey")
+    pc.add_argument("--full", action="store_true")
+    pc.add_argument("-n", type=int, default=0)
+    pc.add_argument("--bank", default="")
+    pc.add_argument("--checkpoint", default="")
+    pc.add_argument("--out", default="")
+    pc.add_argument("--budget", type=int, default=0)
+    pc.add_argument("--base-url", default="")
+    pc.add_argument("--model", default="gpt-4o-mini")
+    pc.add_argument("--live-minimax", action="store_true", help="delegate to ipi_minimax_run --live")
+    pc.add_argument("--peek", action="store_true")
+
     args = p.parse_args(argv)
 
     from spine import ipi_ops
@@ -88,6 +114,78 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(json.dumps(out, indent=2, default=str))
         return 0
+
+    if args.cmd == "paste":
+        from ipi_paste import main as paste_main
+
+        rest = list(args.paste_args or [])
+        if rest and rest[0] == "--":
+            rest = rest[1:]
+        return int(paste_main(rest) or 0)
+
+    if args.cmd == "closed-loop":
+        # Live MiniMax path has its own CLI (RoE + secrets).
+        if args.live_minimax:
+            from ipi_minimax_run import main as mm_main
+
+            rest: list[str] = []
+            if args.full:
+                rest.append("--full")
+            if args.n:
+                rest.extend(["-n", str(args.n)])
+            if args.checkpoint:
+                rest.extend(["--checkpoint", args.checkpoint])
+            if args.out:
+                rest.extend(["--out", args.out])
+            if args.peek:
+                rest.append("--peek")
+            else:
+                rest.append("--live")
+            return int(mm_main(rest) or 0)
+
+        import ipi_closed_loop as icl
+
+        if args.peek:
+            ckpt = args.checkpoint or str(
+                Path(__file__).resolve().parent.parent
+                / "bench"
+                / "results"
+                / "ipi-closed-loop-checkpoint.json"
+            )
+            doc = icl._load_checkpoint(Path(ckpt)) or {}
+            print(icl.format_analysis(icl.analyze_checkpoint(doc)))
+            return 0
+
+        ak = {}
+        agent = args.agent
+        if args.base_url:
+            agent = "openai_tools"
+            ak = {"base_url": args.base_url, "model": args.model}
+        max_n = None if args.full and not args.n else (args.n or (None if args.full else 2))
+        out = icl.run_closed_loop(
+            scenario_bank=args.bank or None,
+            agent=agent,
+            agent_kwargs=ak or None,
+            checkpoint_path=args.checkpoint or None,
+            out_path=args.out or None,
+            budget_per_scenario=args.budget or None,
+            max_scenarios=max_n,
+        )
+        print(
+            json.dumps(
+                {
+                    "ok": out.get("ok"),
+                    "n_success": out.get("n_success"),
+                    "n_held": out.get("n_held"),
+                    "asr": out.get("asr"),
+                    "winning_techniques": out.get("winning_techniques"),
+                    "checkpoint": out.get("checkpoint"),
+                    "out": out.get("out"),
+                },
+                indent=2,
+            )
+        )
+        return 0 if out.get("ok") else 1
 
     return 2
 

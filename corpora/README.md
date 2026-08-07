@@ -32,11 +32,11 @@ git clone --depth 1 https://github.com/elder-plinius/CL4R1T4S.git corpora/CL4R1T
 
 | Content | Becomes |
 | --- | --- |
-| `!SHORTCUTS.json` commands | `corpus.shortcut.*` frames (`!JAILBREAK`, `!OMNI`, …) |
+| `!SHORTCUTS.json` commands | `corpus.shortcut.*` frames (`!JAILBREAK`, `!OMNI`, ...) |
 | Model `.mkd` dumps | custom GODMODE lines, ResponseFormat dividers, bang-command prefixes |
 | Missing folder | builtin Pliny kit only (always works) |
 
-Recipes / UI / MCP: op `pliny_frame` with `frame_id=…`. Phase F scan also exercises the adapter.
+Recipes / UI / MCP: op `pliny_frame` with `frame_id=...`. Phase F scan also exercises the adapter.
 
 ## Do not commit dumps
 

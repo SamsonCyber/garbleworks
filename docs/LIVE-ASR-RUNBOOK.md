@@ -11,13 +11,13 @@ Result documents use `schema_version: live_asr.v1`. Required fields:
 | `tag` | Operator label for the battery |
 | `timestamp` | UTC ISO-ish |
 | `dry_run` | true = mock rows only |
-| `n_requested` | trial count (efficacy default ≥ 30) |
+| `n_requested` | trial count (efficacy default >= 30) |
 | `engagement_id` | RoE / receipt id |
 | `target_desc` | human target note |
 | `technique` | recipe / strategy / prefill label |
 | `complete_case` | successes, n_completed, asr, Wilson LCB/UCB |
 | `promotion` | `promotion_decision` output |
-| `claim_ready` | true only if promotion.promote and n ≥ min_n |
+| `claim_ready` | true only if promotion.promote and n >= min_n |
 | `exit_code` | 0 promote/ok, 1 no success, 2 exploratory under `--require-promote` |
 
 Code: `backend/bench/live_efficacy.py` (`RESULT_SCHEMA`, `build_result`, `validate_result_schema`).
@@ -57,6 +57,21 @@ What it does:
    - `bench/results/*-live-asr-claim.json` (`live_asr.v1` claim doc)
    - `roe-live-latest.json` / `live-asr-claim-latest.json`
 
+### MiniMax-M3 as TARGET (not the ablit generator)
+
+Uses operator key (`~/.secrets/minimax_api_key.txt` or `MINIMAX_API_KEY`).  
+Harness still fires at **127.0.0.1** canary; canary proxies to `api.minimax.io` with a system SECRET guard. Ablit stays generator-only.
+
+```bash
+cd backend
+# key from env or ~/.secrets/minimax_api_key.txt
+python -m bench.roe_live_battery --roe engagements/minimax-canary-roe.json ^
+  --tools garbleworks:gw_baseline --battery v1_canary --target-mode minimax ^
+  --tag roe-minimax-m3
+```
+
+**Estimand:** lab canary ASR on MiniMax-M3 (including leak text inside `<think>` blocks if the model recites SECRET while "refusing"). Not a multi-provider public leaderboard.
+
 ### Deterministic canary (plumbing only)
 
 ```bash
@@ -64,7 +79,7 @@ python -m bench.roe_live_battery --roe engagements/local-selftest-roe.json ^
   --target-mode deterministic --tag roe-plumbing
 ```
 
-Easy unlocks ASR ≈ 1.0 here measures **transport + adjudicator**, not model efficacy.
+Easy unlocks ASR ~= 1.0 here measures **transport + adjudicator**, not model efficacy.
 
 ### Estimand honesty
 

@@ -6,7 +6,7 @@ Last updated: residual cut 1–4 (HB judge path, scoreboard artifact, MCP-first 
 
 - **MCP-first** for agent operators (`backend/mcp_server.py`): compose, scan, HarmBench, agentic IPI, field guide, **reasoned mutator**.
 - **CLI** (`python -m garbleworks`, `spine.ipi_cli`, `harmbench`, `mutator`) for scripts and CI.
-- **TUI v0.1** exists; it is **not** a Claude-Code-style interactive agent REPL. Do not claim Wallbreaker REPL parity.
+- **Agent REPL** ships as first-class: `python -m agent_repl` (headless tool-calling loop) + TUI profile **Agent REPL**. MCP remains the external-agent control plane.
 - **Multimodal / image-edit** remains out of scope (text-first lab).
 - **Default mutation is history-guided** (`reasoned_mutator`, policy=`reasoned`): next style/approach is conditioned on refuse/partial/success history and forces a family switch after a failure streak. Uniform-random remains an A/B baseline only (`policy=random`). LLM chat "one path forever" is **not** the mutator model.
 
@@ -27,12 +27,12 @@ Last updated: residual cut 1–4 (HB judge path, scoreboard artifact, MCP-first 
 | MCP → spine map | **Closed:** `spine/mcp_map.py` |
 | Thin CI campaign YAML | **Closed:** `campaigns/ci_*.json` |
 | History-guided mutator (beats random offline) | **Closed:** `reasoned_mutator.py` — reasons on proposals, stagnation approach-switch, `compare` A/B vs uniform baseline; MCP `reasoned_mutate` / `mutator_compare`; CLI `python -m garbleworks mutator compare` |
+| Full interactive agent **REPL** (tool-calling loop) | **Closed:** `backend/agent_repl/` — pure loop + registry (compose/fire/validate/finish/ask_operator), injectable brain, headless CLI, TUI profile; not pixel WB slash-command parity |
 
 ## Still open
 
 | Gap | Priority | Notes |
 |-----|----------|--------|
-| Full interactive agent **REPL** like Wallbreaker | Medium | Explicit non-goal this cut; MCP-first + TUI v0.1 only |
 | Multimodal image-edit channel | Low | Skipped / text-first |
 | Powered multi-model **live** ASR numbers | Operator | Schema + dry-run artifact ship; live needs keys/budget/auth |
 | Calibrated live LLM judge on HB campaign | Operator | Plug is shipped; production judge wiring is operator env |

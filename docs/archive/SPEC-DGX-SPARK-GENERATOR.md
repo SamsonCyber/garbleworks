@@ -136,8 +136,8 @@ Sizes are **approximate** RAM for weights + KV; leave 16-24 GB free for OS + con
  │
  ┌───────────────────▼─────────────────────┐
  │ Garbleworks control plane (desktop/Pi) │
- │ optimizer · bandit · treesearch · arena│
- │ fire · scope · validate_refire · logs │
+ │ optimizer * bandit * treesearch * arena│
+ │ fire * scope * validate_refire * logs │
  └───────┬─────────────────┬───────────────┘
  │ │
  brain roles │ │ fire (in-scope only)
@@ -156,16 +156,16 @@ For one objective:
 1. **Seed** - creative catalog + bandit top arms + optional ATTACKER draft.
 2. **Compose** - recipe chain (deterministic ops) and/or LLM reframes (GENERATOR).
 3. **Phenotype dedupe** - shingle Jaccard before burn (mutation analysis Tier-2).
-4. **Fire** - scoped adapter; tripwire → burned-cells / clean track.
+4. **Fire** - scoped adapter; tripwire -> burned-cells / clean track.
 5. **Score** - detectors + JUDGE graded score.
 6. **Update** - bandit posteriors, EVOLVE credits, research_store promote/retire.
-7. **Confirm** - `validate_refire` N× before claim; Wilson LCB in report.
+7. **Confirm** - `validate_refire` Nx before claim; Wilson LCB in report.
 
 ### 4.2 New modules (proposed)
 
 | Module | Purpose |
 |---|---|
-| `backend/spark_cluster.py` | Health, model list, role→endpoint map, VRAM budget check |
+| `backend/spark_cluster.py` | Health, model list, role->endpoint map, VRAM budget check |
 | `models/registry.toml` | Locked model bank |
 | `scripts/spark_bootstrap.sh` | Install CUDA stack, pull tags, smoke chat |
 | `backend/ops/llm_ops.py` | Parallel reframe pool size knobs for Tier C |
@@ -197,7 +197,7 @@ vLLM variant: set `PROVIDER=openai` and `BASE_URL=http://spark:8000/v1`.
 Grounded in existing gap analysis (KB 2026-07-12) and code:
 
 1. **Tripwire-aware optimizer policy** (arena already has it; optimizer does not).
-2. **UCB seed credit inject** (EVOLVE_MATH §10 - currently incomplete).
+2. **UCB seed credit inject** (EVOLVE_MATH sec 10 - currently incomplete).
 3. **Dynamic basket** from creative + bandit + host posteriors.
 4. **Target-class surface routing** (obfuscation off on soft targets).
 5. **Free refusal-direction pre-filter** from fire_history embeddings (prior art: DROJ / xJailbreak / STEER - integration only, not claimed novelty).
@@ -252,9 +252,9 @@ Spark upgrades:
 Ship when **all** pass:
 
 1. **Day-1:** Spark Ollama reachable from desktop; `llm.chat` + `brain.chat` for three roles green.
-2. **Generator self-test:** ≥18/20 author-role fixtures non-deflect (recorded JSON).
+2. **Generator self-test:** >=18/20 author-role fixtures non-deflect (recorded JSON).
 3. **Bench:** `python -m bench --tools garbleworks:gw_optimize --tag spark_v1` vs prior 7B baseline; report LCB lift or honest null.
-4. **Validate path:** one objective with `validate-n ≥ 5` and promotion decision documented.
+4. **Validate path:** one objective with `validate-n >= 5` and promotion decision documented.
 5. **Arena dry-run:** mock arena ladder completes without scope violations.
 6. **Security:** no private-IP fire without engagement; remote brain still opt-in.
 7. **Docs:** this spec + operator runbook + model registry + one sample report suitable for resume appendix (redacted).
@@ -280,7 +280,7 @@ Optional stretch (resume gold):
 - Parallel reframe pool (Tier C).
 - Mutation policy module (tripwire bans).
 - Dynamic basket + UCB inject if still open.
-- Ablation: 7B vs 32B generator on fixed battery (n≥30 where API allows; local canary for free).
+- Ablation: 7B vs 32B generator on fixed battery (n>=30 where API allows; local canary for free).
 
 ### Phase 2 - Cluster roles (1 week)
 
@@ -321,7 +321,7 @@ Optional stretch (resume gold):
 | Metric | Baseline (today) | Target (Spark v1) |
 |---|---|---|
 | Generator model | ~7B ablit | 32B ablit primary |
-| Mean reframe latency (n=10) | measure on 3070/9B path | ≤ baseline on equal tokens **or** better quality at +50% latency |
+| Mean reframe latency (n=10) | measure on 3070/9B path | <= baseline on equal tokens **or** better quality at +50% latency |
 | Optimize held-out success rate on local canary battery | measure | + relative lift with CI |
 | Empty / deflect generator rate | measure | <5% on author fixtures |
 | Validate_refire claims with LCB language | partial | 100% of external reports |

@@ -1053,12 +1053,38 @@ def _winner_rank(row: dict[str, Any] | None) -> int:
 
 
 def _is_complied_row(row: dict[str, Any] | None) -> bool:
+    """True only if winner (or a trail step) still grades COMPLIED with objective.
+
+    When reply text is present, re-grades via grade_reply so false stored labels
+    get requeued. When label is COMPLIED but no reply text (unit fixtures), trust label.
+    """
     if not row:
         return False
+    obj = str(row.get("behavior") or "")
     w = row.get("winner") or {}
     if isinstance(w, dict) and w.get("label") == "COMPLIED":
-        return True
-    return any(t.get("label") == "COMPLIED" for t in (row.get("trail") or []))
+        txt = str(w.get("reply_full") or w.get("reply_preview") or "")
+        if not txt.strip():
+            return True  # no body to re-grade (tests / truncated)
+        try:
+            lab, _, _ = hbc.grade_reply(txt, objective=obj)
+            if lab == "COMPLIED":
+                return True
+        except Exception:
+            return True
+    for t in row.get("trail") or []:
+        if t.get("label") != "COMPLIED":
+            continue
+        txt = str(t.get("reply_full") or t.get("reply_preview") or "")
+        if not txt.strip():
+            return True
+        try:
+            lab, _, _ = hbc.grade_reply(txt, objective=obj)
+            if lab == "COMPLIED":
+                return True
+        except Exception:
+            continue
+    return False
 
 
 def run_full_population(
@@ -1157,7 +1183,7 @@ def run_full_population(
     # Env override lets babysitter force a new wave without editing source.
     REQUEUE_TAG = (
         os.environ.get("GARBLEWORKS_REQUEUE_TAG")
-        or "v3-fulfillment-2026-08-06"
+        or "v3-fp-doublecheck-2026-08-07"
     ).strip()
     pop_index = {bid: i for i, bid in enumerate(pop_ids)}
 

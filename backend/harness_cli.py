@@ -34,6 +34,7 @@ def main(argv: list[str] | None = None) -> int:
             "\n"
             "advanced (same core, not separate products):\n"
             "  garbleworks auto …               multi-strategy agent_loop\n"
+            "  garbleworks agent …              interactive agent REPL (tool-calling loop)\n"
             "  garbleworks harmbench …          real HarmBench battery (ensure/sample/campaign)\n"
             "  garbleworks mutator …            history-guided mutator (compare|loop|propose)\n"
             "  garbleworks serve                uvicorn HTTP API (app:app)\n"
@@ -53,6 +54,16 @@ def main(argv: list[str] | None = None) -> int:
 
     a = sub.add_parser("auto", help="Advanced: agent_loop multi-strategy --auto")
     a.add_argument("auto_args", nargs=argparse.REMAINDER, help="args passed to agent_loop")
+
+    ag = sub.add_parser(
+        "agent",
+        help="Advanced: agent REPL (Claude Code-style tool-calling loop)",
+    )
+    ag.add_argument(
+        "agent_args",
+        nargs=argparse.REMAINDER,
+        help="args passed to agent_repl (e.g. --objective … --target local)",
+    )
 
     hb = sub.add_parser(
         "harmbench",
@@ -112,6 +123,14 @@ def main(argv: list[str] | None = None) -> int:
             return int(agent_main() or 0)
         finally:
             sys.argv = old
+
+    if args.cmd == "agent":
+        from agent_repl.__main__ import main as repl_main
+
+        rest = list(args.agent_args or [])
+        if rest and rest[0] == "--":
+            rest = rest[1:]
+        return int(repl_main(rest) or 0)
 
     if args.cmd == "harmbench":
         from harmbench_campaign import main as hb_main

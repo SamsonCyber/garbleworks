@@ -86,9 +86,20 @@ backend/data/*.db
 
 tui/agent/operator_state.json
 tui/last_paste.txt
-
+backend/tui/last_paste.txt
 
 tui/agent/*.json
 tui/agent/*.txt
 !tui/agent/.gitkeep
+
+# Built binaries (use scripts/build-gw-chat.ps1 / go build)
+*.exe
+gw-chat.exe
+
+# Local editor / operator backups (never ship)
+.pi/
+docs/*.bak
+assets/*.prev.jpg
+**/*.stuck-bak
+**/*-bak.json
 

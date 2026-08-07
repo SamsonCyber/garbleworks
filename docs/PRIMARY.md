@@ -1,4 +1,4 @@
-# Primary tree — one elegant harness
+# Primary tree - one elegant harness
 
 **Home:** `C:\Code\garbleworks`  
 **Code:** `backend/`  
@@ -21,7 +21,7 @@ python -m garbleworks scan   # when backend is on PYTHONPATH
 | `serve` | Advanced: HTTP API |
 | `mcp` | Print single-tree MCP launch config |
 
-Full offline suite: `python scripts/repro.py` → `REPRO_OK …`
+Full offline suite: `python scripts/repro.py` -> `REPRO_OK ...`
 
 ## Modules
 
@@ -59,7 +59,7 @@ These are **not** peer products. Prefer `harness_cli.py` for day-to-day.
 |--------|-----|
 | `agent_loop.py` | multi-strategy auto (also `harness_cli.py auto`) |
 | `scan_campaign.py` | coverage map campaigns |
-| `campaign_runner.py` | thin seed→fire→score helper |
+| `campaign_runner.py` | thin seed->fire->score helper |
 | `arena_go.py` / `arena_advise_cli.py` | human-paste arena helpers |
 | `grok_driver.py` / `console.py` | operator fleet UIs |
 | `app.py` | FastAPI (also `harness_cli.py serve`) |

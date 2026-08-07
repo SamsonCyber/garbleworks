@@ -165,6 +165,19 @@ export type JobHandle = {
   done: Promise<number>
 }
 
+/** Long-lived agent chat session (stdin JSONL → GW| stdout). */
+export type AgentSessionHandle = {
+  send: (cmd: Record<string, unknown>) => void
+  turn: (text: string) => void
+  feedback: (text: string) => void
+  stop: () => void
+  clear: () => void
+  set: (fields: Record<string, unknown>) => void
+  quit: () => void
+  kill: () => void
+  done: Promise<number>
+}
+
 function pythonBin(): string {
   return process.env.GARBLEWORKS_PYTHON || process.env.PYTHON || "python"
 }
@@ -345,6 +358,225 @@ export function runValidate(opts: {
   ]
   if (opts.secret) args.push("--secret", opts.secret)
   return runPython(args, opts.onEvent)
+}
+
+/**
+ * Agent REPL: multi-turn attacker-brain tool loop (Claude Code-class).
+ * Default brain=stub against local canary; pass brain=openai for live model.
+ */
+/** Hermes-style brain providers: stub | xai | minimax | opencode-zen | opencode-go | ollama | openai | … */
+export function runAgentRepl(opts: {
+  objective: string
+  target?: string
+  secret?: string
+  brain?: string
+  provider?: string
+  maxRounds?: number
+  maxFires?: number
+  baseUrl?: string
+  model?: string
+  apiKey?: string
+  onEvent: (ev: RunEvent) => void
+}): JobHandle {
+  const args = [
+    "-m",
+    "agent_repl",
+    "--objective",
+    opts.objective,
+    "--target",
+    opts.target || "local",
+    "--brain",
+    opts.brain || opts.provider || "stub",
+    "--max-rounds",
+    String(opts.maxRounds ?? 12),
+    "--max-fires",
+    String(opts.maxFires ?? 24),
+  ]
+  if (opts.provider) args.push("--provider", opts.provider)
+  if (opts.secret) args.push("--secret", opts.secret)
+  if (opts.baseUrl) args.push("--base-url", opts.baseUrl)
+  if (opts.model) args.push("--model", opts.model)
+  if (opts.apiKey) args.push("--api-key", opts.apiKey)
+  return runPython(args, opts.onEvent)
+}
+
+/**
+ * Open a long-lived agent chat session (Wallbreaker-style interactive loop).
+ * Operator messages go via stdin JSONL; agent streams GW| events.
+ */
+export function openAgentSession(opts: {
+  target?: string
+  secret?: string
+  brain?: string
+  provider?: string
+  maxRounds?: number
+  maxFires?: number
+  baseUrl?: string
+  model?: string
+  apiKey?: string
+  objective?: string
+  onEvent: (ev: RunEvent) => void
+}): AgentSessionHandle {
+  const brain = opts.brain || opts.provider || "stub"
+  const args = [
+    "-m",
+    "agent_repl",
+    "--session",
+    "--target",
+    opts.target || "local",
+    "--brain",
+    brain,
+    "--max-rounds",
+    String(opts.maxRounds ?? 12),
+    "--max-fires",
+    String(opts.maxFires ?? 24),
+  ]
+  if (opts.objective) args.push("--objective", opts.objective)
+  if (opts.provider && opts.provider !== "stub") args.push("--provider", opts.provider)
+  if (opts.secret) args.push("--secret", opts.secret)
+  if (opts.baseUrl) args.push("--base-url", opts.baseUrl)
+  if (opts.model) args.push("--model", opts.model)
+  if (opts.apiKey) args.push("--api-key", opts.apiKey)
+
+  let killed = false
+  let proc: Subprocess | null = null
+  // Bun spawn with stdin:"pipe" exposes a FileSink (write/flush/end), not a Web WritableStream
+  type StdinSink = {
+    write: (data: string | Uint8Array) => number | Promise<number>
+    flush?: () => void | Promise<void>
+    end?: (err?: Error) => number | Promise<number> | void
+  }
+  let stdinSink: StdinSink | null = null
+
+  try {
+    proc = spawn({
+      cmd: [pythonBin(), ...args],
+      cwd: BACKEND,
+      stdout: "pipe",
+      stderr: "pipe",
+      stdin: "pipe",
+      env: {
+        ...process.env,
+        PYTHONIOENCODING: "utf-8",
+        GARBLEWORKS_TUI: "1",
+        GARBLEWORKS_CHAT: "1",
+      },
+    })
+    if (proc.stdin && typeof proc.stdin === "object") {
+      stdinSink = proc.stdin as unknown as StdinSink
+    }
+  } catch (e) {
+    opts.onEvent({ type: "error", text: `session spawn failed: ${e}` })
+    opts.onEvent({ type: "done", code: 1 })
+    return {
+      send: () => {},
+      turn: () => {},
+      feedback: () => {},
+      stop: () => {},
+      clear: () => {},
+      set: () => {},
+      quit: () => {},
+      kill: () => {},
+      done: Promise.resolve(1),
+    }
+  }
+
+  const send = (cmd: Record<string, unknown>) => {
+    if (killed || !stdinSink) return
+    const line = JSON.stringify(cmd) + "\n"
+    try {
+      const w = stdinSink.write(line)
+      if (w && typeof (w as Promise<number>).then === "function") {
+        void (w as Promise<number>).catch((e) => {
+          opts.onEvent({ type: "error", text: `stdin write: ${e}` })
+        })
+      }
+      void stdinSink.flush?.()
+    } catch (e) {
+      opts.onEvent({ type: "error", text: `stdin write: ${e}` })
+    }
+  }
+
+  const read = async (stream: ReadableStream<Uint8Array> | null, label: string) => {
+    if (!stream) return
+    const reader = stream.getReader()
+    const dec = new TextDecoder()
+    let buf = ""
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += dec.decode(value, { stream: true })
+        const parts = buf.split(/\r?\n/)
+        buf = parts.pop() || ""
+        for (const line of parts) {
+          if (line.length) opts.onEvent(parseLine(line))
+        }
+      }
+      if (buf.trim()) opts.onEvent(parseLine(buf))
+    } catch (e) {
+      if (!killed) opts.onEvent({ type: "error", text: `${label}: ${e}` })
+    }
+  }
+
+  const done = (async () => {
+    await Promise.all([
+      read(proc!.stdout as ReadableStream<Uint8Array> | null, "stdout"),
+      read(proc!.stderr as ReadableStream<Uint8Array> | null, "stderr"),
+    ])
+    const code = killed ? 130 : ((await proc!.exited) ?? 1)
+    opts.onEvent({ type: "done", code, killed })
+    return code
+  })()
+
+  const closeStdin = () => {
+    try {
+      void stdinSink?.end?.()
+    } catch {
+      /* ignore */
+    }
+    stdinSink = null
+  }
+
+  const kill = () => {
+    if (killed || !proc) return
+    killed = true
+    try {
+      send({ op: "quit" })
+    } catch {
+      /* ignore */
+    }
+    closeStdin()
+    try {
+      proc.kill()
+    } catch {
+      /* already dead */
+    }
+    try {
+      proc.kill(9)
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return {
+    send,
+    turn: (text: string) => send({ op: "turn", text }),
+    feedback: (text: string) => send({ op: "feedback", text }),
+    stop: () => send({ op: "stop" }),
+    clear: () => send({ op: "clear" }),
+    set: (fields: Record<string, unknown>) => send({ op: "set", ...fields }),
+    quit: () => {
+      send({ op: "quit" })
+      closeStdin()
+    },
+    kill,
+    done,
+  }
+}
+
+export function runAgentReplBoot(onEvent: (ev: RunEvent) => void): JobHandle {
+  return runPython(["-m", "agent_repl", "--tui-boot"], onEvent)
 }
 
 export function runFindings(onEvent: (ev: RunEvent) => void): JobHandle {

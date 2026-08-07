@@ -8,9 +8,9 @@ techniques: the `llm-injection-field-guide`. It is the knowledge layer that conn
 - **Version:** 1.1.0 (generated 2026-07-12)
 - **Techniques:** 312 across 20 categories (281 attack-side + 31 defense)
 - **Crosswalked:** 248 / 312 attack techniques (foundations + defense categories intentionally untagged)
-- **Frameworks:** MITRE ATLAS v5.6.0 · OWASP LLM Top 10 2025 · NIST AI 100-2e2025 · CWE 4.20
+- **Frameworks:** MITRE ATLAS v5.6.0 * OWASP LLM Top 10 2025 * NIST AI 100-2e2025 * CWE 4.20
 - **Tool hooks:** 37 techniques map to a garak / promptfoo / PyRIT / StrongREJECT probe
-- **Benchmarks:** 32 techniques tagged with a public benchmark (AgentDojo, InjecAgent, TensorTrust, HackAPrompt, Gray Swan, …)
+- **Benchmarks:** 32 techniques tagged with a public benchmark (AgentDojo, InjecAgent, TensorTrust, HackAPrompt, Gray Swan, ...)
 - **Origin cited:** 70 techniques carry the paper/repo that introduced them
 - **Source:** [`llm-injection-field-guide/field-guide.json`](../llm-injection-field-guide/field-guide.json) (vendored export of live `const T` + `crosswalk-block.js`)
 
@@ -26,10 +26,10 @@ techniques: the `llm-injection-field-guide`. It is the knowledge layer that conn
 
 It is the piece that turns garbleworks from a payload forge into an auditable harness:
 
-1. **Reference → runtime bridge.** `field_guide_ops(title)` returns the garbleworks
+1. **Reference -> runtime bridge.** `field_guide_ops(title)` returns the garbleworks
  op(s) that implement a technique, so you go straight from "I want to test Policy
- Puppetry" to running it. Reference catalog ↔ executable transform, in one hop.
-2. **Runtime → report bridge.** Findings can carry the technique's OWASP/ATLAS/NIST/CWE
+ Puppetry" to running it. Reference catalog <-> executable transform, in one hop.
+2. **Runtime -> report bridge.** Findings can carry the technique's OWASP/ATLAS/NIST/CWE
  IDs (when present) and any garak/promptfoo/PyRIT probe that also tests it, so a result
  drops into a report or a second tool without re-mapping by hand.
 
@@ -70,12 +70,12 @@ service to stand up; if garbleworks is connected, the field guide is connected.
 
 ```text
 field_guide_search("indirect prompt injection")
- → "Indirect Prompt Injection via Retrieved Content"
- cat=indirect · OWASP LLM01 · ATLAS AML.T0051.001 · CWE-1427
- garak: latentinjection · benchmarks: AgentDojo, InjecAgent, Gray Swan
+ -> "Indirect Prompt Injection via Retrieved Content"
+ cat=indirect * OWASP LLM01 * ATLAS AML.T0051.001 * CWE-1427
+ garak: latentinjection * benchmarks: AgentDojo, InjecAgent, Gray Swan
 
 field_guide_ops("Policy Puppetry")
- → { ops: ["policy_puppetry"], run_with: "generate_framings" }
+ -> { ops: ["policy_puppetry"], run_with: "generate_framings" }
 ```
 
 ## Keeping the catalog in sync

@@ -55,7 +55,7 @@ one line to it. Restated for this module:
 | LLM composition | `llm.chat()` against the local generator (`ablit`) |
 | Fire at target | `targets.py` adapters (`raw` / `anthropic_msg` / `gemini_gen`) + `TARGET-*.json` |
 | Stage-1 fitness | `detectors.evaluate()` with a `refusal_bank` detector (already the "did it refuse" negative signal) |
-| Logging | `history.py` JSONL export convention (`backend/exports/…jsonl`) |
+| Logging | `history.py` JSONL export convention (`backend/exports/...jsonl`) |
 
 New code is the evolutionary controller, the judge, the ask-set loader, and a
 small shared firing helper.
@@ -214,7 +214,7 @@ Exactly the two-stage design requested:
 
 ## 10. Ask-sets
 
-- `single` - `--ask "…"`: one ask, one optimization run.
+- `single` - `--ask "..."`: one ask, one optimization run.
 - `probes` - built-in benign canaries (`asksets/probes.json`), e.g. the
  `refine.py` P1-P3 family (system-prompt extraction, hidden-config leak). Safe
  default, needs no external files.
@@ -250,10 +250,10 @@ there is one SSRF implementation, not two that can drift.
 
 ## 13. Config surface
 
-CLI (`python backend/evolve.py …`):
+CLI (`python backend/evolve.py ...`):
 
 ```
---ask "…" | --ask-set probes | --ask-set benchmark:behaviors.csv:goal
+--ask "..." | --ask-set probes | --ask-set benchmark:behaviors.csv:goal
 --target TARGET-abliterated-qwen.json # TargetCfg JSON (or inline)
 --ops a,b,c | --strategies x,y # seed catalog override
 --seed-reps 6

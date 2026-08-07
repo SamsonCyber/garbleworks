@@ -421,11 +421,12 @@ def step_prefill(
 # Ladder
 # --------------------------------------------------------------------------- #
 
-# Local OpenAI-wire canary: baseline usually wins first; prefill last (cloud).
-DEFAULT_LADDER_LOCAL = ("bandit", "baseline", "pack_hunt", "optimize")
+# Local OpenAI-wire canary: baseline wins first (cheap EXECUTE_CANARY_DUMP);
+# bandit is the self-improve path after a miss. Prefill stays cloud/anthropic-only.
+DEFAULT_LADDER_LOCAL = ("baseline", "bandit", "pack_hunt", "optimize")
 # Anthropic system-canary: prefill first (measured), then local strategies if a target is set.
-DEFAULT_LADDER_ANTHROPIC = ("prefill", "bandit", "baseline", "pack_hunt", "optimize")
-DEFAULT_LADDER_AUTO = ("bandit", "baseline", "pack_hunt", "optimize", "prefill")
+DEFAULT_LADDER_ANTHROPIC = ("prefill", "baseline", "bandit", "pack_hunt", "optimize")
+DEFAULT_LADDER_AUTO = ("baseline", "bandit", "pack_hunt", "optimize", "prefill")
 
 
 def run_auto(

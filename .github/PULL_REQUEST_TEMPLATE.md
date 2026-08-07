@@ -1,6 +1,6 @@
 ## What this does
 
-Brief description. Link the issue it closes (`Closes #…`).
+Brief description. Link the issue it closes (`Closes #...`).
 
 ## Type
 

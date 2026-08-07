@@ -1,8 +1,10 @@
 /**
- * Garbleworks Operator TUI — AI red-team cockpit.
+ * Legacy cockpit TUI (reference / `bun run start:cockpit`).
+ * Default operator entry is `src/shell.tsx` (`bun start`) — multi-section
+ * professional shell with chat + status + mission + activity.
  *
- * Web arena (default): local tool-chain morphs on F5 / Ctrl+R·T·S; Grok can
- * override via the seat hub while you paste in the browser.
+ * Web arena: local tool-chain morphs on F5 / Ctrl+R·T·S; Grok can override
+ * via the seat hub while you paste in the browser.
  *   operator_state.json  ← TUI (brief / reply / history / request_id)
  *   agent_seat.json      ← Grok (optional TOOL log + staged payload)
  *
@@ -32,6 +34,7 @@ import {
   type JobHandle,
   type RunEvent,
   runArenaAdvise,
+  runAgentRepl,
   runAuto,
 } from "./bridge"
 import { exportPastePayload, openPasteFile, PASTE_FILE } from "./export_paste"
@@ -70,7 +73,7 @@ type Profile = {
   target: string
   model?: string
   budget: number
-  kind?: "auto" | "arena_advise"
+  kind?: "auto" | "arena_advise" | "agent_repl"
 }
 
 const PROFILES: Profile[] = [
@@ -82,6 +85,45 @@ const PROFILES: Profile[] = [
     target: "(browser)",
     budget: 1,
     kind: "arena_advise",
+  },
+  {
+    id: "agent",
+    label: "Agent REPL",
+    blurb: "Tool loop · stub brain (offline)",
+    mode: "agent_repl",
+    target: "local",
+    budget: 24,
+    kind: "agent_repl",
+  },
+  {
+    id: "agent-xai",
+    label: "Agent · Grok",
+    blurb: "xAI Grok attacker brain",
+    mode: "agent_repl",
+    target: "local",
+    budget: 24,
+    kind: "agent_repl",
+    model: "grok-4-1-fast-reasoning",
+  },
+  {
+    id: "agent-minimax",
+    label: "Agent · MiniMax",
+    blurb: "MiniMax-M3 attacker brain",
+    mode: "agent_repl",
+    target: "local",
+    budget: 24,
+    kind: "agent_repl",
+    model: "MiniMax-M3",
+  },
+  {
+    id: "agent-opencode",
+    label: "Agent · OpenCode",
+    blurb: "OpenCode Zen gateway brain",
+    mode: "agent_repl",
+    target: "local",
+    budget: 24,
+    kind: "agent_repl",
+    model: "minimax-m3",
   },
   {
     id: "local",
@@ -202,6 +244,8 @@ export function App() {
   /** Last agent_seat.json seq we applied to the payload bay. */
   const appliedSeatSeqRef = useRef(0)
   const requestIdRef = useRef(0)
+  /** Debounce r/t/s key-repeat so refuse cannot death-spiral morph. */
+  const lastOutcomeAtRef = useRef(0)
   const pushPayloadOutRef = useRef<(text: string, openEd?: boolean) => void>(() => {})
   const [runDoneBanner, setRunDoneBanner] = useState("")
   const [pasteBlock, setPasteBlock] = useState("")
@@ -255,6 +299,7 @@ export function App() {
   const profile = PROFILES[profileIdx]
   /** Web arena: local tool-chain + Grok seat hub (same mode, no separate profile). */
   const isArena = profile.kind === "arena_advise"
+  const isAgentRepl = profile.kind === "agent_repl"
 
   const readBrief = useCallback(() => {
     const t = briefRef.current?.plainText
@@ -742,6 +787,31 @@ export function App() {
           history: hist,
           onEvent,
         })
+      } else if (isAgentRepl) {
+        setStatusNote(`agent REPL → ${effectiveTarget} · tool loop…`)
+        setRunDoneBanner("AGENT REPL · tool loop")
+        const sec =
+          secret.trim() ||
+          (effectiveTarget !== "local" ? "CANARY_LAB_DEFAULT" : undefined)
+        // Map profile id → Hermes-style provider (stub default)
+        const providerByProfile: Record<string, string> = {
+          agent: "stub",
+          "agent-xai": "xai",
+          "agent-minimax": "minimax",
+          "agent-opencode": "opencode-zen",
+        }
+        const brainProvider = providerByProfile[profile.id] || "stub"
+        handle = runAgentRepl({
+          objective: objective.trim(),
+          target: effectiveTarget,
+          secret: sec,
+          brain: brainProvider,
+          provider: brainProvider === "stub" ? undefined : brainProvider,
+          maxRounds: profile.budget || 12,
+          maxFires: profile.budget || 24,
+          model: profile.model,
+          onEvent,
+        })
       } else {
         setStatusNote(`starting ${profile.label} → ${effectiveTarget}…`)
         const sec =
@@ -784,6 +854,7 @@ export function App() {
     },
     [
       isArena,
+      isAgentRepl,
       brief,
       readBrief,
       objective,
@@ -800,17 +871,19 @@ export function App() {
   const reportOutcome = useCallback(
     (outcome: "refused" | "tripwire" | "success") => {
       if (!isArena) return
-      // Always allow report in web arena: kill any in-flight morph first
+      // Key-repeat / spam guard: while a morph is in flight, do NOT kill-and-restart.
+      // Old path killed the job and re-ran on every r, which looked like a stuck loop.
       if (busyRef.current || jobRef.current) {
-        try {
-          jobRef.current?.kill()
-        } catch {
-          /* */
-        }
-        jobRef.current = null
-        busyRef.current = false
-        setBusy(false)
+        setStatusNote("morph in flight · Esc cancels · then r/t/s after paste")
+        return
       }
+      const now = Date.now()
+      if (now - lastOutcomeAtRef.current < 450) {
+        setStatusNote("slow down · wait for next payload before r/t/s again")
+        return
+      }
+      lastOutcomeAtRef.current = now
+
       const tech =
         adviseRef.current?.technique ||
         boardRef.current.mission.lastStrategy ||
@@ -888,6 +961,36 @@ export function App() {
         })
         return
       }
+
+      // Stall: same payload refused/tripwired 3+ times → stop auto-morph.
+      // This is what looked like "TUI stuck in a loop" (advise×5 identical tail).
+      const STALL_N = 3
+      const norm = (p: string | undefined) => (p || "").trim()
+      const tail = nextHist.slice(-STALL_N)
+      const stalled =
+        sentPayload.length > 0 &&
+        tail.length >= STALL_N &&
+        tail.every(
+          (h) =>
+            norm(h.payload) === sentPayload &&
+            (h.outcome === "refused" || h.outcome === "tripwire"),
+        )
+      if (stalled) {
+        setArenaPhase("exhausted")
+        setStatusNote(
+          `stall · same payload ×${STALL_N} · paste real REPLY then F5, or f = fresh`,
+        )
+        setRunDoneBanner("STALL · stop auto-morph · f / F5")
+        pushOperator({
+          request_id: requestIdRef.current,
+          last_outcome: outcome,
+          last_request: "outcome",
+          phase: "exhausted",
+          history: nextHist,
+        })
+        return
+      }
+
       if (!liveReply) {
         setStatusNote(
           "no REPLY pasted — morphing blind. Paste failure text next time for better mutate.",
@@ -922,9 +1025,7 @@ export function App() {
       setAdvise(null)
       adviseRef.current = null
       setRunDoneBanner(`MORPH · ${outcome} → next op…`)
-      busyRef.current = false
-      setBusy(false)
-      jobRef.current = null
+      setArenaPhase("advising")
       void run({ historyOverride: nextHist })
     },
     [isArena, run, pasteBlock, pushOperator],

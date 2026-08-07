@@ -92,7 +92,7 @@ All server-side outbound HTTP goes through `backend/fire.py`:
 2. **Blocked** by default: link-local / cloud metadata (`169.254.0.0/16`), multicast, reserved, unspecified.
 3. **Loopback and RFC-1918** allowed by default so local Ollama and LAN lab servers work. Set `GARBLEWORKS_BLOCK_PRIVATE=1` to deny them.
 4. **No redirects** after validation (a 302 cannot pivot into a blocked host).
-5. **MCP engagement receipt**: fire tools require host match to `authorized_scope` (default `local-selftest`: `127.0.0.1`, `localhost`). Off-scope → `SCOPE DENIED`.
+5. **MCP engagement receipt**: fire tools require host match to `authorized_scope` (default `local-selftest`: `127.0.0.1`, `localhost`). Off-scope -> `SCOPE DENIED`.
 6. **Caps**: body size and variant fan-out limits.
 
 The HTTP API itself is **unauthenticated**. Bind to `127.0.0.1` only. See [SECURITY.md](../SECURITY.md).
@@ -119,8 +119,8 @@ A single green checkmark is not a claim. Product promotion rules in the canary b
 | Mechanism | Job |
 |-----------|-----|
 | EVOLVE | Genetic search on the probability simplex (Aitchison geometry). Spec: [EVOLVE_MATH.md](../EVOLVE_MATH.md); older prose draft in [archive/EVOLVE_SPEC.md](archive/EVOLVE_SPEC.md) |
-| MAP-Elites | Quality-diversity over behavior × obfuscation |
-| Thompson bandit | Beta posterior per arm; probation → active → retired |
+| MAP-Elites | Quality-diversity over behavior x obfuscation |
+| Thompson bandit | Beta posterior per arm; probation -> active -> retired |
 | Tree search | Multi-turn beam for erosion paths single-turn recipes miss |
 | Register `L(x)` | Lexical loadedness features tied to refusal |
 
@@ -130,7 +130,7 @@ Honest math note from the offline audit: under default hyperparameters the **LCB
 
 | Surface | Start | Role |
 |---------|-------|------|
-| HTTP + web UI | `run.ps1` → `http://127.0.0.1:9877` | Human operator, full REST |
+| HTTP + web UI | `run.ps1` -> `http://127.0.0.1:9877` | Human operator, full REST |
 | MCP | `python backend/mcp_server.py` | Agent operator; scope receipt on fire |
 | TUI | `cd tui && bun start` | Keyboard console; bridges to backend only |
 
