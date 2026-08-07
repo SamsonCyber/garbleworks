@@ -8,6 +8,21 @@ tagged release.
 ## [Unreleased]
 
 ### Added
+- **Agent chat on pi TUI** (Finbot-style tool loop + live graphs): primary
+  operator surface is the open-source pi agent TUI. Launch `.\gw-chat.cmd` /
+  `.\gw-chat.ps1` (or build `gw-chat.exe` via `scripts/build-gw-chat.ps1`) or
+  `cd tui && bun start`. Package `pi-garbleworks/` registers `gw_*` tools against
+  long-lived `agent_repl.engagement_host` (JSONL). Console scripts: `gw` /
+  `garbleworks-agent`. Footer sparklines for latency and ASR; `gw_stream_graph`
+  for model-driven points. Legacy OpenTUI: `bun run start:legacy`. Tests:
+  `test_engagement_host.py`, `test_agent_repl.py`.
+- **Agentic IPI closed loop** (`backend/ipi_closed_loop.py`, `ipi_minimax_run.py`,
+  `ipi_paste.py`): scenario bank + template x mutation ladder, checkpoint resume,
+  paste desk (no auto-loop), MiniMax tools-loop live path. CLI:
+  `spine.ipi_cli closed-loop|paste`. RoE: `engagements/ipi-minimax-roe.json`.
+  Tests: `test_ipi_closed_loop.py`, `test_ipi_paste.py`.
+- **Overnight DeepSeek HarmBench scripts** (`scripts/overnight_deepseek_harmbench.ps1`,
+  monitor + watchdog): resume-friendly full battery under OpenCode Zen RoE.
 - **History-guided mutator** (`backend/reasoned_mutator.py`): next style/approach
   conditioned on refuse/partial/success history; forced family switch after
   stagnation streak; uniform-random baseline for A/B. CLI:
@@ -32,10 +47,16 @@ tagged release.
   Docs: `docs/IPI-AGENT.md`, `docs/GAPS.md`.
 
 ### Fixed
+- **HarmBench COMPLIED false positives (v3-fp-doublecheck):** intent anchors from
+  the objective must appear in the reply; reject polarity-flip "help the victim"
+  shells when the ask is harm; catch mid-body non-intent refusals and list/
+  topic-launder non-fulfillment; partial-escape forces task keywords; resume
+  re-grades stored winners via current `grade_reply` so soft shells requeue.
+  Tests: `test_harmbench.py`.
 - **Evolve math hiring-truth:** `Genome.var` is unbiased sample variance
   (`1/(n-1)`, EVOLVE_MATH sec 5.1); `SHIPPED_DEFAULTS` is the single source for
   `RunConfig`; lock tests in `test_optimizer_math_lock.py`. Doc marks
-  aspirational 1/5 `σ_w`, τ/t genes, and dual `success`/`claim_ready` flags.
+  aspirational 1/5 genes and dual `success`/`claim_ready` flags.
 
 ### Changed
 - **README:** full sync with recent ship (history-guided mutator section,

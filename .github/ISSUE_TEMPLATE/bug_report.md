@@ -5,7 +5,7 @@ title: "[bug] "
 labels: bug
 ---
 
-> ⚠️ **Security issues:** do not file them here. A scope-enforcement escape, SSRF
+> WARNING️ **Security issues:** do not file them here. A scope-enforcement escape, SSRF
 > bypass, or fan-out/cap bypass is a private report - see [`SECURITY.md`](../../SECURITY.md).
 
 **What happened**
@@ -15,8 +15,8 @@ A clear description of the bug.
 What you expected instead.
 
 **Repro**
-1. …
-2. …
+1. ...
+2. ...
 Include the recipe / op(s), the target adapter, and the `detect` block if firing.
 
 **Environment**

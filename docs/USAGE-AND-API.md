@@ -34,7 +34,7 @@ protections are in place to stop a malicious website from abusing that:
  (`GARBLEWORKS_SCOPE` / default local-selftest). Off-scope hosts get
  `SCOPE DENIED` even when they pass the generic range policy.
 - **Request bodies are capped** (4 MB) and fan-out is bounded (`max_variants`
- ≤ 2000, deck inputs ≤ 1000).
+ <= 2000, deck inputs <= 1000).
 
 Still required:
 
@@ -68,7 +68,7 @@ it in `backend/ops/__init__.py`. See the existing files for the pattern.
 
 ### Adaptive layer (history-driven)
 
-Beyond the transform library, the tool has a measure → select → discover loop:
+Beyond the transform library, the tool has a measure -> select -> discover loop:
 
 - `detectors.py` - `llm_judge` detector adds AttackEval 4-level grading (0/.33/.66/1.0),
  persisted per result as `graded_score`.

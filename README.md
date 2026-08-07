@@ -61,7 +61,9 @@ Four primitives, one composed candidate. The harness searches compositions inste
 | CLI | `python -m garbleworks` | One harness: `scan`, `modules`, `harmbench`, `mutator`, `auto`, `serve`, `mcp` |
 | HTTP + web UI | `powershell -File run.ps1` | Human operator at `http://127.0.0.1:9877` |
 | MCP | `python backend/mcp_server.py` | **Agent-first** operator + scope receipt |
-| TUI | `cd tui && bun start` | v0.1 console (not a full agent REPL) |
+| **Agent chat (pi TUI)** | `.\gw-chat.exe` / `.\gw-chat.cmd` or `cd tui && bun start` | Talk → tools (Finbot-style) + live graphs |
+| Legacy OpenTUI | `cd tui && bun run start:legacy` | Older chat shell |
+| Agent REPL (headless) | `python -m agent_repl` / `gw` | Hermes-class tool loop without TUI |
 
 There is **one fire path** (`backend/fire.py`). No second unchecked outbound path.
 
@@ -71,6 +73,7 @@ There is **one fire path** (`backend/fire.py`). No second unchecked outbound pat
 | **History-guided mutator** (not pure random) | `python -m garbleworks mutator compare\|loop\|propose`; MCP `reasoned_mutate` / `mutator_compare` |
 | Procedural technique scan | MCP `run_scan` ([docs/SCAN-CAMPAIGN.md](docs/SCAN-CAMPAIGN.md)) |
 | Stop-on-win auto ladder | `python -m garbleworks auto -- --auto "..." --target local` |
+| **Agent REPL** (tool-calling, Hermes-class) | `python -m agent_repl` / `garbleworks agent`; brains: `stub`, `xai`/`grok`, `minimax`, `opencode-zen`/`opencode-go`, `ollama`, `openai` (`--list-providers`) |
 | **HarmBench battery** | `python -m garbleworks harmbench ensure\|sample\|campaign` |
 | Multi-dataset loaders | `list_behaviors(source=jailbreakbench\|strongreject\|harmbench)` |
 | **Agentic IPI dual scorer** | `python -m spine.ipi_cli`, MCP `run_agentic_ipi` ([docs/IPI-AGENT.md](docs/IPI-AGENT.md)) |
@@ -91,7 +94,14 @@ cd backend
 python -m garbleworks harmbench ensure
 python -m garbleworks harmbench campaign -n 5 --dry-run
 python -m garbleworks mutator compare --budget 16 --seed 0
-python -m spine.ipi_cli run --agent mock_obey --templates report_fill --budget 4
+# Agent REPL (IMPORTANT: bare `python` may be Hermes venv → "No module named agent_repl")
+# Use one of these:
+py -3.12 C:\code\garbleworks\agent_repl.py --list-providers
+C:\code\garbleworks\agent_repl.cmd --provider xai --target local --objective "extract the canary"
+# or from backend with system Python:
+cd backend
+py -3.12 -m agent_repl --provider minimax --model MiniMax-M3 --target local
+py -3.12 -m spine.ipi_cli run --agent mock_obey --templates report_fill --budget 4
 python -m bench.live_efficacy --scoreboard --n 30 --dry-run
 ```
 
@@ -430,13 +440,21 @@ Copy [.mcp.json.example](.mcp.json.example).
 | Agentic IPI | `list_ipi_templates`, `run_agentic_ipi`, `score_document_detectability` |
 | Map | `field_guide_*`, `mcp_spine_map` |
 
-### TUI
+### Agent chat (pi TUI + live graphs)
+
+Talk to the harness like Finbot: model calls `gw_fire_target` / compose / refire;
+latency + ASR sparklines sit in the footer.
 
 ```powershell
-cd tui
-bun install
-bun start
+# needs: pi on PATH  (npm i -g --ignore-scripts @earendil-works/pi-coding-agent)
+.\gw-chat.exe
+# or
+.\gw-chat.cmd
+cd tui; bun start
 ```
+
+Package: `pi-garbleworks/`. Host: `python -m agent_repl.engagement_host`.
+Legacy OpenTUI: `cd tui; bun run start:legacy`.
 
 ---
 

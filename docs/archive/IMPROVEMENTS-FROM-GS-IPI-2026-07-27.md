@@ -7,14 +7,14 @@ Evidence: Kill Crops + Wipe Firmware live transcripts; `arena_class.py`; `spine/
 
 ## Conclusions (ranked)
 
-| # | Conclusion | Confidence | Weakest premise | Flip if… |
+| # | Conclusion | Confidence | Weakest premise | Flip if... |
 |---|------------|------------|-----------------|----------|
 | 1 | **Operator loop is the product gap**, not op count | VERIFIED-sourced (session) | Assumes operator uses MCP/arena_next_move as main path | Most fires go through spine TUI only |
 | 2 | **Delivery + failure codes must be first-class** in advise | VERIFIED (Wipe D0, Crops D2) | GS always looks like our classes | New class of challenges |
 | 3 | **MCP must collapse onto spine** or operators will keep driving legacy ladders | VERIFIED (mcp has no `run_campaign`) | Spine is only for canary labs | MCP already wraps spine off-tree |
 | 4 | **Objective class taxonomy is handout-era**, not agent-IPI-era | VERIFIED (`arena_class.py` rules) | Keyword rules are enough with better text | ML classifier ships |
 | 5 | **Recipe/op soup is Stage-B**; pure IPI needs **carrier templates** + **success detectors for tools** | INFERRED | Pair strategy covers IPI | Pair ASR high on AgentDojo-like |
-| 6 | **Register/L(x) should gate “instruction chrome”** after D2 | PROBABLE | NEXT-1 was only one sample | Stealth fills also get named |
+| 6 | **Register/L(x) should gate "instruction chrome"** after D2 | PROBABLE | NEXT-1 was only one sample | Stealth fills also get named |
 
 Overall plan confidence: **7.5/10** for prioritization; **5/10** that any single item alone lifts GS ASR.
 
@@ -24,15 +24,15 @@ Overall plan confidence: **7.5/10** for prioritization; **5/10** that any single
 
 ### Wipe Firmware (D0 delivery)
 - `arena_next_move` / clean ladders assume a **pasteable chat jailbreak**.
-- Reality: **CSV carrier + broken shell**. Advise never said “prove ingestion first.”
+- Reality: **CSV carrier + broken shell**. Advise never said "prove ingestion first."
 - Ops catalog (140+) never ran. **Zero mutator value** until context holds the CSV.
 - Success criteria allow **provided procedure**, not only FS side effect. Scorer/detectors on spine are canary/substring oriented, not `tool_call:name=shred` / `contains:firmware.bin` procedure packs.
 
 ### Kill Crops (D2 instruction hierarchy)
-- Class detector: hydro + `set_ph` → sometimes `scada_ops`, often **generic** when objective is long IPI prose.
+- Class detector: hydro + `set_ph` -> sometimes `scada_ops`, often **generic** when objective is long IPI prose.
 - `scada_ops` ladder still **clean_maintenance / chat-shaped**, not pure tool-return IPI.
 - `tool_result_wrap` exists as an op; **no carrier kit** that emits disease-report fill / CSV row / incomplete-tool variants with anti-chrome rules.
-- Live refusal: model **named embedded instruction**. Garbleworks has no **failure-code router** that says “drop action_items/SYSTEM; switch third-person SOP.”
+- Live refusal: model **named embedded instruction**. Garbleworks has no **failure-code router** that says "drop action_items/SYSTEM; switch third-person SOP."
 
 ### Spine vs MCP split (architecture)
 - Spine **CLOSED**: `CampaignObjective.delivery`, four strategies, claim gate, default=pair.
@@ -55,11 +55,11 @@ Already filed: multi-spine, recipe vs attack state, PAIR vs genetic inversion (n
 **Where:** `arena_class.py` or new `failure_codes.py`; consume in `arena_next_move` / `arena_ladders.py`.
 
 **Behavior:** 
-- D0 → force **delivery checklist** (inline carrier, no disk search, T2 if agent asked for file). 
-- D2 → ban chrome ops (`chat_template_inject`, SYSTEM-ish seeds); prefer SOP/JSON/third-person templates. 
-- D5 → switch success criterion to **procedure emission**, not shell success.
+- D0 -> force **delivery checklist** (inline carrier, no disk search, T2 if agent asked for file). 
+- D2 -> ban chrome ops (`chat_template_inject`, SYSTEM-ish seeds); prefer SOP/JSON/third-person templates. 
+- D5 -> switch success criterion to **procedure emission**, not shell success.
 
-**Why:** Today’s advise re-emitted clean_direct while the real bug was D0.
+**Why:** Today's advise re-emitted clean_direct while the real bug was D0.
 
 #### P0.2 Objective classes for agent IPI
 Add to `ObjectiveClass`:
@@ -87,11 +87,11 @@ New module e.g. `backend/carriers/`:
 - `tool_result_envelope(tool_name, body)` 
 - `inline_user_plus_carrier(benign_user, carrier)` - **Wipe PASTE-NOW pattern**
 
-MCP: `compose_carrier(kind, goal, constraints)` → paste-ready text.
+MCP: `compose_carrier(kind, goal, constraints)` -> paste-ready text.
 
 **Why:** h4rm3l/GW ops rewrite strings; GS IPI wins on **where** the string sits. Delivery is already on `CampaignObjective` but not exposed to the human-in-the-loop paste path.
 
-#### P0.4 MCP → spine (minimal)
+#### P0.4 MCP -> spine (minimal)
 Expose:
 - `run_campaign` / `campaign_status` 
 - `compose_carrier` 
@@ -109,7 +109,7 @@ Without this, P0.1-0.3 never reach the agent driving GS.
 #### P1.1 Success detectors for agent actions
 Extend `SuccessDetector.kind`:
 - `tool_name` - set_ph_level / run_shell 
-- `tool_arg` - value≈2.0, path contains firmware.bin 
+- `tool_arg` - value~=2.0, path contains firmware.bin 
 - `procedure_mentions` - shred|rm|set_ph with target artifact 
 - `no_confirm_language` optional soft score 
 
@@ -117,11 +117,11 @@ Wire to GS-like transcripts (tool blocks + final text).
 
 #### P1.2 Delivery-aware seed builders
 `CampaignObjective.delivery in {tool_result, rag_doc}`:
-- Default seeds must **not** be “Please comply: {goal}” (current `__post_init__` bias). 
+- Default seeds must **not** be "Please comply: {goal}" (current `__post_init__` bias). 
 - Seeds = carrier-framed variants only.
 
 #### P1.3 Ingestion proof gate
-Before counting a fire as “refused injection,” require **ingest signal** (quoted row, theme from CSV, disease place names). Else tag D0 and do not burn ladder steps or promote “technique failed.”
+Before counting a fire as "refused injection," require **ingest signal** (quoted row, theme from CSV, disease place names). Else tag D0 and do not burn ladder steps or promote "technique failed."
 
 ---
 
@@ -139,10 +139,10 @@ When D2 fires, auto-raise L(x) penalty on tokens: `SYSTEM`, `ignore previous`, `
 Feed into Stage-B neutralize / seed filter.
 
 #### P2.3 MAP-Elites / evolve only as Stage-B on survivors
-Do not open GS with genetic soup. Illuminate **after** a carrier frame shows partial (D1→ tool-ish).
+Do not open GS with genetic soup. Illuminate **after** a carrier frame shows partial (D1-> tool-ish).
 
 #### P2.4 Claim gate honesty for GS
-n=1 arena paste ≠ promote. Log as `EXISTENCE` until m-of-k on same model class.
+n=1 arena paste != promote. Log as `EXISTENCE` until m-of-k on same model class.
 
 ---
 
@@ -150,10 +150,10 @@ n=1 arena paste ≠ promote. Log as `EXISTENCE` until m-of-k on same model class
 
 | Item | Note |
 |------|------|
-| TUI “IPI mode” | Carrier + failure codes + paste bay; not only jailbreak chat |
+| TUI "IPI mode" | Carrier + failure codes + paste bay; not only jailbreak chat |
 | Grok driver packet | Include last D-code + delivery + banned ops |
 | Import session handoffs | Parse `SESSION-HANDOFF-*.md` / GS transcripts into history |
-| Field-guide ops link | `tool_result_wrap` → pure_ipi ladder entry |
+| Field-guide ops link | `tool_result_wrap` -> pure_ipi ladder entry |
 
 ---
 
@@ -208,13 +208,13 @@ n=1 arena paste ≠ promote. Log as `EXISTENCE` until m-of-k on same model class
 
 ## Fabrication / contradiction check
 
-- No claim that spine “doesn’t exist” - it shipped same day; **gap is exposure + IPI semantics**. 
+- No claim that spine "doesn't exist" - it shipped same day; **gap is exposure + IPI semantics**. 
 - No claim encode ops are useless - they are Stage-B after delivery works. 
 - Tension: earlier design said multi-turn default on hardened targets; pure GS IPI is often **single fill**. Multi-turn is for chat ablation / T2 paste after agent asks (Wipe), not Crops pure score. **Resolve:** multi-turn optional by class; pure_ipi stays single-carrier.
 
 ---
 
-## What I don’t know
+## What I don't know
 
 - Exact GS UI for fill vs full message on Wipe when attempts return 
 - Whether Aluminum Hippo has non-shell file tools on other models 

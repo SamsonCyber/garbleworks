@@ -1,9 +1,9 @@
 # Gap report: proven techniques missing from the field guide / Garbleworks
 
 **Date:** 2026-08-02  
-**Status:** **SHIPPED** — all 10 ranked techniques are in `field-guide.json`; 9 executable ops in `ops/gap_ops.py` (Shadow Alignment is model-level FG only).  
+**Status:** **SHIPPED** - all 10 ranked techniques are in `field-guide.json`; 9 executable ops in `ops/gap_ops.py` (Shadow Alignment is model-level FG only).  
 **Baseline at research:** 326 techniques / 159 ops. **After ship:** see live registry.  
-**Match method:** casefold title equality, distinctive substring, and mechanism keywords against `title` + `what` + `fam` + op map. Keyword-only “stac” hits were discarded as false positives on the word *stack*.
+**Match method:** casefold title equality, distinctive substring, and mechanism keywords against `title` + `what` + `fam` + op map. Keyword-only "stac" hits were discarded as false positives on the word *stack*.
 
 Ops: `red_queen_frame`, `industry_reframe`, `stac_chain`, `tag_along_seed`, `conjunctive_split`, `mastermind_seed`, `x_teaming_seed`, `overthinking_frame`, `agent_only_perceptual`.
 
@@ -13,64 +13,64 @@ Ops: `red_queen_frame`, `industry_reframe`, `stac_chain`, `tag_along_seed`, `con
 
 The catalog is already dense on single-turn mutators, classic multi-turn (Crescendo, FITD, Echo Chamber, ActorAttack, GOAT, RACE), MCP/tool-result poison, and multimodal IPI. The **high-impact holes** cluster in three places:
 
-1. **Agent tool-sequence composition** (benign steps → harmful end state).  
+1. **Agent tool-sequence composition** (benign steps -> harmful end state).  
 2. **Multi-agent routing / privilege piggybacking** (split triggers, tag-along, planner swarms).  
-3. **Semantic cover that is not PAP/persona** (industry dialect laundering; “prevent harm” concealment).
+3. **Semantic cover that is not PAP/persona** (industry dialect laundering; "prevent harm" concealment).
 
 Below: ranked true gaps only. Each is implementable without re-researching the source.
 
 ---
 
-## Ranked gaps (impact × novelty for Garbleworks)
+## Ranked gaps (impact x novelty for Garbleworks)
 
-Score is informal 1–5 for each of **impact** (measured ASR / class of targets) and **novelty** (new mechanism vs existing FG family). **Priority** = impact + novelty.
+Score is informal 1-5 for each of **impact** (measured ASR / class of targets) and **novelty** (new mechanism vs existing FG family). **Priority** = impact + novelty.
 
-### 1. STAC — Sequential Tool Attack Chaining  
-**Priority: 10/10** · **Lane: both** (FG writeup + multi-turn agent recipe / harness mode)
+### 1. STAC - Sequential Tool Attack Chaining  
+**Priority: 10/10** * **Lane: both** (FG writeup + multi-turn agent recipe / harness mode)
 
 | Field | Detail |
 |-------|--------|
 | Mechanism | Individually harmless tool calls chained so the harmful effect appears only at the last execution step. Pipeline synthesizes executable chains, validates in-environment, reverse-engineers stealthy multi-turn user prompts that induce the chain. |
 | Why not covered | Catalog has tool-result poison, tool-description poison, MCP rug-pull/shadowing, confused-deputy. None model **cumulative benign tool sequences** as the attack unit. |
 | Impact | Average final ASR **91.2%** on eight SOTA agents; 483 cases, 1,352 interaction sets, 10 failure modes. Prompt defenses weak; ToolShield more durable. |
-| Source | Li et al., arXiv:2509.25624, https://arxiv.org/abs/2509.25624 · code: amazon-science/MultiTurnAgentAttack |
+| Source | Li et al., arXiv:2509.25624, https://arxiv.org/abs/2509.25624 * code: amazon-science/MultiTurnAgentAttack |
 | Implement next | FG entry under multiturn/indirect. Op-worthy as recipe stages that emit turn plans + expected tool traces; fire path needs tool-using target (agent seat), not pure string mutator. |
 
 ### 2. X-Teaming (adaptive multi-agent multi-turn red team)  
-**Priority: 9/10** · **Lane: both** (FG + orchestration layer; not a single string op)
+**Priority: 9/10** * **Lane: both** (FG + orchestration layer; not a single string op)
 
 | Field | Detail |
 |-------|--------|
 | Mechanism | Collaborative agents for **planning**, **attack optimization** (TextGrad), and **verification** generate diverse multi-turn escalations from the same harmful behavior. |
 | Why not covered | GOAT, ActorAttack, Crescendo, RACE exist as techniques. Missing is the **named multi-agent planner/optimizer/verifier swarm** with measured diversity gains (+153% plan diversity vs ActorAttack). |
-| Impact | ASR up to **98.1%**; **96.2%** on Claude 3.7 Sonnet; closed-source HarmBench ~**94.3%**. XGuard-Train: 30k multi-turn pairs (~20× prior). |
+| Impact | ASR up to **98.1%**; **96.2%** on Claude 3.7 Sonnet; closed-source HarmBench ~**94.3%**. XGuard-Train: 30k multi-turn pairs (~20x prior). |
 | Source | Rahman et al., arXiv:2504.13203, https://arxiv.org/abs/2504.13203 |
 | Implement next | FG entry (optimization / multiturn). Wire as arena ladder profile: planner LLM + attacker LLM + judge, not a `lang_ops` transform. |
 
 ### 3. Mastermind (knowledge-driven multi-turn)  
-**Priority: 9/10** · **Lane: both** (FG + bandit/knowledge-repo loop)
+**Priority: 9/10** * **Lane: both** (FG + bandit/knowledge-repo loop)
 
 | Field | Detail |
 |-------|--------|
-| Mechanism | Closed loop **plan → execute → reflect**. Hierarchical goals keep long-horizon coherence. Knowledge repository stores successful patterns and recombines them. |
-| Why not covered | AutoDAN-Turbo (self-discovering agent) and bandit selection exist. Mastermind’s **persistent attack-knowledge graph + hierarchical decoupling of strategy vs tactics** is not catalogued. |
+| Mechanism | Closed loop **plan -> execute -> reflect**. Hierarchical goals keep long-horizon coherence. Knowledge repository stores successful patterns and recombines them. |
+| Why not covered | AutoDAN-Turbo (self-discovering agent) and bandit selection exist. Mastermind's **persistent attack-knowledge graph + hierarchical decoupling of strategy vs tactics** is not catalogued. |
 | Impact | Paper reports substantial ASR/harm gains vs Crescendo, ActorAttack, X-Teaming, Siren on frontier models including GPT-5 and Claude 3.7 Sonnet. |
 | Source | Li et al., arXiv:2601.05445, https://arxiv.org/abs/2601.05445 |
 | Implement next | FG multiturn. Op-worthy as evolve/bandit extension that persists winning framings across runs (research_store already near this). |
 
-### 4. Red Queen Attack (conceal under “prevent harm”)  
-**Priority: 8/10** · **Lane: both** (FG + framing op / multiturn seed)
+### 4. Red Queen Attack (conceal under "prevent harm")  
+**Priority: 8/10** * **Lane: both** (FG + framing op / multiturn seed)
 
 | Field | Detail |
 |-------|--------|
-| Mechanism | Multi-turn roleplay where the user asks the model to help **stop** or **defend against** a harmful act, so the model generates the attack plan as “prevention advice.” |
-| Why not covered | Crescendo escalates intensity; FITD uses small commitments; Deceptive Delight camouflages topics. Red Queen’s **defensive/prevention guise** is a distinct concealment strategy. |
-| Impact | **87.62%** ASR GPT-4o; **75.4%** Llama3-70B; 40 scenarios × 14 harm categories → 56k dialogues. Larger models more vulnerable. |
-| Source | Jiang et al., arXiv:2409.17458, https://arxiv.org/abs/2409.17458 · ACL 2025 Findings |
+| Mechanism | Multi-turn roleplay where the user asks the model to help **stop** or **defend against** a harmful act, so the model generates the attack plan as "prevention advice." |
+| Why not covered | Crescendo escalates intensity; FITD uses small commitments; Deceptive Delight camouflages topics. Red Queen's **defensive/prevention guise** is a distinct concealment strategy. |
+| Impact | **87.62%** ASR GPT-4o; **75.4%** Llama3-70B; 40 scenarios x 14 harm categories -> 56k dialogues. Larger models more vulnerable. |
+| Source | Jiang et al., arXiv:2409.17458, https://arxiv.org/abs/2409.17458 * ACL 2025 Findings |
 | Implement next | FG multiturn + `red_queen_frame` op (scenario templates). Trivial offline string/recipe; high ROI. |
 
 ### 5. Conjunctive prompt attacks (multi-agent routing)  
-**Priority: 8/10** · **Lane: field-guide + agent harness** (not pure string op)
+**Priority: 8/10** * **Lane: field-guide + agent harness** (not pure string op)
 
 | Field | Detail |
 |-------|--------|
@@ -81,18 +81,18 @@ Score is informal 1–5 for each of **impact** (measured ASR / class of targets)
 | Implement next | FG multiagent/indirect. Harness: multi-agent testbed with injectable agent templates + trigger placement search. |
 
 ### 6. Tag-Along Attacks / Slingshot  
-**Priority: 8/10** · **Lane: both** (FG + agent RL attacker seat)
+**Priority: 8/10** * **Lane: both** (FG + agent RL attacker seat)
 
 | Field | Detail |
 |-------|--------|
-| Mechanism | Tool-less adversary rides a trusted Operator’s tool privileges through conversation only (“tag-along”). Slingshot: cold-start RL that discovers short, instruction-like attack strings (often not long persuasion). |
-| Why not covered | Confused-deputy and tool-call injection via chat templates exist. Missing is **tool-less peer that hijacks another agent’s privileges** as a first-class threat model with verifiable tool outcomes. |
-| Impact | **67.0%** success on held-out extreme tasks vs Qwen2.5-32B Operator (baseline **1.7%**); attempts-to-first-success 52.3 → 1.3. Zero-shot transfer: Gemini 2.5 Flash **56%**, Meta-SecAlign-8B **39.2%**. |
+| Mechanism | Tool-less adversary rides a trusted Operator's tool privileges through conversation only ("tag-along"). Slingshot: cold-start RL that discovers short, instruction-like attack strings (often not long persuasion). |
+| Why not covered | Confused-deputy and tool-call injection via chat templates exist. Missing is **tool-less peer that hijacks another agent's privileges** as a first-class threat model with verifiable tool outcomes. |
+| Impact | **67.0%** success on held-out extreme tasks vs Qwen2.5-32B Operator (baseline **1.7%**); attempts-to-first-success 52.3 -> 1.3. Zero-shot transfer: Gemini 2.5 Flash **56%**, Meta-SecAlign-8B **39.2%**. |
 | Source | Nellessen & Kachman, arXiv:2602.02395, https://arxiv.org/abs/2602.02395 |
-| Implement next | FG agentic. Op/recipe: short syntactic “tag-along” seeds + agent_loop target with tool allowlist. |
+| Implement next | FG agentic. Op/recipe: short syntactic "tag-along" seeds + agent_loop target with tool allowlist. |
 
 ### 7. Agent-only perceptual injection (mobile VLM)  
-**Priority: 7/10** · **Lane: field-guide first** (vision pipeline later)
+**Priority: 7/10** * **Lane: field-guide first** (vision pipeline later)
 
 | Field | Detail |
 |-------|--------|
@@ -103,7 +103,7 @@ Score is informal 1–5 for each of **impact** (measured ASR / class of targets)
 | Implement next | FG multimodal/agent. Op deferred until vision/mobile harness; catalog the channel now. |
 
 ### 8. Legitimate industry reframing (domain laundering)  
-**Priority: 7/10** · **Lane: both** (FG + cheap framing op)
+**Priority: 7/10** * **Lane: both** (FG + cheap framing op)
 
 | Field | Detail |
 |-------|--------|
@@ -114,26 +114,26 @@ Score is informal 1–5 for each of **impact** (measured ASR / class of targets)
 | Implement next | FG semantic/persuasion. Op `industry_reframe` with domains {cyber_edu, biodefense, agrochem, mining_blast, legal_hist}; stack with `manyshot_seed` + prefill. |
 
 ### 9. Shadow Alignment (fine-tune jailbreak of aligned models)  
-**Priority: 6/10** · **Lane: field-guide only** (modellevel; not a prompt op)
+**Priority: 6/10** * **Lane: field-guide only** (modellevel; not a prompt op)
 
 | Field | Detail |
 |-------|--------|
 | Mechanism | Fine-tune a safety-aligned open (or FaaS) model on a small set of harmful instruction pairs; refusal collapses while general capability largely remains. |
-| Why not covered | Refusal-direction ablation / abliteration is weight-surgery. Shadow Alignment is **data-efficient SFT undoing of alignment** — different attacker capability model. |
+| Why not covered | Refusal-direction ablation / abliteration is weight-surgery. Shadow Alignment is **data-efficient SFT undoing of alignment** - different attacker capability model. |
 | Impact | Foundational result: order of ~10² examples can subvert aligned open models; underpins later FaaS attacks (TrojanPraise et al. stealth variants). |
 | Source | Yang et al. Shadow Alignment line (e.g. arXiv:2310.02949 family); see also TrojanPraise arXiv:2601.12460 for modern stealth fine-tune |
 | Implement next | FG modellevel writeup + defense notes (moderation of fine-tune sets). No garbleworks string op. |
 
 ### 10. Overthinking (extra reasoning budget helps the attacker)  
-**Priority: 6/10** · **Lane: field-guide + reasoner fire config**
+**Priority: 6/10** * **Lane: field-guide + reasoner fire config**
 
 | Field | Detail |
 |-------|--------|
 | Mechanism | Empirically, **higher reasoning effort** on thinking models can increase jailbreak success (more chance to invent a benign framing that still satisfies the ask). |
 | Why not covered | Catalog has Reasoning Interruption (force *less* think) and H-CoT hijack. Missing is the inverted finding: **more think can be worse** for defenders. |
-| Impact | Yang et al. multi-turn analysis: higher reasoning effort → higher StrongREJECT scores for reasoners (single- and multi-turn). |
+| Impact | Yang et al. multi-turn analysis: higher reasoning effort -> higher StrongREJECT scores for reasoners (single- and multi-turn). |
 | Source | https://arxiv.org/abs/2508.07646 |
-| Implement next | FG decoding/reasoning. Harness: `reasoning_effort` axis on targets; do not assume “max think = safer.” |
+| Implement next | FG decoding/reasoning. Harness: `reasoning_effort` axis on targets; do not assume "max think = safer." |
 
 ---
 

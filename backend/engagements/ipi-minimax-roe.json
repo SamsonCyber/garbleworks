@@ -1,0 +1,23 @@
+{
+  "engagement_id": "ipi-minimax-tools-loop-2026-08-07",
+  "authority_source": "operator-owned MiniMax API key; authorized self-test of MiniMax-M3 as tools-loop AGENT TARGET for agentic IPI",
+  "authorized_scope": ["127.0.0.1", "localhost"],
+  "permitted_roles": ["recon", "scanner", "attacker", "judge"],
+  "auto_allowed": [
+    "present inert document carriers to a tools-loop agent on operator-controlled loopback or direct OpenAI-compat endpoint with operator key",
+    "score with Garbleworks dual scorer (delivery x harm x conceal)",
+    "write results under backend/bench/results"
+  ],
+  "approval_required": [
+    "any other cloud provider",
+    "any non-lab production customer agent",
+    "publish as multi-provider public leaderboard without n/LCB and delivery_fail accounting"
+  ],
+  "evidence_required": true,
+  "notes": "This is INDIRECT prompt injection measurement: untrusted documents + tools, not direct chat jailbreak. MiniMax is the agent brain under test (tool calls in sandbox). Estimand=agentic_ipi (not chat efficacy). Delivery_fail is not technique fail.",
+  "battery_default": "ipi_closed_loop",
+  "target_mode_default": "minimax_tools",
+  "tools_default": "set_ph_level|shell|report_status|read_file",
+  "target_model": "MiniMax-M3",
+  "target_base": "https://api.minimax.io/v1"
+}

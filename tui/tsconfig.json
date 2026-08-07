@@ -9,5 +9,11 @@
     "skipLibCheck": true,
     "types": ["bun-types"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": [
+    "src/probe_integration.ts",
+    "src/run_live_probe.ts",
+    "src/debug_spawn.ts",
+    "src/apply_gw_smoke.ts"
+  ]
 }

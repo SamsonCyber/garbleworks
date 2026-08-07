@@ -4,22 +4,30 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "bun run src/index.tsx",
-    "start:tui": "bun run src/index.tsx",
+    "start": "cmd /c ..\\gw-chat.cmd",
+    "start:pi": "cmd /c ..\\gw-chat.cmd",
+    "start:legacy": "bun run src/shell.tsx",
+    "start:tui": "bun run src/shell.tsx",
+    "start:cockpit": "bun run src/index.tsx",
     "start:cli": "python ../backend/arena_go.py --sample --fresh",
     "start:menu": "python ../backend/arena_go.py --fresh",
     "arena": "python ../backend/arena_go.py --fresh",
     "arena:sample": "python ../backend/arena_go.py --sample --fresh",
-    "dev": "bun run --watch src/index.tsx",
+    "dev": "bun run --watch src/shell.tsx",
+    "test": "bun test src/shell_state.test.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "@opentui/core": "^0.4.3",
     "@opentui/core-win32-x64": "^0.4.3",
     "@opentui/react": "^0.4.3",
+    "asciichart": "^1.5.25",
+    "drawille": "^2.0.2",
     "react": "^19.2.7"
   },
   "devDependencies": {
-    "@types/react": "^19.2.17"
+    "@types/asciichart": "^1.5.8",
+    "@types/react": "^19.2.17",
+    "bun-types": "^1.3.14"
   }
 }

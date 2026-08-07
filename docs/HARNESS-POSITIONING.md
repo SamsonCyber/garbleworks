@@ -26,7 +26,7 @@ op_name := <a registered op in one of 20 families>
 Denotationally, a recipe is a composition of transformations
 
 ```
-R = op_k ∘ … ∘ op_2 ∘ op_1 , R : str → set<str>
+R = op_k ∘ ... ∘ op_2 ∘ op_1 , R : str -> set<str>
 ```
 
 where each `op_i` is a parameterized map from a string to one or more variant
@@ -68,25 +68,25 @@ Four things h4rm3l does not do, in rough order of importance:
  LLM. Garbleworks searches the composition space with a **genetic optimizer on
  the probability simplex** (Aitchison geometry, logistic-normal mutation,
  credit-assignment bandits - `EVOLVE_MATH`) and, now, **MAP-Elites
- quality-diversity** over a (behavior × obfuscation) grid (`rainbow.py`). The
+ quality-diversity** over a (behavior x obfuscation) grid (`rainbow.py`). The
  recipe space is searched, not just sampled.
 
 2. **Statistical rigor.** h4rm3l reports ASR. Garbleworks treats fitness as a
  random variable: **Wilson / empirical-Bernstein confidence bounds**,
  **successive-halving racing**, **winner's-curse held-out re-estimation**, and
  optional **Benjamini-Hochberg FDR** on multi-strategy claim batches
- (`rank_strategies(fdr_q=...)`, EVOLVE_MATH §14; **default off**). Dual product
+ (`rank_strategies(fdr_q=...)`, EVOLVE_MATH sec 14; **default off**). Dual product
  flags separate mean success from LCB `claim_ready`. A cross-model weak-point
  dataset is only bounty-actionable if "technique X breaks family Y" claims
  survive re-fire + (when multi-test) FDR correction.
 
 3. **The register / L(x) analytical layer.** A morpheme-loadedness model with a
  live `p_refuse(L) = σ(α₀ + α₁L)` calibration that names *which lexical features*
- a target's safety layer over-weights (`EVOLVE_MATH` §3, `register.py`). No
+ a target's safety layer over-weights (`EVOLVE_MATH` sec 3, `register.py`). No
  h4rm3l analog; it turns "it refused" into a finding.
 
 4. **Closed adaptive loop + persistence.** h4rm3l is benchmark-generation-first.
- Garbleworks runs a live compose → fire → judge → evolve loop (`optimize`), a
+ Garbleworks runs a live compose -> fire -> judge -> evolve loop (`optimize`), a
  per-target hypothesis store with promote/retire/compose lifecycle, and - new - 
  a **multi-turn beam tree search** (Tempest-style, `treesearch.py`) for the
  erosion attacks the single-turn DSL cannot reach.
@@ -104,6 +104,6 @@ new attack primitive.
 ## References
 
 - h4rm3l - Doumbouya et al. 2024, arXiv:2408.04811 (composable jailbreak DSL + synthesizer).
-- WildTeaming - Jiang et al. 2024, arXiv:2406.18510 (composition > singletons, 4.6×).
+- WildTeaming - Jiang et al. 2024, arXiv:2406.18510 (composition > singletons, 4.6x).
 - Rainbow Teaming - Samvelyan et al. 2024, arXiv:2402.16822 (MAP-Elites for adversarial prompts).
 - Tempest - Zhou & Arel 2025, arXiv:2503.10619 (multi-turn tree-search jailbreak).

@@ -168,7 +168,7 @@ requires (24/24 codepoint-audit pass).
 | Visible-CoT hijack / dilution / no-decode | `cot_hijack` (modes), `cot_dilution`, `cot_no_decode`, `cot_forge_verdict` |
 | Transliteration / pseudo-locale | `transliterate`, `pseudo_locale` |
 | Sentence reordering | `sentence_reorder` |
-| Active↔passive / syntax restructuring | `active_passive` |
+| Active<->passive / syntax restructuring | `active_passive` |
 | Typo / noise injection | `typo_inject` |
 
 ## Sampler (3)

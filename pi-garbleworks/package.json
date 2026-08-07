@@ -1,0 +1,11 @@
+{
+  "name": "pi-garbleworks",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Garbleworks red-team tools + live graphs for the pi coding agent TUI",
+  "type": "module",
+  "pi": {
+    "extensions": ["./extensions/garbleworks.ts"],
+    "skills": ["./skills/red-team"]
+  }
+}

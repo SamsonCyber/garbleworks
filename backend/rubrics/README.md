@@ -1,4 +1,4 @@
-﻿# Rubrics
+# Rubrics
 
 Optional gold-cell graders for campaign scoring live here.
 

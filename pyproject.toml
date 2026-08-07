@@ -13,6 +13,20 @@ license = { text = "Apache-2.0" }
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
 
+# Console scripts require: pip install -e .  (use system py -3.12, not Hermes venv)
+# Single word: `gw` → interactive app (Hermes-style). Same entry as garbleworks-agent.
+[project.scripts]
+gw = "agent_repl.__main__:main"
+garbleworks-agent = "agent_repl.__main__:main"
+gw-agent = "agent_repl.__main__:main"
+
+[tool.setuptools.package-dir]
+"" = "backend"
+
+[tool.setuptools.packages.find]
+where = ["backend"]
+include = ["agent_repl*", "spine*", "ops*", "bench*", "arena*"]
+
 [tool.pytest.ini_options]
 testpaths = ["backend"]
 pythonpath = ["backend"]
